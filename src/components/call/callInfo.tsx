@@ -241,7 +241,7 @@ function CallInfo({
                       </SelectContent>
                     </Select>
                     <AlertDialog>
-                      <AlertDialogTrigger>
+                      <AlertDialogTrigger asChild>
                         <Button
                           disabled={isClicked}
                           className="bg-red-500 hover:bg-red-600 p-2"
@@ -314,6 +314,7 @@ function CallInfo({
                       strokeWidth={4}
                       showValueLabel={true}
                       formatOptions={{ signDisplay: "never" }}
+                      aria-label={`Overall Hiring Score: ${analytics?.overallScore} out of 100`}
                     />
                     <p className="font-medium my-auto text-xl">
                       Overall Hiring Score
@@ -323,7 +324,9 @@ function CallInfo({
                     <div className="font-medium ">
                       <span className="font-normal">Feedback: </span>
                       {analytics?.overallFeedback === undefined ? (
-                        <Skeleton className="w-[200px] h-[20px]" />
+                        <span className="inline-block">
+                          <Skeleton className="w-[200px] h-[20px]" />
+                        </span>
                       ) : (
                         analytics?.overallFeedback
                       )}
@@ -353,6 +356,7 @@ function CallInfo({
                         </div>
                       }
                       formatOptions={{ signDisplay: "never" }}
+                      aria-label={`Communication Score: ${analytics?.communication.score ?? 0} out of 10`}
                     />
                     <p className="font-medium my-auto text-xl">Communication</p>
                   </div>
@@ -360,7 +364,9 @@ function CallInfo({
                     <div className="font-medium ">
                       <span className="font-normal">Feedback: </span>
                       {analytics?.communication.feedback === undefined ? (
-                        <Skeleton className="w-[200px] h-[20px]" />
+                        <span className="inline-block">
+                          <Skeleton className="w-[200px] h-[20px]" />
+                        </span>
                       ) : (
                         analytics?.communication.feedback
                       )}
@@ -371,13 +377,13 @@ function CallInfo({
               <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-slate-50">
                 <div className="flex flex-row gap-2  align-middle">
                   <p className="my-auto">User Sentiment: </p>
-                  <p className="font-medium my-auto">
+                  <span className="font-medium my-auto">
                     {call?.call_analysis?.user_sentiment === undefined ? (
                       <Skeleton className="w-[200px] h-[20px]" />
                     ) : (
                       call?.call_analysis?.user_sentiment
                     )}
-                  </p>
+                  </span>
 
                   <div
                     className={`${
@@ -397,7 +403,9 @@ function CallInfo({
                   <div className="font-medium  ">
                     <span className="font-normal">Call Summary: </span>
                     {call?.call_analysis?.call_summary === undefined ? (
-                      <Skeleton className="w-[200px] h-[20px]" />
+                      <span className="inline-block">
+                        <Skeleton className="w-[200px] h-[20px]" />
+                      </span>
                     ) : (
                       call?.call_analysis?.call_summary
                     )}

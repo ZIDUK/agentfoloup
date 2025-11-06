@@ -3,7 +3,7 @@
 import React, { useState, useContext, ReactNode, useEffect } from "react";
 import { Interviewer } from "@/types/interviewer";
 import { InterviewerService } from "@/services/interviewers.service";
-import { useClerk } from "@clerk/nextjs";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 interface InterviewerContextProps {
   interviewers: Interviewer[];
@@ -27,15 +27,15 @@ interface InterviewerProviderProps {
 
 export function InterviewerProvider({ children }: InterviewerProviderProps) {
   const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
-  const { user } = useClerk();
+  const [user, setUser] = useState<any>(null);
+  const supabase = createClientComponentClient();
   const [interviewersLoading, setInterviewersLoading] = useState(true);
+  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
   const fetchInterviewers = async () => {
     try {
       setInterviewersLoading(true);
-      const response = await InterviewerService.getAllInterviewers(
-        user?.id as string,
-      );
+      const response = await InterviewerService.getAllInterviewers("");
       setInterviewers(response);
     } catch (error) {
       console.error(error);
@@ -49,7 +49,38 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
   };
 
   useEffect(() => {
-    if (user?.id) {
+    // If SKIP_AUTH is enabled, use a mock user and fetch interviewers immediately
+    if (SKIP_AUTH) {
+      const mockUser = {
+        id: "dev-user-123",
+        email: "dev@example.com",
+      };
+      setUser(mockUser);
+      // Fetch interviewers immediately when SKIP_AUTH is enabled
+      fetchInterviewers();
+      return;
+    }
+
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    getUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase, SKIP_AUTH]);
+
+  useEffect(() => {
+    if (user?.id && !SKIP_AUTH) {
       fetchInterviewers();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

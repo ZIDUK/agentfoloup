@@ -5,7 +5,6 @@ import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import Navbar from "@/components/navbar";
 import Providers from "@/components/providers";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import SideMenu from "@/components/sideMenu";
 import { usePathname } from "next/navigation";
@@ -39,7 +38,7 @@ export default function RootLayout({
   const pathname = usePathname();
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <title>{metadata.title}</title>
         <meta name="description" content={metadata.description} />
@@ -50,35 +49,31 @@ export default function RootLayout({
           inter.className,
           "antialiased overflow-hidden min-h-screen",
         )}
+        suppressHydrationWarning
       >
-        <ClerkProvider
-          signInFallbackRedirectUrl={"/dashboard"}
-          afterSignOutUrl={"/sign-in"}
-        >
-          <Providers>
+        <Providers>
+          {!pathname.includes("/sign-in") &&
+            !pathname.includes("/sign-up") && <Navbar />}
+          <div className="flex flex-row h-screen">
             {!pathname.includes("/sign-in") &&
-              !pathname.includes("/sign-up") && <Navbar />}
-            <div className="flex flex-row h-screen">
-              {!pathname.includes("/sign-in") &&
-                !pathname.includes("/sign-up") && <SideMenu />}
-              <div className="ml-[200px] pt-[64px] h-full overflow-y-auto flex-grow">
-                {children}
-              </div>
+              !pathname.includes("/sign-up") && <SideMenu />}
+            <div className="ml-[200px] pt-[64px] h-full overflow-y-auto flex-grow">
+              {children}
             </div>
-            <Toaster
-              toastOptions={{
-                classNames: {
-                  toast: "bg-white",
-                  title: "text-black",
-                  description: "text-red-400",
-                  actionButton: "bg-indigo-400",
-                  cancelButton: "bg-orange-400",
-                  closeButton: "bg-white-400",
-                },
-              }}
-            />
-          </Providers>
-        </ClerkProvider>
+          </div>
+          <Toaster
+            toastOptions={{
+              classNames: {
+                toast: "bg-white",
+                title: "text-black",
+                description: "text-red-400",
+                actionButton: "bg-indigo-400",
+                cancelButton: "bg-orange-400",
+                closeButton: "bg-white-400",
+              },
+            }}
+          />
+        </Providers>
       </body>
     </html>
   );

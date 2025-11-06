@@ -50,13 +50,34 @@ Based on this transcript and the provided main interview questions, generate the
             b) Any follow-up questions that were asked related to this main question and their answers
           - The summary should be a cohesive paragraph encompassing all related information for each main question
 4. Create a 10 to 15 words summary regarding the soft skills considering factors such as confidence, leadership, adaptability, critical thinking and decision making.
+
+5. Answer Quality Metrics:
+   - averageAnswerLength: number (average number of words per answer)
+   - answerRelevanceScore: number (0-10) - How relevant are the answers to the questions asked?
+   - depthScore: number (0-10) - How deep and detailed are the answers? Do they show thorough understanding?
+   - consistencyScore: number (0-10) - Are the answers consistent throughout the interview? Do they contradict each other?
+
+6. Advanced Analysis:
+   - confidenceLevel: string (one of: "High", "Medium", "Low") - Overall confidence level based on assertiveness, hesitation, and self-assurance
+   - engagementScore: number (0-10) - How engaged and interested was the candidate? Did they ask questions? Show enthusiasm?
+   - problemSolvingScore: number (0-10) - How well did they approach problem-solving questions? Logical reasoning and analytical skills
+   - adaptabilityScore: number (0-10) - How well did they adapt to different types of questions, including unexpected or challenging ones?
+
 Ensure the output is in valid JSON format with the following structure:
 {
   "overallScore": number,
   "overallFeedback": string,
   "communication": { "score": number, "feedback": string },
   "questionSummaries": [{ "question": string, "summary": string }],
-  "softSkillSummary: string
+  "softSkillSummary": string,
+  "averageAnswerLength": number,
+  "answerRelevanceScore": number,
+  "depthScore": number,
+  "consistencyScore": number,
+  "confidenceLevel": string,
+  "engagementScore": number,
+  "problemSolvingScore": number,
+  "adaptabilityScore": number
 }
 
 IMPORTANT: Only use the main questions provided. Do not generate or infer additional questions such as follow-up questions.`;

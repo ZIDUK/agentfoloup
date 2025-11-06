@@ -1,10 +1,10 @@
-import { OpenAI } from "openai";
 import { NextResponse } from "next/server";
 import {
   SYSTEM_PROMPT,
   generateQuestionsPrompt,
 } from "@/lib/prompts/generate-questions";
 import { logger } from "@/lib/logger";
+import { getMistralClient } from "@/services/mistral.service";
 
 export const maxDuration = 60;
 
@@ -12,15 +12,11 @@ export async function POST(req: Request, res: Response) {
   logger.info("generate-interview-questions request received");
   const body = await req.json();
 
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    maxRetries: 5,
-    dangerouslyAllowBrowser: true,
-  });
+  const mistral = getMistralClient();
 
   try {
-    const baseCompletion = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const baseCompletion = await mistral.createChatCompletion({
+      model: process.env.MISTRAL_MODEL || "mistral-large-latest",
       messages: [
         {
           role: "system",
@@ -45,11 +41,20 @@ export async function POST(req: Request, res: Response) {
       },
       { status: 200 },
     );
-  } catch (error) {
-    logger.error("Error generating interview questions");
+  } catch (error: any) {
+    logger.error("Error generating interview questions", error);
+    console.error("Error generating interview questions:", error);
+    console.error("Error details:", {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+    });
 
     return NextResponse.json(
-      { error: "internal server error" },
+      { 
+        error: "internal server error",
+        details: error?.message || "Unknown error",
+      },
       { status: 500 },
     );
   }

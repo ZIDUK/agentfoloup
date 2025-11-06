@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { useClerk, useOrganization } from "@clerk/nextjs";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { InterviewBase, Question } from "@/types/interview";
 import { useInterviews } from "@/contexts/interviews.context";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,8 +17,38 @@ interface Props {
 }
 
 function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
-  const { user } = useClerk();
-  const { organization } = useOrganization();
+  const [user, setUser] = useState<any>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const supabase = createClientComponentClient();
+  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
+
+  useEffect(() => {
+    // If SKIP_AUTH is enabled, use a mock user
+    if (SKIP_AUTH) {
+      const mockUser = {
+        id: "dev-user-123",
+        email: "dev@example.com",
+        user_metadata: {
+          organization_id: "dev-org-123",
+        },
+      };
+      setUser(mockUser);
+      setOrganizationId(mockUser.user_metadata.organization_id);
+      return;
+    }
+
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+      if (user) {
+        const orgId = user.user_metadata?.organization_id || user.id;
+        setOrganizationId(orgId);
+      }
+    };
+    getUser();
+  }, [supabase, SKIP_AUTH]);
   const [isClicked, setIsClicked] = useState(false);
 
   const [questions, setQuestions] = useState<Question[]>(
@@ -67,7 +97,7 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
   const onSave = async () => {
     try {
       interviewData.user_id = user?.id || "";
-      interviewData.organization_id = organization?.id || "";
+      interviewData.organization_id = organizationId || "";
 
       interviewData.questions = questions;
       interviewData.description = description;
@@ -77,11 +107,11 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
         ...interviewData,
         interviewer_id: interviewData.interviewer_id.toString(),
         response_count: interviewData.response_count.toString(),
-        logo_url: organization?.imageUrl || "",
+        logo_url: user?.user_metadata?.avatar_url || "",
       };
 
       const response = await axios.post("/api/create-interview", {
-        organizationName: organization?.name,
+        organizationName: user?.user_metadata?.organization_name || "My Organization",
         interviewData: sanitizedInterviewData,
       });
       setIsClicked(false);

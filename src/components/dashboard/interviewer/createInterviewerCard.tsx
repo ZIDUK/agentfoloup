@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { avatars } from "@/components/dashboard/interviewer/avatars";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useInterviewers } from "@/contexts/interviewers.context";
-import { useClerk } from "@clerk/nextjs";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useEffect, useState as useStateHook } from "react";
 
 const createInterviewerCard = () => {
   const [open, setOpen] = useState(false);
@@ -23,8 +24,30 @@ const createInterviewerCard = () => {
   const [speed, setSpeed] = useState(0.9);
   const [image, setImage] = useState("");
   const { createInterviewer } = useInterviewers();
-  const { user } = useClerk();
+  const [user, setUser] = useStateHook<any>(null);
+  const supabase = createClientComponentClient();
   const [isClicked, setIsClicked] = useState(false);
+  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
+
+  useEffect(() => {
+    // If SKIP_AUTH is enabled, use a mock user
+    if (SKIP_AUTH) {
+      const mockUser = {
+        id: "dev-user-123",
+        email: "dev@example.com",
+      };
+      setUser(mockUser);
+      return;
+    }
+
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, [supabase, SKIP_AUTH]);
 
   useEffect(() => {
     if (!open) {
@@ -209,7 +232,13 @@ const createInterviewerCard = () => {
                     setGallery(false);
                   }}
                 >
-                  <Image alt="avatar" width={125} height={100} src={item.img} />
+                  {item.img ? (
+                    <Image alt="avatar" width={125} height={100} src={item.img} />
+                  ) : (
+                    <div className="w-[125px] h-[100px] bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                      No Image
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

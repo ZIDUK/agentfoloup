@@ -25,6 +25,16 @@ export interface Analytics {
     question: string;
     summary: string;
   }>;
+  // Answer Quality Metrics
+  averageAnswerLength?: number;
+  answerRelevanceScore?: number;
+  depthScore?: number;
+  consistencyScore?: number;
+  // Advanced Analysis
+  confidenceLevel?: "High" | "Medium" | "Low";
+  engagementScore?: number;
+  problemSolvingScore?: number;
+  adaptabilityScore?: number;
 }
 
 export interface FeedbackData {
@@ -45,7 +55,8 @@ export interface CallData {
   from_number: string;
   to_number: string;
   metadata: Record<string, unknown>;
-  retell_llm_dynamic_variables: {
+  // Legacy field from Retell AI (kept for backward compatibility)
+  retell_llm_dynamic_variables?: {
     customer_name: string;
   };
   drop_call_if_machine_detected: boolean;

@@ -1,10 +1,10 @@
-import { OpenAI } from "openai";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import {
   SYSTEM_PROMPT,
   getCommunicationAnalysisPrompt,
 } from "@/lib/prompts/communication-analysis";
+import { getMistralClient } from "@/services/mistral.service";
 
 export async function POST(req: Request) {
   logger.info("analyze-communication request received");
@@ -20,14 +20,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-      maxRetries: 5,
-      dangerouslyAllowBrowser: true,
-    });
+    const mistral = getMistralClient();
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const completion = await mistral.createChatCompletion({
+      model: process.env.MISTRAL_MODEL || "mistral-large-latest",
       messages: [
         {
           role: "system",

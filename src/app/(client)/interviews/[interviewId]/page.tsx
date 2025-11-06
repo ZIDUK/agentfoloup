@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import React, { useState, useEffect } from "react";
-import { useOrganization } from "@clerk/nextjs";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useInterviews } from "@/contexts/interviews.context";
 import { Share2, Filter, Pencil, UserIcon, Eye, Palette } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -64,20 +64,58 @@ function InterviewHome({ params, searchParams }: Props) {
   const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
   const [themeColor, setThemeColor] = useState<string>("#4F46E5");
   const [iconColor, seticonColor] = useState<string>("#4F46E5");
-  const { organization } = useOrganization();
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const supabase = createClientComponentClient();
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
+
+  useEffect(() => {
+    // If SKIP_AUTH is enabled, use a mock organization
+    if (SKIP_AUTH) {
+      setOrganizationId("dev-org-123");
+      return;
+    }
+
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const orgId = user.user_metadata?.organization_id || user.id;
+        setOrganizationId(orgId);
+      }
+    };
+    getUser();
+  }, [supabase, SKIP_AUTH]);
 
   const seeInterviewPreviewPage = () => {
-    const protocol = base_url?.includes("localhost") ? "http" : "https";
-    if (interview?.url) {
-      const url = interview?.readable_slug
-        ? `${protocol}://${base_url}/call/${interview?.readable_slug}`
-        : interview.url.startsWith("http")
-          ? interview.url
-          : `https://${interview.url}`;
+    if (!interview) {
+      console.error("Interview is not loaded yet.");
+      toast.error("Interview not loaded. Please try again.");
+      return;
+    }
+
+    // Use readable_slug if available, otherwise extract the ID from the URL
+    let interviewId = interview.readable_slug;
+    
+    if (!interviewId && interview.url) {
+      // Extract the ID from the URL (e.g., "http://localhost:3000/call/abc123" -> "abc123")
+      const urlParts = interview.url.split("/");
+      interviewId = urlParts[urlParts.length - 1];
+    }
+    
+    if (!interviewId && interview.id) {
+      // Fallback to interview.id
+      interviewId = interview.id;
+    }
+
+    if (interviewId) {
+      // Use relative path for better compatibility
+      const url = `/call/${interviewId}`;
       window.open(url, "_blank");
     } else {
-      console.error("Interview URL is null or undefined.");
+      console.error("Interview ID or URL is not available.");
+      toast.error("Unable to open interview preview. Interview URL is missing.");
     }
   };
 
@@ -107,8 +145,8 @@ function InterviewHome({ params, searchParams }: Props) {
   useEffect(() => {
     const fetchOrganizationData = async () => {
       try {
-        if (organization?.id) {
-          const data = await ClientService.getOrganizationById(organization.id);
+        if (organizationId) {
+          const data = await ClientService.getOrganizationById(organizationId);
           if (data?.plan) {
             setCurrentPlan(data.plan);
           }
@@ -119,7 +157,7 @@ function InterviewHome({ params, searchParams }: Props) {
     };
 
     fetchOrganizationData();
-  }, [organization]);
+  }, [organizationId]);
   useEffect(() => {
     const fetchResponses = async () => {
       try {
@@ -136,6 +174,16 @@ function InterviewHome({ params, searchParams }: Props) {
     };
 
     fetchResponses();
+
+    // Listen for responses-updated event to refresh responses
+    const handleResponsesUpdated = () => {
+      fetchResponses();
+    };
+    window.addEventListener("responses-updated", handleResponsesUpdated);
+
+    return () => {
+      window.removeEventListener("responses-updated", handleResponsesUpdated);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -1,4 +1,3 @@
-import { OpenAI } from "openai";
 import { NextResponse } from "next/server";
 import { ResponseService } from "@/services/responses.service";
 import { InterviewService } from "@/services/interviews.service";
@@ -7,6 +6,7 @@ import {
   createUserPrompt,
 } from "@/lib/prompts/generate-insights";
 import { logger } from "@/lib/logger";
+import { getMistralClient } from "@/services/mistral.service";
 
 export async function POST(req: Request, res: Response) {
   logger.info("generate-insights request received");
@@ -22,11 +22,7 @@ export async function POST(req: Request, res: Response) {
     });
   }
 
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    maxRetries: 5,
-    dangerouslyAllowBrowser: true,
-  });
+  const mistral = getMistralClient();
 
   try {
     const prompt = createUserPrompt(
@@ -36,8 +32,8 @@ export async function POST(req: Request, res: Response) {
       interview.description,
     );
 
-    const baseCompletion = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const baseCompletion = await mistral.createChatCompletion({
+      model: process.env.MISTRAL_MODEL || "mistral-large-latest",
       messages: [
         {
           role: "system",

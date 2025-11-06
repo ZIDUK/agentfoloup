@@ -162,42 +162,50 @@ function DetailsPopup({
               id="slider-3"
               className=" h-36 pt-1 overflow-x-scroll scroll whitespace-nowrap scroll-smooth scrollbar-hide w-[27.5rem]"
             >
-              {interviewers.map((item, key) => (
-                <div
-                  className=" p-0 inline-block cursor-pointer ml-1 mr-5 rounded-xl shrink-0 overflow-hidden"
-                  key={item.id}
-                >
-                  <button
-                    className="absolute ml-9"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInterviewerDetails(item);
-                      setOpenInterviewerDetails(true);
-                    }}
-                  >
-                    <Info size={18} color="#4f46e5" strokeWidth={2.2} />
-                  </button>
-                  <div
-                    className={`w-[96px] overflow-hidden rounded-full ${
-                      selectedInterviewer === item.id
-                        ? "border-4 border-indigo-600"
-                        : ""
-                    }`}
-                    onClick={() => setSelectedInterviewer(item.id)}
-                  >
-                    <Image
-                      src={item.image}
-                      alt="Picture of the interviewer"
-                      width={70}
-                      height={70}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <CardTitle className="mt-0 text-xs text-center">
-                    {item.name}
-                  </CardTitle>
+              {interviewers.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+                  No interviewers available. Please create one first.
                 </div>
-              ))}
+              ) : (
+                <>
+                  {interviewers.map((item, key) => (
+                    <div
+                      className=" p-0 inline-block cursor-pointer ml-1 mr-5 rounded-xl shrink-0 overflow-hidden"
+                      key={item.id}
+                    >
+                      <button
+                        className="absolute ml-9"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setInterviewerDetails(item);
+                          setOpenInterviewerDetails(true);
+                        }}
+                      >
+                        <Info size={18} color="#4f46e5" strokeWidth={2.2} />
+                      </button>
+                      <div
+                        className={`w-[96px] overflow-hidden rounded-full ${
+                          selectedInterviewer === item.id
+                            ? "border-4 border-indigo-600"
+                            : ""
+                        }`}
+                        onClick={() => setSelectedInterviewer(item.id)}
+                      >
+                        <Image
+                          src={item.image}
+                          alt="Picture of the interviewer"
+                          width={70}
+                          height={70}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <CardTitle className="mt-0 text-xs text-center">
+                        {item.name}
+                      </CardTitle>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
             {interviewers.length > 4 ? (
               <div className="flex-row justify-center ml-3 mb-1 items-center space-y-6">

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useOrganization } from "@clerk/nextjs";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import InterviewCard from "@/components/dashboard/interview/interviewCard";
 import CreateInterviewCard from "@/components/dashboard/interview/createInterviewCard";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -15,8 +15,29 @@ import Image from "next/image";
 
 function Interviews() {
   const { interviews, interviewsLoading } = useInterviews();
-  const { organization } = useOrganization();
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const supabase = createClientComponentClient();
   const [loading, setLoading] = useState<boolean>(false);
+  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
+
+  useEffect(() => {
+    // If SKIP_AUTH is enabled, use a mock organization
+    if (SKIP_AUTH) {
+      setOrganizationId("dev-org-123");
+      return;
+    }
+
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const orgId = user.user_metadata?.organization_id || user.id;
+        setOrganizationId(orgId);
+      }
+    };
+    getUser();
+  }, [supabase, SKIP_AUTH]);
   const [currentPlan, setCurrentPlan] = useState<string>("");
   const [allowedResponsesCount, setAllowedResponsesCount] =
     useState<number>(10);
@@ -37,8 +58,8 @@ function Interviews() {
   useEffect(() => {
     const fetchOrganizationData = async () => {
       try {
-        if (organization?.id) {
-          const data = await ClientService.getOrganizationById(organization.id);
+        if (organizationId) {
+          const data = await ClientService.getOrganizationById(organizationId);
           if (data?.plan) {
             setCurrentPlan(data.plan);
             if (data.plan === "free_trial_over") {
@@ -55,11 +76,11 @@ function Interviews() {
     };
 
     fetchOrganizationData();
-  }, [organization]);
+  }, [organizationId]);
 
   useEffect(() => {
     const fetchResponsesCount = async () => {
-      if (!organization || currentPlan !== "free") {
+      if (!organizationId || currentPlan !== "free") {
         return;
       }
 
@@ -67,15 +88,15 @@ function Interviews() {
       try {
         const totalResponses =
           await ResponseService.getResponseCountByOrganizationId(
-            organization.id,
+            organizationId,
           );
         const hasExceededLimit = totalResponses >= allowedResponsesCount;
         if (hasExceededLimit) {
           setCurrentPlan("free_trial_over");
-          await InterviewService.deactivateInterviewsByOrgId(organization.id);
+          await InterviewService.deactivateInterviewsByOrgId(organizationId);
           await ClientService.updateOrganization(
             { plan: "free_trial_over" },
-            organization.id,
+            organizationId,
           );
         }
       } catch (error) {
@@ -86,7 +107,7 @@ function Interviews() {
     };
 
     fetchResponsesCount();
-  }, [organization, currentPlan, allowedResponsesCount]);
+  }, [organizationId, currentPlan, allowedResponsesCount]);
 
   return (
     <main className="p-8 pt-0 ml-12 mr-auto rounded-md">

@@ -4,9 +4,19 @@ import { Interview } from "@/types/interview";
 import { Interviewer } from "@/types/interviewer";
 import { Response } from "@/types/response";
 import React, { useEffect, useState } from "react";
-import { UserCircleIcon, SmileIcon, Info } from "lucide-react";
+import {
+  UserCircleIcon,
+  SmileIcon,
+  Info,
+  TrendingUp,
+  Award,
+  BarChart3,
+  Target,
+} from "lucide-react";
 import { useInterviewers } from "@/contexts/interviewers.context";
 import { PieChart } from "@mui/x-charts/PieChart";
+import { BarChart } from "@mui/x-charts/BarChart";
+import { LineChart } from "@mui/x-charts/LineChart";
 import { CandidateStatus } from "@/lib/enum";
 import { convertSecondstoMMSS } from "@/lib/utils";
 import Image from "next/image";
@@ -71,6 +81,33 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
 
   const [tableData, setTableData] = useState<TableData[]>([]);
 
+  // New metrics state
+  const [answerQualityMetrics, setAnswerQualityMetrics] = useState({
+    averageAnswerLength: 0,
+    averageRelevanceScore: 0,
+    averageDepthScore: 0,
+    averageConsistencyScore: 0,
+  });
+
+  const [advancedAnalysis, setAdvancedAnalysis] = useState({
+    confidenceLevels: { High: 0, Medium: 0, Low: 0 },
+    averageEngagementScore: 0,
+    averageProblemSolvingScore: 0,
+    averageAdaptabilityScore: 0,
+  });
+
+  const [comparativeMetrics, setComparativeMetrics] = useState({
+    scoreDistribution: [] as number[],
+    topPerformers: [] as Array<{ name: string; score: number }>,
+    averageScore: 0,
+    scoreTrends: [] as Array<{ date: string; score: number }>,
+    candidatesWithComparison: [] as Array<{
+      name: string;
+      score: number;
+      vsAverage: number;
+    }>,
+  });
+
   const prepareTableData = (responses: Response[]): TableData[] => {
     return responses.map((response) => ({
       call_id: response.call_id,
@@ -99,6 +136,49 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
       return;
     }
 
+    // Generate call_analysis for responses that don't have it but have a transcript
+    // This ensures the sentiment chart works even if individual response pages haven't been opened
+    const generateMissingCallAnalysis = async () => {
+      const responsesNeedingAnalysis = responses.filter(
+        (response) =>
+          response.is_ended &&
+          !response.details?.call_analysis?.user_sentiment &&
+          (response.details?.transcript || (response.details as any)?.transcript),
+      );
+
+      // Generate analysis for up to 5 responses at a time to avoid overwhelming the API
+      const batchSize = 5;
+      for (let i = 0; i < responsesNeedingAnalysis.length; i += batchSize) {
+        const batch = responsesNeedingAnalysis.slice(i, i + batchSize);
+        await Promise.all(
+          batch.map(async (response) => {
+            try {
+              // Call the get-call API to generate call_analysis
+              await fetch("/api/get-call", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: response.call_id }),
+              });
+            } catch (error) {
+              console.error(
+                `Error generating call_analysis for ${response.call_id}:`,
+                error,
+              );
+            }
+          }),
+        );
+      }
+
+      // If we generated any analyses, reload the responses
+      if (responsesNeedingAnalysis.length > 0) {
+        // Trigger a re-render by updating the responses
+        // This will be handled by the parent component refreshing
+        window.dispatchEvent(new Event("responses-updated"));
+      }
+    };
+
+    generateMissingCallAnalysis();
+
     const sentimentCounter = {
       positive: 0,
       negative: 0,
@@ -121,7 +201,21 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
       [CandidateStatus.SELECTED]: 0,
     };
 
+    // New metrics accumulators
+    let totalAnswerLength = 0;
+    let answerLengthCount = 0;
+    let totalRelevanceScore = 0;
+    let totalDepthScore = 0;
+    let totalConsistencyScore = 0;
+    let totalEngagementScore = 0;
+    let totalProblemSolvingScore = 0;
+    let totalAdaptabilityScore = 0;
+    const confidenceCounter = { High: 0, Medium: 0, Low: 0 };
+    const scores: number[] = [];
+    const performers: Array<{ name: string; score: number }> = [];
+
     responses.forEach((response) => {
+      // Check sentiment from call_analysis (if available from analysis)
       const sentiment = response.details?.call_analysis?.user_sentiment;
       if (sentiment === "Positive") {
         sentimentCounter.positive += 1;
@@ -131,6 +225,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
         sentimentCounter.neutral += 1;
       }
 
+      // Check call completion from call_analysis (if available from analysis)
       const callCompletion =
         response.details?.call_analysis?.call_completion_rating;
       if (callCompletion === "Complete") {
@@ -141,16 +236,14 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
         callCompletionCounter.partial += 1;
       }
 
-      const agentTaskCompletion =
-        response.details?.call_analysis?.agent_task_completion_rating;
-      if (
-        agentTaskCompletion === "Complete" ||
-        agentTaskCompletion === "Partial"
-      ) {
+      // For completion rate: use is_ended as the primary indicator
+      // A response is considered completed if is_ended is true
+      // This works with Deepgram responses that may or may not have call_analysis
+      if (response.is_ended) {
         completedCount += 1;
       }
 
-      totalDuration += response.duration;
+      totalDuration += response.duration || 0;
       if (
         Object.values(CandidateStatus).includes(
           response.candidate_status as CandidateStatus,
@@ -158,6 +251,116 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
       ) {
         statusCounter[response.candidate_status as CandidateStatus]++;
       }
+
+      // Calculate new metrics from analytics
+      const analytics = response.analytics;
+      if (analytics) {
+        // Answer Quality Metrics
+        if (analytics.averageAnswerLength) {
+          totalAnswerLength += analytics.averageAnswerLength;
+          answerLengthCount++;
+        }
+        if (analytics.answerRelevanceScore !== undefined) {
+          totalRelevanceScore += analytics.answerRelevanceScore;
+        }
+        if (analytics.depthScore !== undefined) {
+          totalDepthScore += analytics.depthScore;
+        }
+        if (analytics.consistencyScore !== undefined) {
+          totalConsistencyScore += analytics.consistencyScore;
+        }
+
+        // Advanced Analysis
+        if (analytics.confidenceLevel) {
+          confidenceCounter[analytics.confidenceLevel as "High" | "Medium" | "Low"]++;
+        }
+        if (analytics.engagementScore !== undefined) {
+          totalEngagementScore += analytics.engagementScore;
+        }
+        if (analytics.problemSolvingScore !== undefined) {
+          totalProblemSolvingScore += analytics.problemSolvingScore;
+        }
+        if (analytics.adaptabilityScore !== undefined) {
+          totalAdaptabilityScore += analytics.adaptabilityScore;
+        }
+
+        // Comparative Metrics
+        if (analytics.overallScore !== undefined) {
+          scores.push(analytics.overallScore);
+          performers.push({
+            name: response.name || "Anonymous",
+            score: analytics.overallScore,
+          });
+        }
+      }
+    });
+
+    // Calculate averages for new metrics
+    const validResponses = responses.filter((r) => r.analytics).length || 1;
+    setAnswerQualityMetrics({
+      averageAnswerLength: answerLengthCount > 0 ? Math.round(totalAnswerLength / answerLengthCount) : 0,
+      averageRelevanceScore: validResponses > 0 ? Math.round((totalRelevanceScore / validResponses) * 10) / 10 : 0,
+      averageDepthScore: validResponses > 0 ? Math.round((totalDepthScore / validResponses) * 10) / 10 : 0,
+      averageConsistencyScore: validResponses > 0 ? Math.round((totalConsistencyScore / validResponses) * 10) / 10 : 0,
+    });
+
+    setAdvancedAnalysis({
+      confidenceLevels: confidenceCounter,
+      averageEngagementScore: validResponses > 0 ? Math.round((totalEngagementScore / validResponses) * 10) / 10 : 0,
+      averageProblemSolvingScore: validResponses > 0 ? Math.round((totalProblemSolvingScore / validResponses) * 10) / 10 : 0,
+      averageAdaptabilityScore: validResponses > 0 ? Math.round((totalAdaptabilityScore / validResponses) * 10) / 10 : 0,
+    });
+
+    // Calculate score distribution (histogram with 10 bins: 0-10, 10-20, ..., 90-100)
+    const distribution = Array(10).fill(0);
+    scores.forEach((score) => {
+      const bin = Math.min(Math.floor(score / 10), 9);
+      distribution[bin]++;
+    });
+
+    // Get top 3 performers
+    const topPerformers = performers
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+
+    const averageScore = scores.length > 0
+      ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
+      : 0;
+
+    // Calculate score trends (group by date)
+    const trendsMap = new Map<string, number[]>();
+    responses.forEach((response) => {
+      if (response.analytics?.overallScore !== undefined && response.created_at) {
+        const date = new Date(response.created_at).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+        if (!trendsMap.has(date)) {
+          trendsMap.set(date, []);
+        }
+        trendsMap.get(date)!.push(response.analytics.overallScore);
+      }
+    });
+    const scoreTrends = Array.from(trendsMap.entries())
+      .map(([date, scores]) => ({
+        date,
+        score: Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10,
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // Calculate comparison with average for all candidates
+    const candidatesWithComparison = performers.map((performer) => ({
+      name: performer.name,
+      score: performer.score,
+      vsAverage: Math.round((performer.score - averageScore) * 10) / 10,
+    }));
+
+    setComparativeMetrics({
+      scoreDistribution: distribution,
+      topPerformers: topPerformers,
+      averageScore: averageScore,
+      scoreTrends: scoreTrends,
+      candidatesWithComparison: candidatesWithComparison,
     });
 
     setSentimentCount(sentimentCounter);
@@ -330,6 +533,309 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                   },
                 }}
               />
+            </div>
+          </div>
+
+          {/* Answer Quality Metrics Section */}
+          <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
+            <div className="flex flex-row gap-2 items-center mb-4">
+              <Target className="h-5 w-5 text-indigo-600" />
+              <p className="font-semibold my-2">Answer Quality Metrics</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
+                <p className="text-sm font-medium text-gray-600">
+                  Avg Answer Length
+                </p>
+                <p className="text-2xl font-semibold text-indigo-600">
+                  {answerQualityMetrics.averageAnswerLength}
+                  <span className="text-sm text-gray-500 ml-1">words</span>
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
+                <p className="text-sm font-medium text-gray-600">
+                  Relevance Score
+                </p>
+                <p className="text-2xl font-semibold text-indigo-600">
+                  {answerQualityMetrics.averageRelevanceScore.toFixed(1)}
+                  <span className="text-sm text-gray-500 ml-1">/10</span>
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
+                <p className="text-sm font-medium text-gray-600">Depth Score</p>
+                <p className="text-2xl font-semibold text-indigo-600">
+                  {answerQualityMetrics.averageDepthScore.toFixed(1)}
+                  <span className="text-sm text-gray-500 ml-1">/10</span>
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
+                <p className="text-sm font-medium text-gray-600">
+                  Consistency Score
+                </p>
+                <p className="text-2xl font-semibold text-indigo-600">
+                  {answerQualityMetrics.averageConsistencyScore.toFixed(1)}
+                  <span className="text-sm text-gray-500 ml-1">/10</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Advanced Analysis Section */}
+          <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
+            <div className="flex flex-row gap-2 items-center mb-4">
+              <TrendingUp className="h-5 w-5 text-indigo-600" />
+              <p className="font-semibold my-2">Advanced Analysis</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
+                <p className="text-sm font-medium text-gray-600">
+                  Engagement Score
+                </p>
+                <p className="text-2xl font-semibold text-indigo-600">
+                  {advancedAnalysis.averageEngagementScore.toFixed(1)}
+                  <span className="text-sm text-gray-500 ml-1">/10</span>
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
+                <p className="text-sm font-medium text-gray-600">
+                  Problem-Solving
+                </p>
+                <p className="text-2xl font-semibold text-indigo-600">
+                  {advancedAnalysis.averageProblemSolvingScore.toFixed(1)}
+                  <span className="text-sm text-gray-500 ml-1">/10</span>
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
+                <p className="text-sm font-medium text-gray-600">
+                  Adaptability
+                </p>
+                <p className="text-2xl font-semibold text-indigo-600">
+                  {advancedAnalysis.averageAdaptabilityScore.toFixed(1)}
+                  <span className="text-sm text-gray-500 ml-1">/10</span>
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
+                <p className="text-sm font-medium text-gray-600">
+                  Confidence Level
+                </p>
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full" />
+                    <span className="text-sm">
+                      High: {advancedAnalysis.confidenceLevels.High}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+                    <span className="text-sm">
+                      Medium: {advancedAnalysis.confidenceLevels.Medium}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-red-500 rounded-full" />
+                    <span className="text-sm">
+                      Low: {advancedAnalysis.confidenceLevels.Low}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Comparative Metrics Section */}
+          <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
+            <div className="flex flex-row gap-2 items-center mb-4">
+              <BarChart3 className="h-5 w-5 text-indigo-600" />
+              <p className="font-semibold my-2">Comparative Metrics</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Score Distribution */}
+              <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50 shadow-md">
+                <div className="flex flex-row gap-2 items-center mb-2">
+                  <p className="font-semibold text-[15px]">Score Distribution</p>
+                  <InfoTooltip content="Distribution of overall scores across all candidates" />
+                </div>
+                {comparativeMetrics.scoreDistribution.length > 0 &&
+                comparativeMetrics.scoreDistribution.some((v) => v > 0) ? (
+                  <BarChart
+                    xAxis={[
+                      {
+                        scaleType: "band",
+                        data: [
+                          "0-10",
+                          "10-20",
+                          "20-30",
+                          "30-40",
+                          "40-50",
+                          "50-60",
+                          "60-70",
+                          "70-80",
+                          "80-90",
+                          "90-100",
+                        ],
+                      },
+                    ]}
+                    series={[
+                      {
+                        data: comparativeMetrics.scoreDistribution,
+                        color: "#4F46E5",
+                      },
+                    ]}
+                    width={400}
+                    height={200}
+                  />
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-8">
+                    No score data available
+                  </p>
+                )}
+              </div>
+
+              {/* Top Performers & Average */}
+              <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50 shadow-md">
+                <div className="flex flex-row gap-2 items-center mb-2">
+                  <Award className="h-5 w-5 text-indigo-600" />
+                  <p className="font-semibold text-[15px]">Top Performers</p>
+                  <InfoTooltip content="Top 3 candidates by overall score" />
+                </div>
+                {comparativeMetrics.topPerformers.length > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    {comparativeMetrics.topPerformers.map((performer, index) => (
+                      <div
+                        key={index}
+                        className="flex flex-row justify-between items-center p-2 rounded-lg bg-indigo-50"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold ${
+                              index === 0
+                                ? "bg-yellow-500"
+                                : index === 1
+                                  ? "bg-gray-400"
+                                  : "bg-orange-600"
+                            }`}
+                          >
+                            {index + 1}
+                          </div>
+                          <span className="font-medium">
+                            {performer.name}
+                          </span>
+                        </div>
+                        <span className="font-semibold text-indigo-600">
+                          {performer.score}/100
+                        </span>
+                      </div>
+                    ))}
+                    <div className="mt-3 pt-3 border-t border-gray-300">
+                      <div className="flex flex-row justify-between items-center">
+                        <span className="font-medium text-gray-600">
+                          Average Score
+                        </span>
+                        <span className="font-semibold text-indigo-600 text-lg">
+                          {comparativeMetrics.averageScore.toFixed(1)}/100
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-8">
+                    No performance data available
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Score Trends and Comparison with Average */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              {/* Score Trends */}
+              <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50 shadow-md">
+                <div className="flex flex-row gap-2 items-center mb-2">
+                  <TrendingUp className="h-5 w-5 text-indigo-600" />
+                  <p className="font-semibold text-[15px]">Score Trends</p>
+                  <InfoTooltip content="Average score trends over time" />
+                </div>
+                {comparativeMetrics.scoreTrends.length > 0 ? (
+                  <LineChart
+                    xAxis={[
+                      {
+                        data: comparativeMetrics.scoreTrends.map((t) => t.date),
+                        scaleType: "point",
+                      },
+                    ]}
+                    series={[
+                      {
+                        data: comparativeMetrics.scoreTrends.map((t) => t.score),
+                        color: "#4F46E5",
+                        label: "Average Score",
+                      },
+                      {
+                        data: Array(comparativeMetrics.scoreTrends.length).fill(
+                          comparativeMetrics.averageScore,
+                        ),
+                        color: "#9ca3af",
+                        label: "Overall Average",
+                        strokeDasharray: "5 5",
+                      },
+                    ]}
+                    width={400}
+                    height={200}
+                  />
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-8">
+                    No trend data available
+                  </p>
+                )}
+              </div>
+
+              {/* Comparison with Average */}
+              <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50 shadow-md">
+                <div className="flex flex-row gap-2 items-center mb-2">
+                  <BarChart3 className="h-5 w-5 text-indigo-600" />
+                  <p className="font-semibold text-[15px]">
+                    Comparison with Average
+                  </p>
+                  <InfoTooltip content="How each candidate compares to the average score" />
+                </div>
+                {comparativeMetrics.candidatesWithComparison.length > 0 ? (
+                  <ScrollArea className="h-[200px]">
+                    <div className="flex flex-col gap-2">
+                      {comparativeMetrics.candidatesWithComparison
+                        .sort((a, b) => b.score - a.score)
+                        .map((candidate, index) => (
+                          <div
+                            key={index}
+                            className="flex flex-row justify-between items-center p-2 rounded-lg bg-slate-100"
+                          >
+                            <span className="font-medium text-sm">
+                              {candidate.name}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-indigo-600 text-sm">
+                                {candidate.score}/100
+                              </span>
+                              <span
+                                className={`text-sm font-medium ${
+                                  candidate.vsAverage > 0
+                                    ? "text-green-600"
+                                    : candidate.vsAverage < 0
+                                      ? "text-red-600"
+                                      : "text-gray-600"
+                                }`}
+                              >
+                                {candidate.vsAverage > 0 ? "+" : ""}
+                                {candidate.vsAverage.toFixed(1)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-8">
+                    No comparison data available
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
