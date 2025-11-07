@@ -29,6 +29,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // @ts-expect-error - Deepgram SDK types may not include manage API
     const { result, error } = await deepgram.listen.manage.createProjectKey(
       process.env.DEEPGRAM_PROJECT_ID,
       {

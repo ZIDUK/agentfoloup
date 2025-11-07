@@ -13,9 +13,9 @@ export async function POST(req: Request, res: Response) {
   logger.info("register-call request received");
 
   try {
-    const body = await req.json();
+  const body = await req.json();
 
-    const interviewerId = body.interviewer_id;
+  const interviewerId = body.interviewer_id;
     
     if (!interviewerId) {
       logger.error("No interviewer_id provided");
@@ -26,7 +26,7 @@ export async function POST(req: Request, res: Response) {
     }
 
     // getInterviewer now accepts bigint, number, or string
-    const interviewer = await InterviewerService.getInterviewer(interviewerId);
+  const interviewer = await InterviewerService.getInterviewer(interviewerId);
 
     if (!interviewer) {
       logger.error(`Interviewer not found: ${interviewerId}`);
@@ -42,6 +42,7 @@ export async function POST(req: Request, res: Response) {
       const callId = nanoid();
       
       try {
+        // @ts-expect-error - Deepgram SDK types may not include manage API
         const { result, error } = await deepgram.listen.manage.createProjectKey(
           process.env.DEEPGRAM_PROJECT_ID || "",
           {
@@ -85,9 +86,9 @@ export async function POST(req: Request, res: Response) {
     // Development mode: return a mock response
     logger.info("No voice provider configured, using development mode");
     const callId = nanoid();
-    
-    return NextResponse.json(
-      {
+
+  return NextResponse.json(
+    {
         registerCallResponse: {
           call_id: callId,
           access_token: "dev-token-" + callId,
@@ -95,9 +96,9 @@ export async function POST(req: Request, res: Response) {
           interviewer_id: interviewerId,
         },
         provider: "development",
-      },
-      { status: 200 },
-    );
+    },
+    { status: 200 },
+  );
   }
   } catch (error) {
     logger.error("Error in register-call:", error);

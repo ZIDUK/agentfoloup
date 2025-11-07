@@ -37,12 +37,14 @@ export async function POST(req: Request) {
       response_format: { type: "json_object" },
     });
 
-    const analysis = completion.choices[0]?.message?.content;
+    const analysisContent = completion.choices[0]?.message?.content;
+    const analysis =
+      typeof analysisContent === "string" ? analysisContent : "{}";
 
     logger.info("Communication analysis completed successfully");
 
     return NextResponse.json(
-      { analysis: JSON.parse(analysis || "{}") },
+      { analysis: JSON.parse(analysis) },
       { status: 200 },
     );
   } catch (error) {

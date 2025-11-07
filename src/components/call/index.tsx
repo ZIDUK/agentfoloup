@@ -469,12 +469,12 @@ function Call({ interview }: InterviewProps) {
       }
 
       // Create response record
-      const response = await createResponse({
-        interview_id: interview.id,
+        const response = await createResponse({
+          interview_id: interview.id,
         call_id: callId,
-        email: email,
-        name: name,
-      });
+          email: email,
+          name: name,
+        });
 
       setIsStarted(true);
       setIsCalling(true);
@@ -482,7 +482,7 @@ function Call({ interview }: InterviewProps) {
       console.error("Error starting conversation:", error);
       toast.error("Failed to start interview. Please try again.");
     } finally {
-      setLoading(false);
+    setLoading(false);
     }
   };
 
@@ -538,8 +538,8 @@ function Call({ interview }: InterviewProps) {
               },
               duration: duration,
             },
-            callId,
-          );
+          callId,
+        );
           
           console.log("Response saved successfully", result);
           
@@ -708,17 +708,17 @@ function Call({ interview }: InterviewProps) {
                     </div>
                     <div className="flex flex-col mx-auto justify-center items-center align-middle">
                       {interviewerImg ? (
-                        <Image
-                          src={interviewerImg}
-                          alt="Image of the interviewer"
-                          width={120}
-                          height={120}
-                          className={`object-cover object-center mx-auto my-auto ${
-                            activeTurn === "agent"
-                              ? `border-4 border-[${interview.theme_color}] rounded-full`
-                              : ""
-                          }`}
-                        />
+                      <Image
+                        src={interviewerImg}
+                        alt="Image of the interviewer"
+                        width={120}
+                        height={120}
+                        className={`object-cover object-center mx-auto my-auto ${
+                          activeTurn === "agent"
+                            ? `border-4 border-[${interview.theme_color}] rounded-full`
+                            : ""
+                        }`}
+                      />
                       ) : (
                         <div className="w-[120px] h-[120px] bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
                           No Image

@@ -56,9 +56,9 @@ export async function POST(req: Request, res: Response) {
   // Generate analytics if not already present
   let analytics = callDetails.analytics;
   if (!analytics || !callDetails.is_analysed) {
-    const payload = {
-      callId: body.id,
-      interviewId: interviewId,
+  const payload = {
+    callId: body.id,
+    interviewId: interviewId,
       transcript: transcript,
     };
     
@@ -121,15 +121,15 @@ export async function POST(req: Request, res: Response) {
 
   // Only save if we generated new analytics or call_analysis
   if (!callDetails.is_analysed || needsSave) {
-    await ResponseService.saveResponse(
-      {
+  await ResponseService.saveResponse(
+    {
         details: updatedCallResponse,
-        is_analysed: true,
-        duration: duration,
-        analytics: analytics,
-      },
-      body.id,
-    );
+      is_analysed: true,
+      duration: duration,
+      analytics: analytics,
+    },
+    body.id,
+  );
     logger.info("Call analysed and saved successfully");
   }
 

@@ -233,7 +233,7 @@ const createInterviewerCard = () => {
                   }}
                 >
                   {item.img ? (
-                    <Image alt="avatar" width={125} height={100} src={item.img} />
+                  <Image alt="avatar" width={125} height={100} src={item.img} />
                   ) : (
                     <div className="w-[125px] h-[100px] bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
                       No Image

@@ -168,42 +168,42 @@ function DetailsPopup({
                 </div>
               ) : (
                 <>
-                  {interviewers.map((item, key) => (
-                    <div
-                      className=" p-0 inline-block cursor-pointer ml-1 mr-5 rounded-xl shrink-0 overflow-hidden"
-                      key={item.id}
-                    >
-                      <button
-                        className="absolute ml-9"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setInterviewerDetails(item);
-                          setOpenInterviewerDetails(true);
-                        }}
-                      >
-                        <Info size={18} color="#4f46e5" strokeWidth={2.2} />
-                      </button>
-                      <div
-                        className={`w-[96px] overflow-hidden rounded-full ${
-                          selectedInterviewer === item.id
-                            ? "border-4 border-indigo-600"
-                            : ""
-                        }`}
-                        onClick={() => setSelectedInterviewer(item.id)}
-                      >
-                        <Image
-                          src={item.image}
-                          alt="Picture of the interviewer"
-                          width={70}
-                          height={70}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <CardTitle className="mt-0 text-xs text-center">
-                        {item.name}
-                      </CardTitle>
-                    </div>
-                  ))}
+              {interviewers.map((item, key) => (
+                <div
+                  className=" p-0 inline-block cursor-pointer ml-1 mr-5 rounded-xl shrink-0 overflow-hidden"
+                  key={item.id}
+                >
+                  <button
+                    className="absolute ml-9"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInterviewerDetails(item);
+                      setOpenInterviewerDetails(true);
+                    }}
+                  >
+                    <Info size={18} color="#4f46e5" strokeWidth={2.2} />
+                  </button>
+                  <div
+                    className={`w-[96px] overflow-hidden rounded-full ${
+                      selectedInterviewer === item.id
+                        ? "border-4 border-indigo-600"
+                        : ""
+                    }`}
+                    onClick={() => setSelectedInterviewer(item.id)}
+                  >
+                    <Image
+                      src={item.image}
+                      alt="Picture of the interviewer"
+                      width={70}
+                      height={70}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <CardTitle className="mt-0 text-xs text-center">
+                    {item.name}
+                  </CardTitle>
+                </div>
+              ))}
                 </>
               )}
             </div>

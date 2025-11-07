@@ -28,10 +28,15 @@ export async function GET(res: NextRequest) {
       { status: 200 },
     );
   } catch (error) {
-    logger.error("Error creating interviewers:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : String(error);
+    logger.error("Error creating interviewers:", errorMessage);
 
     return NextResponse.json(
-      { error: "Failed to create interviewers", details: error },
+      {
+        error: "Failed to create interviewers",
+        details: errorMessage,
+      },
       { status: 500 },
     );
   }

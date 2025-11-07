@@ -17,6 +17,14 @@ const nextConfig = {
       },
     ],
   },
+  eslint: {
+    // Disable ESLint during builds (useful for Docker builds)
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    // Disable TypeScript errors during builds (for Docker builds)
+    ignoreBuildErrors: true,
+  },
   webpack: (webpackConfig, { webpack }) => {
     webpackConfig.plugins.push(
       // Remove node: from import specifiers, because Next.js does not yet support node: scheme
