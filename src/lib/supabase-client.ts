@@ -9,7 +9,18 @@ export const getSupabaseClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
-  if (!supabaseUrl || !supabaseKey) {
+  // Validate that both URL and key exist and are not empty strings
+  // Also check if URL looks like a valid URL (starts with http) to avoid JWT tokens
+  const isValidUrl = supabaseUrl && 
+    typeof supabaseUrl === 'string' && 
+    supabaseUrl.trim().length > 0 &&
+    (supabaseUrl.startsWith('http://') || supabaseUrl.startsWith('https://'));
+  
+  const isValidKey = supabaseKey && 
+    typeof supabaseKey === 'string' && 
+    supabaseKey.trim().length > 0;
+  
+  if (!isValidUrl || !isValidKey) {
     // During build time, we need to handle this gracefully
     // Return a mock client that will fail gracefully at runtime
     // but won't break the build
