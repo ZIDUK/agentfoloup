@@ -13,18 +13,21 @@ export const getSupabaseClient = () => {
     // During build time, we need to handle this gracefully
     // Return a mock client that will fail gracefully at runtime
     // but won't break the build
+    const mockQuery = {
+      select: () => mockQuery,
+      insert: () => mockQuery,
+      update: () => mockQuery,
+      delete: () => mockQuery,
+      eq: () => mockQuery,
+      filter: () => mockQuery,
+      or: () => mockQuery,
+      order: () => mockQuery,
+      single: () => Promise.resolve({ data: null, error: null }),
+      then: (resolve: any) => resolve({ data: null, error: null }),
+    };
+    
     return {
-      from: () => ({
-        select: () => ({ data: null, error: null }),
-        insert: () => ({ data: null, error: null }),
-        update: () => ({ data: null, error: null }),
-        delete: () => ({ data: null, error: null }),
-        eq: () => ({ data: null, error: null }),
-        filter: () => ({ data: null, error: null }),
-        or: () => ({ data: null, error: null }),
-        order: () => ({ data: null, error: null }),
-        single: () => Promise.resolve({ data: null, error: null }),
-      }),
+      from: () => mockQuery,
       auth: {
         getUser: () => Promise.resolve({ data: { user: null }, error: null }),
         getSession: () => Promise.resolve({ data: { session: null }, error: null }),
