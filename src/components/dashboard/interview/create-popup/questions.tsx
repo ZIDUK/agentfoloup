@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { getSupabaseClient } from "@/lib/supabase-client";
 import { InterviewBase, Question } from "@/types/interview";
 import { useInterviews } from "@/contexts/interviews.context";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,7 +19,7 @@ interface Props {
 function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
   const [user, setUser] = useState<any>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const supabase = createClientComponentClient();
+  const supabase = getSupabaseClient();
   const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { getSupabaseClient } from "@/lib/supabase-client";
 import InterviewCard from "@/components/dashboard/interview/interviewCard";
 import CreateInterviewCard from "@/components/dashboard/interview/createInterviewCard";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import Image from "next/image";
 function Interviews() {
   const { interviews, interviewsLoading } = useInterviews();
   const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const supabase = createClientComponentClient();
+  const supabase = getSupabaseClient();
   const [loading, setLoading] = useState<boolean>(false);
   const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
@@ -204,5 +204,8 @@ function Interviews() {
     </main>
   );
 }
+
+// Force dynamic rendering to avoid build-time errors
+export const dynamic = 'force-dynamic';
 
 export default Interviews;

@@ -2,7 +2,7 @@
 
 import React, { useState, useContext, ReactNode, useEffect } from "react";
 import { User } from "@/types/user";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { getSupabaseClient } from "@/lib/supabase-client";
 import { ClientService } from "@/services/clients.service";
 
 interface ClientContextProps {
@@ -21,7 +21,7 @@ export function ClientProvider({ children }: ClientProviderProps) {
   const [client, setClient] = useState<User>();
   const [user, setUser] = useState<any>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const supabase = createClientComponentClient();
+  const supabase = getSupabaseClient();
   const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
   const [clientLoading, setClientLoading] = useState(true);

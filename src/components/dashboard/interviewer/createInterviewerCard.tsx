@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { avatars } from "@/components/dashboard/interviewer/avatars";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useInterviewers } from "@/contexts/interviewers.context";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { getSupabaseClient } from "@/lib/supabase-client";
 import { useEffect, useState as useStateHook } from "react";
 
 const createInterviewerCard = () => {
@@ -25,7 +25,7 @@ const createInterviewerCard = () => {
   const [image, setImage] = useState("");
   const { createInterviewer } = useInterviewers();
   const [user, setUser] = useStateHook<any>(null);
-  const supabase = createClientComponentClient();
+  const supabase = getSupabaseClient();
   const [isClicked, setIsClicked] = useState(false);
   const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 

@@ -3,7 +3,7 @@
 import React, { useState, useContext, ReactNode, useEffect } from "react";
 import { Interview } from "@/types/interview";
 import { InterviewService } from "@/services/interviews.service";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { getSupabaseClient } from "@/lib/supabase-client";
 
 interface InterviewContextProps {
   interviews: Interview[];
@@ -31,7 +31,7 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [user, setUser] = useState<any>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const supabase = createClientComponentClient();
+  const supabase = getSupabaseClient();
   const [interviewsLoading, setInterviewsLoading] = useState(false);
   const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 

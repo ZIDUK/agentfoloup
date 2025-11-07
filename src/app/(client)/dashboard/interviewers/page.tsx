@@ -90,4 +90,7 @@ function Interviewers() {
   );
 }
 
+// Force dynamic rendering to avoid build-time errors
+export const dynamic = 'force-dynamic';
+
 export default Interviewers;
