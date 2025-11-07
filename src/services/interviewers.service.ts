@@ -1,9 +1,9 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-
-const supabase = createClientComponentClient();
+import { getSupabaseClient } from "@/lib/supabase-client";
 
 const getAllInterviewers = async (clientId: string = "") => {
   try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return [];
     const { data: clientData, error: clientError } = await supabase
       .from("interviewer")
       .select(`*`);
@@ -26,6 +26,8 @@ const getAllInterviewers = async (clientId: string = "") => {
 };
 
 const createInterviewer = async (payload: any) => {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
   // Check for existing interviewer with the same name
   // Only check agent_id if it's provided
   let query = supabase
@@ -70,6 +72,8 @@ const createInterviewer = async (payload: any) => {
 };
 
 const getInterviewer = async (interviewerId: bigint | number | string) => {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
   // Convert to number for Supabase query (Supabase handles number IDs better)
   const id = typeof interviewerId === 'bigint' 
     ? Number(interviewerId) 

@@ -1,8 +1,8 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-
-const supabase = createClientComponentClient();
+import { getSupabaseClient } from "@/lib/supabase-client";
 
 const createResponse = async (payload: any) => {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
   const { error, data } = await supabase
     .from("response")
     .insert({ ...payload })
@@ -18,6 +18,8 @@ const createResponse = async (payload: any) => {
 };
 
 const saveResponse = async (payload: any, call_id: string) => {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
   const { error, data } = await supabase
     .from("response")
     .update({ ...payload })
@@ -33,6 +35,8 @@ const saveResponse = async (payload: any, call_id: string) => {
 
 const getAllResponses = async (interviewId: string) => {
   try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return [];
     const { data, error } = await supabase
       .from("response")
       .select(`*`)
@@ -56,6 +60,8 @@ const getResponseCountByOrganizationId = async (
   organizationId: string,
 ): Promise<number> => {
   try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return 0;
     const { count, error } = await supabase
       .from("interview")
       .select("response(id)", { count: "exact", head: true }) // join + count
@@ -71,6 +77,8 @@ const getResponseCountByOrganizationId = async (
 
 const getAllEmailAddressesForInterview = async (interviewId: string) => {
   try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return [];
     const { data, error } = await supabase
       .from("response")
       .select(`email`)
@@ -86,6 +94,8 @@ const getAllEmailAddressesForInterview = async (interviewId: string) => {
 
 const getResponseByCallId = async (id: string) => {
   try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return null;
     const { data, error } = await supabase
       .from("response")
       .select(`*`)
@@ -100,6 +110,8 @@ const getResponseByCallId = async (id: string) => {
 };
 
 const deleteResponse = async (id: string) => {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
   const { error, data } = await supabase
     .from("response")
     .delete()
@@ -114,6 +126,8 @@ const deleteResponse = async (id: string) => {
 };
 
 const updateResponse = async (payload: any, call_id: string) => {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
   const { error, data } = await supabase
     .from("response")
     .update({ ...payload })

@@ -1,9 +1,8 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-
-const supabase = createClientComponentClient();
+import { getSupabaseClient } from "@/lib/supabase-client";
 
 const getAllInterviews = async (userId: string, organizationId: string) => {
   try {
+    const supabase = getSupabaseClient();
     const { data: clientData, error: clientError } = await supabase
       .from("interview")
       .select(`*`)
@@ -20,6 +19,7 @@ const getAllInterviews = async (userId: string, organizationId: string) => {
 
 const getInterviewById = async (id: string) => {
   try {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("interview")
       .select(`*`)
@@ -34,6 +34,7 @@ const getInterviewById = async (id: string) => {
 };
 
 const updateInterview = async (payload: any, id: string) => {
+  const supabase = getSupabase();
   const { error, data } = await supabase
     .from("interview")
     .update({ ...payload })
@@ -48,6 +49,7 @@ const updateInterview = async (payload: any, id: string) => {
 };
 
 const deleteInterview = async (id: string) => {
+  const supabase = getSupabase();
   const { error, data } = await supabase
     .from("interview")
     .delete()
@@ -63,6 +65,7 @@ const deleteInterview = async (id: string) => {
 
 const getAllRespondents = async (interviewId: string) => {
   try {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("interview")
       .select(`respondents`)
@@ -77,6 +80,7 @@ const getAllRespondents = async (interviewId: string) => {
 };
 
 const createInterview = async (payload: any) => {
+  const supabase = getSupabase();
   const { error, data } = await supabase
     .from("interview")
     .insert({ ...payload });
@@ -91,6 +95,7 @@ const createInterview = async (payload: any) => {
 
 const deactivateInterviewsByOrgId = async (organizationId: string) => {
   try {
+    const supabase = getSupabaseClient();
     const { error } = await supabase
       .from("interview")
       .update({ is_active: false })

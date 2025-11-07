@@ -1,8 +1,8 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-
-const supabase = createClientComponentClient();
+import { getSupabaseClient } from "@/lib/supabase-client";
 
 const updateOrganization = async (payload: any, id: string) => {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
   const { error, data } = await supabase
     .from("organization")
     .update({ ...payload })
@@ -22,6 +22,8 @@ const getClientById = async (
   organization_id?: string | null,
 ) => {
   try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return null;
     const { data, error } = await supabase
       .from("user")
       .select(`*`)
@@ -69,6 +71,8 @@ const getOrganizationById = async (
   organization_name?: string,
 ) => {
   try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return null;
     const { data, error } = await supabase
       .from("organization")
       .select(`*`)

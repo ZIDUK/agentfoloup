@@ -1,9 +1,9 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { getSupabaseClient } from "@/lib/supabase-client";
 import { FeedbackData } from "@/types/response";
 
-const supabase = createClientComponentClient();
-
 const submitFeedback = async (feedbackData: FeedbackData) => {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error("Supabase client not available");
   const { error, data } = await supabase
     .from("feedback")
     .insert(feedbackData)
