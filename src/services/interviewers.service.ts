@@ -27,7 +27,11 @@ const getAllInterviewers = async (clientId: string = "") => {
 
 const createInterviewer = async (payload: any) => {
   const supabase = getSupabaseClient();
-  if (!supabase) return null;
+  if (!supabase) {
+    console.error("Supabase client is not available. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.");
+    return null;
+  }
+  
   // Check for existing interviewer with the same name
   // Only check agent_id if it's provided
   let query = supabase
@@ -57,6 +61,8 @@ const createInterviewer = async (payload: any) => {
     agent_id: payload.agent_id || null,
   };
 
+  console.log("Creating interviewer with payload:", insertPayload);
+
   const { error, data } = await supabase
     .from("interviewer")
     .insert(insertPayload)
@@ -65,9 +71,11 @@ const createInterviewer = async (payload: any) => {
 
   if (error) {
     console.error("Error creating interviewer:", error);
+    console.error("Error details:", JSON.stringify(error, null, 2));
     return null;
   }
 
+  console.log("Interviewer created successfully:", data);
   return data;
 };
 
