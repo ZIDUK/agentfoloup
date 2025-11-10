@@ -15,16 +15,43 @@ export interface Response {
   tab_switch_count: number;
 }
 
+export type CEFRLevel =
+  | "A1"
+  | "A2"
+  | "A2+"
+  | "B1"
+  | "B1+"
+  | "B2"
+  | "B2+"
+  | "C1"
+  | "C1+"
+  | "C2";
+
+export interface QuestionSummary {
+  question: string;
+  summary: string;
+  // Per-question CEFR analysis (optional, only if answer found)
+  questionTranscript?: string;
+  wordsPerMinute?: number;
+  badPauses?: number;
+  cefrLevel?: CEFRLevel;
+  pronunciationLevel?: CEFRLevel;
+  fluencyLevel?: CEFRLevel;
+  vocabularyLevel?: CEFRLevel;
+  grammarLevel?: CEFRLevel;
+  pronunciationFeedback?: string;
+  fluencyFeedback?: string;
+  vocabularyFeedback?: string;
+  grammarFeedback?: string;
+}
+
 export interface Analytics {
   overallScore: number;
   overallFeedback: string;
   communication: { score: number; feedback: string };
   generalIntelligence: string;
   softSkillSummary: string;
-  questionSummaries: Array<{
-    question: string;
-    summary: string;
-  }>;
+  questionSummaries: QuestionSummary[];
   // Answer Quality Metrics
   averageAnswerLength?: number;
   answerRelevanceScore?: number;
@@ -35,6 +62,21 @@ export interface Analytics {
   engagementScore?: number;
   problemSolvingScore?: number;
   adaptabilityScore?: number;
+  // CEFR Language Proficiency Evaluation (Overall)
+  pronunciationScore?: number;
+  fluencyScore?: number;
+  grammarScore?: number;
+  vocabularyScore?: number;
+  coherenceScore?: number;
+  cefrLevel?: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+  cefrDescription?: string;
+  ieltsEstimate?: string;
+  // Detailed feedback by skill (Overall)
+  pronunciationFeedback?: string;
+  fluencyFeedback?: string;
+  vocabularyFeedback?: string;
+  grammarFeedback?: string;
+  coherenceFeedback?: string;
 }
 
 export interface FeedbackData {

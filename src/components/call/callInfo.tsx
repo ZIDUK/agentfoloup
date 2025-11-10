@@ -36,6 +36,11 @@ import {
 } from "@/components/ui/select";
 import { CandidateStatus } from "@/lib/enum";
 import { ArrowLeft } from "lucide-react";
+import {
+  getCEFRColor,
+  getCEFRDescription,
+  estimateIELTSBand,
+} from "@/lib/utils";
 
 type CallProps = {
   call_id: string;
@@ -374,6 +379,140 @@ function CallInfo({
                   </div>
                 </div>
               )}
+              {analytics?.cefrLevel && (
+                <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-slate-50">
+                  <div className="flex flex-row gap-2 align-middle">
+                    <div
+                      className={`px-3 py-1 rounded-lg border-2 font-semibold text-lg ${getCEFRColor(
+                        analytics.cefrLevel,
+                      )}`}
+                    >
+                      CEFR: {analytics.cefrLevel}
+                    </div>
+                    {analytics.ieltsEstimate && (
+                      <div className="px-3 py-1 rounded-lg bg-gray-100 border-2 border-gray-300 font-medium text-sm my-auto">
+                        IELTS: {analytics.ieltsEstimate}
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-2">
+                    {analytics.pronunciationScore !== undefined && (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-600">
+                          Pronunciation
+                        </span>
+                        <span className="font-semibold text-indigo-600">
+                          {analytics.pronunciationScore.toFixed(1)}/10
+                        </span>
+                      </div>
+                    )}
+                    {analytics.fluencyScore !== undefined && (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-600">Fluency</span>
+                        <span className="font-semibold text-indigo-600">
+                          {analytics.fluencyScore.toFixed(1)}/10
+                        </span>
+                      </div>
+                    )}
+                    {analytics.grammarScore !== undefined && (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-600">Grammar</span>
+                        <span className="font-semibold text-indigo-600">
+                          {analytics.grammarScore.toFixed(1)}/10
+                        </span>
+                      </div>
+                    )}
+                    {analytics.vocabularyScore !== undefined && (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-600">
+                          Vocabulary
+                        </span>
+                        <span className="font-semibold text-indigo-600">
+                          {analytics.vocabularyScore.toFixed(1)}/10
+                        </span>
+                      </div>
+                    )}
+                    {analytics.coherenceScore !== undefined && (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-600">Coherence</span>
+                        <span className="font-semibold text-indigo-600">
+                          {analytics.coherenceScore.toFixed(1)}/10
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {analytics.cefrDescription && (
+                    <div className="mt-2">
+                      <div className="font-medium">
+                        <span className="font-normal">Description: </span>
+                        {analytics.cefrDescription}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* Detailed Feedback by Skill */}
+              {(analytics?.pronunciationFeedback ||
+                analytics?.fluencyFeedback ||
+                analytics?.vocabularyFeedback ||
+                analytics?.grammarFeedback ||
+                analytics?.coherenceFeedback) && (
+                <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-slate-50">
+                  <p className="font-semibold text-lg mb-2">
+                    Descriptive Feedback
+                  </p>
+                  {analytics.pronunciationFeedback && (
+                    <div className="border-l-4 border-indigo-500 pl-3 py-2">
+                      <p className="font-semibold text-indigo-600 mb-1">
+                        Pronunciation
+                      </p>
+                      <p className="text-gray-700 text-sm">
+                        {analytics.pronunciationFeedback}
+                      </p>
+                    </div>
+                  )}
+                  {analytics.fluencyFeedback && (
+                    <div className="border-l-4 border-green-500 pl-3 py-2">
+                      <p className="font-semibold text-green-600 mb-1">
+                        Fluency
+                      </p>
+                      <p className="text-gray-700 text-sm">
+                        {analytics.fluencyFeedback}
+                      </p>
+                    </div>
+                  )}
+                  {analytics.vocabularyFeedback && (
+                    <div className="border-l-4 border-blue-500 pl-3 py-2">
+                      <p className="font-semibold text-blue-600 mb-1">
+                        Vocabulary
+                      </p>
+                      <p className="text-gray-700 text-sm">
+                        {analytics.vocabularyFeedback}
+                      </p>
+                    </div>
+                  )}
+                  {analytics.grammarFeedback && (
+                    <div className="border-l-4 border-purple-500 pl-3 py-2">
+                      <p className="font-semibold text-purple-600 mb-1">
+                        Grammar
+                      </p>
+                      <p className="text-gray-700 text-sm">
+                        {analytics.grammarFeedback}
+                      </p>
+                    </div>
+                  )}
+                  {analytics.coherenceFeedback && (
+                    <div className="border-l-4 border-orange-500 pl-3 py-2">
+                      <p className="font-semibold text-orange-600 mb-1">
+                        Coherence
+                      </p>
+                      <p className="text-gray-700 text-sm">
+                        {analytics.coherenceFeedback}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-slate-50">
                 <div className="flex flex-row gap-2  align-middle">
                   <p className="my-auto">User Sentiment: </p>
@@ -429,6 +568,7 @@ function CallInfo({
                       questionNumber={index + 1}
                       question={qs.question}
                       answer={qs.summary}
+                      questionSummary={qs}
                     />
                   ))}
                 </ScrollArea>

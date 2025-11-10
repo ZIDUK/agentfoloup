@@ -18,7 +18,7 @@ import { PieChart } from "@mui/x-charts/PieChart";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { CandidateStatus } from "@/lib/enum";
-import { convertSecondstoMMSS } from "@/lib/utils";
+import { convertSecondstoMMSS, getCEFRColor } from "@/lib/utils";
 import Image from "next/image";
 import {
   Tooltip,
@@ -106,6 +106,15 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
       score: number;
       vsAverage: number;
     }>,
+  });
+
+  const [cefrMetrics, setCefrMetrics] = useState({
+    levelDistribution: { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 },
+    averagePronunciation: 0,
+    averageFluency: 0,
+    averageGrammar: 0,
+    averageVocabulary: 0,
+    averageCoherence: 0,
   });
 
   const prepareTableData = (responses: Response[]): TableData[] => {
@@ -213,6 +222,15 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
     const confidenceCounter = { High: 0, Medium: 0, Low: 0 };
     const scores: number[] = [];
     const performers: Array<{ name: string; score: number }> = [];
+    
+    // CEFR metrics accumulators
+    const cefrLevelCounter = { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 };
+    let totalPronunciation = 0;
+    let totalFluency = 0;
+    let totalGrammar = 0;
+    let totalVocabulary = 0;
+    let totalCoherence = 0;
+    let cefrCount = 0;
 
     responses.forEach((response) => {
       // Check sentiment from call_analysis (if available from analysis)
@@ -292,6 +310,30 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
             score: analytics.overallScore,
           });
         }
+
+        // CEFR Metrics
+        if (analytics.cefrLevel) {
+          const level = analytics.cefrLevel as "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+          if (cefrLevelCounter[level] !== undefined) {
+            cefrLevelCounter[level]++;
+          }
+        }
+        if (analytics.pronunciationScore !== undefined) {
+          totalPronunciation += analytics.pronunciationScore;
+          cefrCount++;
+        }
+        if (analytics.fluencyScore !== undefined) {
+          totalFluency += analytics.fluencyScore;
+        }
+        if (analytics.grammarScore !== undefined) {
+          totalGrammar += analytics.grammarScore;
+        }
+        if (analytics.vocabularyScore !== undefined) {
+          totalVocabulary += analytics.vocabularyScore;
+        }
+        if (analytics.coherenceScore !== undefined) {
+          totalCoherence += analytics.coherenceScore;
+        }
       }
     });
 
@@ -361,6 +403,16 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
       averageScore: averageScore,
       scoreTrends: scoreTrends,
       candidatesWithComparison: candidatesWithComparison,
+    });
+
+    // Calculate CEFR metrics
+    setCefrMetrics({
+      levelDistribution: cefrLevelCounter,
+      averagePronunciation: cefrCount > 0 ? Math.round((totalPronunciation / cefrCount) * 10) / 10 : 0,
+      averageFluency: cefrCount > 0 ? Math.round((totalFluency / cefrCount) * 10) / 10 : 0,
+      averageGrammar: cefrCount > 0 ? Math.round((totalGrammar / cefrCount) * 10) / 10 : 0,
+      averageVocabulary: cefrCount > 0 ? Math.round((totalVocabulary / cefrCount) * 10) / 10 : 0,
+      averageCoherence: cefrCount > 0 ? Math.round((totalCoherence / cefrCount) * 10) / 10 : 0,
     });
 
     setSentimentCount(sentimentCounter);
@@ -641,6 +693,117 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
               </div>
             </div>
           </div>
+
+          {/* CEFR Language Proficiency Section */}
+          {(cefrMetrics.averagePronunciation > 0 ||
+            Object.values(cefrMetrics.levelDistribution).some((v) => v > 0)) && (
+            <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
+              <div className="flex flex-row gap-2 items-center mb-4">
+                <Target className="h-5 w-5 text-indigo-600" />
+                <p className="font-semibold my-2">English Language Proficiency (CEFR)</p>
+                <InfoTooltip content="Common European Framework of Reference for Languages evaluation based on pronunciation, fluency, grammar, vocabulary, and coherence" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* CEFR Level Distribution */}
+                <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50 shadow-md">
+                  <div className="flex flex-row gap-2 items-center mb-2">
+                    <p className="font-semibold text-[15px]">CEFR Level Distribution</p>
+                  </div>
+                  {Object.values(cefrMetrics.levelDistribution).some((v) => v > 0) ? (
+                    <div className="flex flex-col gap-2">
+                      {(["A1", "A2", "B1", "B2", "C1", "C2"] as const).map((level) => {
+                        const count = cefrMetrics.levelDistribution[level];
+                        if (count === 0) return null;
+                        return (
+                          <div
+                            key={level}
+                            className="flex flex-row justify-between items-center p-2 rounded-lg"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`px-2 py-1 rounded border-2 text-xs font-semibold ${getCEFRColor(
+                                  level,
+                                )}`}
+                              >
+                                {level}
+                              </div>
+                              <span className="text-sm text-gray-600">
+                                {level === "A1"
+                                  ? "Beginner"
+                                  : level === "A2"
+                                    ? "Elementary"
+                                    : level === "B1"
+                                      ? "Intermediate"
+                                      : level === "B2"
+                                        ? "Upper Intermediate"
+                                        : level === "C1"
+                                          ? "Advanced"
+                                          : "Proficient"}
+                              </span>
+                            </div>
+                            <span className="font-semibold text-indigo-600">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-8">
+                      No CEFR data available
+                    </p>
+                  )}
+                </div>
+
+                {/* Language Skills Scores */}
+                <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50 shadow-md">
+                  <div className="flex flex-row gap-2 items-center mb-2">
+                    <p className="font-semibold text-[15px]">Average Language Skills</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {cefrMetrics.averagePronunciation > 0 && (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-600">Pronunciation</span>
+                        <span className="font-semibold text-indigo-600 text-lg">
+                          {cefrMetrics.averagePronunciation.toFixed(1)}/10
+                        </span>
+                      </div>
+                    )}
+                    {cefrMetrics.averageFluency > 0 && (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-600">Fluency</span>
+                        <span className="font-semibold text-indigo-600 text-lg">
+                          {cefrMetrics.averageFluency.toFixed(1)}/10
+                        </span>
+                      </div>
+                    )}
+                    {cefrMetrics.averageGrammar > 0 && (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-600">Grammar</span>
+                        <span className="font-semibold text-indigo-600 text-lg">
+                          {cefrMetrics.averageGrammar.toFixed(1)}/10
+                        </span>
+                      </div>
+                    )}
+                    {cefrMetrics.averageVocabulary > 0 && (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-600">Vocabulary</span>
+                        <span className="font-semibold text-indigo-600 text-lg">
+                          {cefrMetrics.averageVocabulary.toFixed(1)}/10
+                        </span>
+                      </div>
+                    )}
+                    {cefrMetrics.averageCoherence > 0 && (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-600">Coherence</span>
+                        <span className="font-semibold text-indigo-600 text-lg">
+                          {cefrMetrics.averageCoherence.toFixed(1)}/10
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Comparative Metrics Section */}
           <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
