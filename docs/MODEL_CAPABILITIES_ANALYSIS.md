@@ -39,11 +39,16 @@
 
 **Solución**: Calcular bad pauses en el backend analizando gaps en timestamps
 
-### 3. **Pronunciation Score - INFERIDO, NO REAL**
-**Problema**: 
-- El modelo solo ve texto transcrito
-- No puede evaluar pronunciación real del audio
-- Solo puede inferir problemas de pronunciación basándose en:
+### 3. **Pronunciation Score - MEJORADO CON DEEPGRAM**
+**Situación Actual**: 
+- Mistral solo ve texto transcrito y puede inferir problemas de pronunciación
+- **PERO tenemos Deepgram** que puede proporcionar datos adicionales:
+  - Timestamps precisos de palabras
+  - Patrones de velocidad de habla
+  - Variabilidad en ritmo (indicador de fluidez)
+  - Análisis de pausas y silencios
+
+**Mejora Propuesta**: Combinar análisis de Mistral (texto) con datos de Deepgram (audio) para evaluación más precisa
   - Palabras mal escritas en el transcript
   - Errores de transcripción obvios
   - Pero NO puede evaluar acento, entonación, claridad real
@@ -158,12 +163,36 @@ const baseCompletion = await mistral.createChatCompletion({
 
 ## 🎯 Recomendación Final
 
-**SÍ, Mistral Large puede evaluar la mayoría de lo que necesitamos**, pero debemos:
+**SÍ, la combinación Mistral + Deepgram puede evaluar TODO lo que necesitamos**, con esta estrategia:
 
-1. ✅ **Mantener**: Análisis CEFR, gramática, vocabulario, coherencia, feedback descriptivo
-2. ⚠️ **Ajustar expectativas**: Pronunciation y Fluency son inferidas del texto, no del audio
-3. 🔧 **Mejorar**: Calcular WPM y bad pauses en backend usando timestamps
-4. 🔧 **Configurar**: Agregar `max_tokens` para evitar truncamiento
+### Estrategia Híbrida: Mistral (Texto) + Deepgram (Audio)
 
-El modelo puede hacer un excelente trabajo con análisis basado en texto, que es la mayoría de lo que necesitamos. Para evaluación real de pronunciación y fluidez de audio, necesitaríamos un servicio especializado como Speechace.
+1. ✅ **Mistral Large** (Análisis de Texto):
+   - Análisis CEFR general y por pregunta
+   - Gramática, vocabulario, coherencia
+   - Feedback descriptivo detallado
+   - Evaluación de contenido y relevancia
+
+2. ✅ **Deepgram** (Análisis de Audio):
+   - WPM preciso usando timestamps
+   - Bad pauses detectados de gaps reales en audio
+   - Análisis de velocidad de habla y variabilidad
+   - Patrones de fluidez basados en ritmo real
+
+3. 🔧 **Combinación**:
+   - Mistral evalúa pronunciación basándose en texto (inferida)
+   - Deepgram proporciona datos de fluidez real (WPM, pausas)
+   - Combinamos ambos para evaluación más completa
+
+### Ventajas de esta Aproximación
+
+- ✅ **Costo-efectivo**: Usamos servicios que ya tenemos
+- ✅ **Precisión mejorada**: Datos reales de audio + análisis inteligente de texto
+- ✅ **Completo**: Cubre todos los aspectos necesarios
+- ✅ **Escalable**: No requiere servicios adicionales costosos
+
+### Limitación Única
+
+- ⚠️ **Pronunciación**: Sigue siendo principalmente inferida del texto (Mistral), no evaluación directa de acento/entonación del audio
+- 💡 **Solución futura**: Si necesitamos evaluación de pronunciación 100% precisa, podríamos integrar Speechace solo para ese aspecto específico
 

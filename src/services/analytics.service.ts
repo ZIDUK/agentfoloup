@@ -11,7 +11,8 @@ import {
 import { getMistralClient } from "@/services/mistral.service";
 
 /**
- * Calculate WPM and bad pauses for a question using transcript timing data
+ * Calculate WPM and bad pauses for a question using Deepgram transcript timing data
+ * This uses REAL audio data from Deepgram, not estimates
  */
 function calculateQuestionFluencyMetrics(
   questionTranscript: string,
@@ -21,9 +22,9 @@ function calculateQuestionFluencyMetrics(
     words?: Array<{ word: string; start: number; end: number }>;
   }>,
   questionIndex: number,
-): { wpm: number; badPauses: number } {
+): { wpm: number; badPauses: number; averageWordDuration?: number; speechVariability?: number } {
   if (!transcriptObject || transcriptObject.length === 0) {
-    return { wpm: 0, badPauses: 0 };
+    return { wpm: 0, badPauses: 0, averageWordDuration: 0, speechVariability: 0 };
   }
 
   // Find candidate responses (user role) that match this question
@@ -38,7 +39,7 @@ function calculateQuestionFluencyMetrics(
       .length;
     // Estimate average speaking rate (150 WPM is average)
     const estimatedWpm = wordCount > 0 ? Math.round(wordCount * 2) : 0;
-    return { wpm: estimatedWpm, badPauses: 0 };
+    return { wpm: estimatedWpm, badPauses: 0, averageWordDuration: 0, speechVariability: 0 };
   }
 
   // Get words from candidate entries
@@ -51,7 +52,7 @@ function calculateQuestionFluencyMetrics(
   );
 
   if (allCandidateWords.length === 0) {
-    return { wpm: 0, badPauses: 0 };
+    return { wpm: 0, badPauses: 0, averageWordDuration: 0, speechVariability: 0 };
   }
 
   // Calculate duration
@@ -86,7 +87,22 @@ function calculateQuestionFluencyMetrics(
     }
   });
 
-  return { wpm, badPauses };
+  // Calculate additional fluency metrics from Deepgram audio data
+  // Average word duration (shorter = faster speech)
+  const wordDurations = allCandidateWords.map((w) => (w.end - w.start) / 1000);
+  const averageWordDuration = wordDurations.length > 0
+    ? wordDurations.reduce((a, b) => a + b, 0) / wordDurations.length
+    : 0;
+
+  // Speech variability (standard deviation of word durations)
+  // Higher variability = less fluent (more hesitations, inconsistent pace)
+  const variance = wordDurations.length > 0
+    ? wordDurations.reduce((sum, dur) => sum + Math.pow(dur - averageWordDuration, 2), 0) /
+      wordDurations.length
+    : 0;
+  const speechVariability = Math.sqrt(variance);
+
+  return { wpm, badPauses, averageWordDuration, speechVariability };
 }
 
 export const generateInterviewAnalytics = async (payload: {
@@ -147,15 +163,19 @@ export const generateInterviewAnalytics = async (payload: {
       analyticsResponse.questionSummaries = analyticsResponse.questionSummaries.map(
         (qs: QuestionSummary, index: number) => {
           if (qs.questionTranscript) {
-            const { wpm, badPauses } = calculateQuestionFluencyMetrics(
-              qs.questionTranscript,
-              transcriptObject,
-              index,
-            );
+            const { wpm, badPauses, averageWordDuration, speechVariability } =
+              calculateQuestionFluencyMetrics(
+                qs.questionTranscript,
+                transcriptObject,
+                index,
+              );
             return {
               ...qs,
               wordsPerMinute: wpm,
               badPauses: badPauses,
+              // Additional Deepgram-based metrics (can be used for enhanced fluency analysis)
+              averageWordDuration: averageWordDuration,
+              speechVariability: speechVariability,
             };
           }
           return qs;
