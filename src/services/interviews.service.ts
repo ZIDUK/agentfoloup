@@ -11,8 +11,7 @@ const getAllInterviews = async (userId: string, organizationId: string) => {
 
     return [...(clientData || [])];
   } catch (error) {
-    console.log(error);
-
+    console.error("getAllInterviews error", error);
     return [];
   }
 };
@@ -34,7 +33,7 @@ const getInterviewById = async (id: string) => {
 };
 
 const updateInterview = async (payload: any, id: string) => {
-  const supabase = getSupabase();
+  const supabase = getSupabaseClient();
   const { error, data } = await supabase
     .from("interview")
     .update({ ...payload })
@@ -49,7 +48,7 @@ const updateInterview = async (payload: any, id: string) => {
 };
 
 const deleteInterview = async (id: string) => {
-  const supabase = getSupabase();
+  const supabase = getSupabaseClient();
   const { error, data } = await supabase
     .from("interview")
     .delete()
@@ -80,7 +79,7 @@ const getAllRespondents = async (interviewId: string) => {
 };
 
 const createInterview = async (payload: any) => {
-  const supabase = getSupabase();
+  const supabase = getSupabaseClient();
   const { error, data } = await supabase
     .from("interview")
     .insert({ ...payload });
