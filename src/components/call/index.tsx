@@ -88,7 +88,7 @@ function Call({ interview }: InterviewProps) {
     dialogMessage: proctoringDialogMessage,
     handleUnderstand,
     getProctoringData,
-  } = useTabSwitchPrevention(isStarted);
+  } = useTabSwitchPrevention(isStarted && !isEnded);
 
   // Keep a ref so the save effect always reads the latest proctoring snapshot
   // without needing it in the effect dependency array.
@@ -404,8 +404,9 @@ function Call({ interview }: InterviewProps) {
       }
 
       // Start camera recording if access was granted.
+      // Pass the AI audio stream so both the candidate and interviewer voices are recorded.
       if (stream) {
-        startRecording(stream);
+        startRecording(stream, player.getRecordingStream());
       }
 
       await createResponse({

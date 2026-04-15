@@ -44,12 +44,19 @@ const useTabSwitchPrevention = (isActive: boolean = false) => {
     }
   }, []);
 
-  // Request fullscreen when the interview starts.
+  // Request fullscreen when the interview starts; exit when it ends.
   useEffect(() => {
     if (!isActive) return;
     if (typeof document !== "undefined" && document.fullscreenEnabled) {
       document.documentElement.requestFullscreen().catch(() => {});
     }
+    return () => {
+      // Exit fullscreen when proctoring deactivates so the fullscreenchange
+      // event fires after the listener below has already been removed.
+      if (typeof document !== "undefined" && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    };
   }, [isActive]);
 
   // Tab visibility change (browser tab hidden / visible).

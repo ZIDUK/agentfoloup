@@ -331,10 +331,14 @@ function CallInfo({
                       <p className="font-semibold text-sm">Video Recording</p>
                       <div className="flex flex-row gap-3 mt-1 items-start">
                         <video
-                          src={recordingUrl}
                           controls
                           className="rounded-md border border-slate-300 max-w-sm"
-                        />
+                        >
+                          <source
+                            src={recordingUrl}
+                            type={recordingUrl.endsWith(".mp4") ? "video/mp4" : "video/webm"}
+                          />
+                        </video>
                         <a
                           className="my-auto"
                           href={recordingUrl}

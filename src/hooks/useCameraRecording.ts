@@ -18,12 +18,14 @@ export const useCameraRecording = () => {
   const chunksRef = useRef<Blob[]>([]);
   // Keep a ref to the latest stream so stopAndUpload can stop tracks
   const streamRef = useRef<MediaStream | null>(null);
+  // Mixing AudioContext used to combine mic + AI audio into a single track
+  const mixingContextRef = useRef<AudioContext | null>(null);
 
   const requestCameraAccess = useCallback(async (): Promise<MediaStream | null> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
-        audio: false, // audio is captured by Deepgram separately
+        audio: { echoCancellation: true, noiseSuppression: true },
       });
       setCameraStream(stream);
       streamRef.current = stream;
@@ -45,8 +47,31 @@ export const useCameraRecording = () => {
     }
   }, []);
 
-  const startRecording = useCallback((stream: MediaStream) => {
+  const startRecording = useCallback((cameraStream: MediaStream, aiStream?: MediaStream | null) => {
     chunksRef.current = [];
+
+    // Mix microphone (from cameraStream) and AI audio (from aiStream) into one track.
+    let recordingStream = cameraStream;
+    if (aiStream && aiStream.getAudioTracks().length > 0) {
+      try {
+        const mixingContext = new AudioContext();
+        mixingContextRef.current = mixingContext;
+        const destination = mixingContext.createMediaStreamDestination();
+
+        if (cameraStream.getAudioTracks().length > 0) {
+          mixingContext.createMediaStreamSource(cameraStream).connect(destination);
+        }
+        mixingContext.createMediaStreamSource(aiStream).connect(destination);
+
+        recordingStream = new MediaStream([
+          ...cameraStream.getVideoTracks(),
+          ...destination.stream.getAudioTracks(),
+        ]);
+      } catch {
+        // Fall back to camera stream only if mixing fails
+        recordingStream = cameraStream;
+      }
+    }
 
     const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
       ? "video/webm;codecs=vp9"
@@ -56,10 +81,10 @@ export const useCameraRecording = () => {
 
     let recorder: MediaRecorder;
     try {
-      recorder = new MediaRecorder(stream, { mimeType });
+      recorder = new MediaRecorder(recordingStream, { mimeType });
     } catch {
       // Fallback without specifying mimeType
-      recorder = new MediaRecorder(stream);
+      recorder = new MediaRecorder(recordingStream);
     }
 
     mediaRecorderRef.current = recorder;
@@ -97,6 +122,12 @@ export const useCameraRecording = () => {
             stream.getTracks().forEach((t) => t.stop());
             streamRef.current = null;
             setCameraStream(null);
+          }
+
+          // Close mixing context
+          if (mixingContextRef.current) {
+            mixingContextRef.current.close().catch(() => {});
+            mixingContextRef.current = null;
           }
 
           if (chunksRef.current.length === 0) {
@@ -148,6 +179,10 @@ export const useCameraRecording = () => {
       stream.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
       setCameraStream(null);
+    }
+    if (mixingContextRef.current) {
+      mixingContextRef.current.close().catch(() => {});
+      mixingContextRef.current = null;
     }
     setIsRecording(false);
   }, []);
