@@ -124,8 +124,8 @@ function CallInfo({
       return updatedTranscript;
     };
 
-    if (call && name) {
-      setTranscript(replaceAgentAndUser(call?.transcript as string, name));
+    if (call && name && call.transcript) {
+      setTranscript(replaceAgentAndUser(call.transcript, name));
     }
   }, [call, name]);
 
