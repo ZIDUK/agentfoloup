@@ -64,6 +64,10 @@ function CallInfo({
   const [candidateStatus, setCandidateStatus] = useState<string>("");
   const [interviewId, setInterviewId] = useState<string>("");
   const [tabSwitchCount, setTabSwitchCount] = useState<number>();
+  const [fullscreenExitCount, setFullscreenExitCount] = useState<number>();
+  const [windowSwitchCount, setWindowSwitchCount] = useState<number>();
+  const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
+  const [proctoringEvents, setProctoringEvents] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchResponses = async () => {
@@ -97,6 +101,15 @@ function CallInfo({
         setCandidateStatus(response.candidate_status);
         setInterviewId(response.interview_id);
         setTabSwitchCount(response.tab_switch_count);
+        setFullscreenExitCount(response.fullscreen_exit_count ?? 0);
+        setRecordingUrl(response.recording_url ?? null);
+        // Derive window switch count from proctoring events
+        const events: any[] = response.proctoring_events ?? [];
+        setProctoringEvents(events);
+        const windowSummary = events.find(
+          (e: any) => e.type === "window_switch_summary",
+        );
+        setWindowSwitchCount(windowSummary?.count ?? 0);
       } catch (error) {
         console.error(error);
       } finally {
@@ -183,11 +196,24 @@ function CallInfo({
                     <ArrowLeft className="mr-2" />
                     <p className="text-sm font-semibold">Back to Summary</p>
                   </div>
-                  {tabSwitchCount && tabSwitchCount > 0 && (
-                    <p className="text-sm font-semibold text-red-500 bg-red-200 rounded-sm px-2 py-1">
-                      Tab Switching Detected
-                    </p>
-                  )}
+                  {/* Proctoring flags */}
+                  <div className="flex flex-row gap-2 flex-wrap justify-end">
+                    {tabSwitchCount != null && tabSwitchCount > 0 && (
+                      <span className="text-xs font-semibold text-red-600 bg-red-100 border border-red-300 rounded px-2 py-1">
+                        Tab switches: {tabSwitchCount}
+                      </span>
+                    )}
+                    {windowSwitchCount != null && windowSwitchCount > 0 && (
+                      <span className="text-xs font-semibold text-orange-600 bg-orange-100 border border-orange-300 rounded px-2 py-1">
+                        Window switches: {windowSwitchCount}
+                      </span>
+                    )}
+                    {fullscreenExitCount != null && fullscreenExitCount > 0 && (
+                      <span className="text-xs font-semibold text-yellow-700 bg-yellow-100 border border-yellow-300 rounded px-2 py-1">
+                        Fullscreen exits: {fullscreenExitCount}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col justify-between gap-3 w-full">
@@ -281,21 +307,78 @@ function CallInfo({
                     </AlertDialog>
                   </div>
                 </div>
-                <div className="flex flex-col mt-3">
-                  <p className="font-semibold">Interview Recording</p>
-                  <div className="flex flex-row gap-3 mt-2">
-                    {call?.recording_url && (
-                      <ReactAudioPlayer src={call?.recording_url} controls />
-                    )}
-                    <a
-                      className="my-auto"
-                      href={call?.recording_url}
-                      download=""
-                      aria-label="Download"
-                    >
-                      <DownloadIcon size={20} />
-                    </a>
-                  </div>
+                <div className="flex flex-col mt-3 gap-3">
+                  {/* Audio recording from Deepgram (legacy/Retell) */}
+                  {call?.recording_url && (
+                    <div>
+                      <p className="font-semibold text-sm">Audio Recording</p>
+                      <div className="flex flex-row gap-3 mt-1 items-center">
+                        <ReactAudioPlayer src={call.recording_url} controls />
+                        <a
+                          className="my-auto"
+                          href={call.recording_url}
+                          download=""
+                          aria-label="Download audio"
+                        >
+                          <DownloadIcon size={20} />
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                  {/* Video recording captured from the candidate's camera */}
+                  {recordingUrl && (
+                    <div>
+                      <p className="font-semibold text-sm">Video Recording</p>
+                      <div className="flex flex-row gap-3 mt-1 items-start">
+                        <video
+                          src={recordingUrl}
+                          controls
+                          className="rounded-md border border-slate-300 max-w-sm"
+                        />
+                        <a
+                          className="my-auto"
+                          href={recordingUrl}
+                          download=""
+                          aria-label="Download video"
+                        >
+                          <DownloadIcon size={20} />
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                  {/* Proctoring event log */}
+                  {proctoringEvents.length > 0 && (
+                    <div>
+                      <p className="font-semibold text-sm mb-1">
+                        Proctoring Event Log
+                      </p>
+                      <div className="max-h-36 overflow-y-auto bg-slate-50 rounded-md border border-slate-200 p-2 text-xs space-y-1">
+                        {proctoringEvents
+                          .filter((e) => e.type !== "window_switch_summary")
+                          .map((event: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className="flex justify-between text-slate-600"
+                            >
+                              <span className="font-medium">
+                                {event.type === "tab_hidden"
+                                  ? "Tab switch"
+                                  : event.type === "window_blur"
+                                  ? "Window switch"
+                                  : event.type === "fullscreen_exit"
+                                  ? "Fullscreen exit"
+                                  : event.type}
+                              </span>
+                              <span>
+                                {event.timestamp
+                                  ? new Date(event.timestamp).toLocaleTimeString()
+                                  : "—"}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

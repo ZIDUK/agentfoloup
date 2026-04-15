@@ -31,7 +31,7 @@ export const getSupabaseClient = () => {
     single: () => Promise.resolve({ data: null, error: null }),
     then: (resolve: any) => resolve({ data: null, error: null }),
   };
-  
+
   // Create mock client
   const mockClient = {
     from: () => mockQuery,

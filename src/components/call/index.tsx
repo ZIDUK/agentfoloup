@@ -5,13 +5,14 @@ import {
   AlarmClockIcon,
   XCircleIcon,
   CheckCircleIcon,
+  VideoIcon,
+  VideoOffIcon,
 } from "lucide-react";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { useResponses } from "@/contexts/responses.context";
 import Image from "next/image";
-import axios from "axios";
 import MiniLoader from "../loaders/mini-loader/miniLoader";
 import { toast } from "sonner";
 import { isLightColor, testEmail } from "@/lib/utils";
@@ -39,18 +40,10 @@ import { InterviewerService } from "@/services/interviewers.service";
 import { DeepgramAgentService } from "@/services/deepgram-agent.service";
 import { AudioPlayer } from "@/lib/audio-player";
 import { AgentEvents } from "@deepgram/sdk";
+import { useCameraRecording } from "@/hooks/useCameraRecording";
 
 type InterviewProps = {
   interview: Interview;
-};
-
-type registerCallResponseType = {
-  data: {
-    registerCallResponse: {
-      call_id: string;
-      access_token: string;
-    };
-  };
 };
 
 type transcriptType = {
@@ -75,7 +68,6 @@ function Call({ interview }: InterviewProps) {
   const [isOldUser, setIsOldUser] = useState<boolean>(false);
   const [callId, setCallId] = useState<string>("");
   const [callStartTime, setCallStartTime] = useState<number | null>(null);
-  const { tabSwitchCount } = useTabSwitchPrevention();
   const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [interviewerImg, setInterviewerImg] = useState("");
@@ -86,6 +78,42 @@ function Call({ interview }: InterviewProps) {
   const [agentService, setAgentService] = useState<DeepgramAgentService | null>(null);
   const [audioPlayer, setAudioPlayer] = useState<AudioPlayer | null>(null);
   const audioPlayerRef = useRef<AudioPlayer | null>(null);
+
+  // Proctoring — isStarted drives activation so events aren't captured pre-interview.
+  const {
+    tabSwitchCount,
+    windowSwitchCount,
+    fullscreenExitCount,
+    isDialogOpen: isProctoringDialogOpen,
+    dialogMessage: proctoringDialogMessage,
+    handleUnderstand,
+    getProctoringData,
+  } = useTabSwitchPrevention(isStarted);
+
+  // Keep a ref so the save effect always reads the latest proctoring snapshot
+  // without needing it in the effect dependency array.
+  const proctoringDataRef = useRef(getProctoringData());
+  useEffect(() => {
+    proctoringDataRef.current = getProctoringData();
+  }, [getProctoringData]);
+
+  // Camera recording
+  const {
+    cameraStream,
+    cameraError,
+    requestCameraAccess,
+    startRecording,
+    stopAndUpload,
+    stopCamera,
+  } = useCameraRecording();
+  const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Attach the camera stream to the preview video element whenever it changes.
+  useEffect(() => {
+    if (cameraVideoRef.current && cameraStream) {
+      cameraVideoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream]);
 
   const lastUserResponseRef = useRef<HTMLDivElement | null>(null);
 
@@ -121,7 +149,6 @@ function Call({ interview }: InterviewProps) {
   useEffect(() => {
     let intervalId: any;
     if (isCalling) {
-      // setting time from 0 to 1 every 10 milisecond using javascript setInterval method
       intervalId = setInterval(() => setTime(time + 1), 10);
     }
     setCurrentTimeDuration(String(Math.floor(time / 100)));
@@ -150,172 +177,110 @@ function Call({ interview }: InterviewProps) {
       return;
     }
 
-    // Initialize audio player
     const player = new AudioPlayer();
     setAudioPlayer(player);
-    audioPlayerRef.current = player; // Update ref immediately
-    
-    // Pre-initialize AudioContext on user interaction (required by browsers)
+    audioPlayerRef.current = player;
+
     const initAudio = async () => {
       try {
         await player.initialize();
-        console.log("AudioPlayer initialized");
       } catch (error) {
         console.error("Error initializing AudioPlayer:", error);
       }
     };
-    
-    // Initialize on first user interaction
+
     const handleInteraction = () => {
       initAudio();
-      document.removeEventListener('click', handleInteraction);
-      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener("click", handleInteraction);
+      document.removeEventListener("touchstart", handleInteraction);
     };
-    
-    document.addEventListener('click', handleInteraction, { once: true });
-    document.addEventListener('touchstart', handleInteraction, { once: true });
 
-    // Setup Deepgram Voice Agent event handlers
+    document.addEventListener("click", handleInteraction, { once: true });
+    document.addEventListener("touchstart", handleInteraction, { once: true });
+
     agentService.on(AgentEvents.Open, () => {
-      console.log("Connection opened");
       setIsCalling(true);
     });
 
     agentService.on(AgentEvents.Close, () => {
-      console.log("Connection closed");
       setIsCalling(false);
       setIsEnded(true);
     });
 
     agentService.on(AgentEvents.ConversationText, async (data: any) => {
-      console.log("ConversationText event received:", data);
-      
-      // Handle different formats of ConversationText event
-      // Format 1: { role: "user" | "assistant", content: "text" }
-      // Format 2: { agent: { text: "..." }, user: { text: "..." } }
       let role: string | null = null;
       let content: string | null = null;
-      
+
       if (data.role && data.content) {
-        // Format 1: Direct role and content
         role = data.role;
         content = data.content;
       } else if (data.agent?.text) {
-        // Format 2: Agent text
         role = "agent";
         content = data.agent.text;
       } else if (data.user?.text) {
-        // Format 2: User text
         role = "user";
         content = data.user.text;
       }
-      
+
       if (role && content) {
         if (role === "agent" || role === "assistant") {
           setLastInterviewerResponse(content);
           setActiveTurn("agent");
-          // Add to transcript (avoid duplicates)
           setTranscript((prev) => {
-            // Check if this is a duplicate (same content as last entry)
             const lastEntry = prev[prev.length - 1];
             if (lastEntry?.role === "agent" && lastEntry?.content === content) {
-              return prev; // Skip duplicate
+              return prev;
             }
-            const newTranscript = [
-              ...prev,
-              { role: "agent", content: content },
-            ];
-            console.log("Transcript updated with agent text. Total entries:", newTranscript.length);
-            return newTranscript;
+            return [...prev, { role: "agent", content: content! }];
           });
         } else if (role === "user") {
           setLastUserResponse(content);
           setActiveTurn("user");
-          // Add to transcript (avoid duplicates)
           setTranscript((prev) => {
-            // Check if this is a duplicate (same content as last entry)
             const lastEntry = prev[prev.length - 1];
             if (lastEntry?.role === "user" && lastEntry?.content === content) {
-              return prev; // Skip duplicate
+              return prev;
             }
-            const newTranscript = [
-              ...prev,
-              { role: "user", content: content },
-            ];
-            console.log("Transcript updated with user text. Total entries:", newTranscript.length);
-            return newTranscript;
+            return [...prev, { role: "user", content: content! }];
           });
         }
       }
     });
 
     agentService.on(AgentEvents.UserStartedSpeaking, () => {
-      console.log("User started speaking - Deepgram detected user speech");
       setActiveTurn("user");
-      // Clear audio buffer when user starts speaking (interrupt agent)
       if (audioPlayerRef.current) {
         audioPlayerRef.current.clearBuffer();
       }
     });
 
-    // Handle EndOfThought event (LLM finished thinking)
-    // Note: This event may not be in AgentEvents enum, so we use string directly
-    agentService.on("EndOfThought" as any, () => {
-      console.log("EndOfThought - LLM finished processing");
-      // This is a good time to show "thinking" indicator if needed
-    });
-
-    // Handle AgentStartedSpeaking event (with latency metrics)
-    // Note: This event may not be in AgentEvents enum, so we use string directly
-    agentService.on("AgentStartedSpeaking" as any, (data: any) => {
-      console.log("AgentStartedSpeaking:", data);
+    agentService.on("AgentStartedSpeaking" as any, () => {
       setActiveTurn("agent");
-      if (data) {
-        console.log("Latency metrics:", {
-          tts_latency: data.tts_latency,
-          ttt_latency: data.ttt_latency,
-          total_latency: data.total_latency,
-        });
-      }
     });
 
     agentService.on(AgentEvents.Audio, async (audioData: any) => {
-      console.log("Audio chunk received", {
-        size: audioData.byteLength || (audioData as any).length,
-        type: audioData.constructor.name,
-        isArrayBuffer: audioData instanceof ArrayBuffer,
-        isBuffer: (audioData as any).buffer !== undefined,
-      });
       setActiveTurn("agent");
-      
-      // Get current audioPlayer from ref (always up-to-date)
+
       let player = audioPlayerRef.current;
       if (!player) {
-        console.log("Creating AudioPlayer on-the-fly for audio chunk");
         player = new AudioPlayer();
         setAudioPlayer(player);
-        audioPlayerRef.current = player; // Update ref immediately
+        audioPlayerRef.current = player;
       }
-      
+
       try {
-        // Convert Buffer to ArrayBuffer if needed
         let arrayBuffer: ArrayBuffer;
         if (audioData instanceof ArrayBuffer) {
           arrayBuffer = audioData;
         } else if ((audioData as any).buffer instanceof ArrayBuffer) {
-          // It's a Buffer/Uint8Array, get the underlying ArrayBuffer
           arrayBuffer = (audioData as any).buffer as ArrayBuffer;
         } else if (audioData instanceof Uint8Array) {
-          // Uint8Array.buffer is ArrayBufferLike, but we know it's ArrayBuffer in this context
           arrayBuffer = audioData.buffer.slice(0) as ArrayBuffer;
         } else {
-          // Try to convert to ArrayBuffer
-          console.warn("Unknown audio format, attempting conversion");
-          const converted = await audioData.arrayBuffer?.() || new Uint8Array(audioData).buffer;
+          const converted =
+            (await audioData.arrayBuffer?.()) || new Uint8Array(audioData).buffer;
           arrayBuffer = converted as ArrayBuffer;
         }
-        
-        // Add audio chunk (will initialize and play automatically)
         await player.addAudioChunk(arrayBuffer);
       } catch (error) {
         console.error("Error adding audio chunk:", error);
@@ -323,7 +288,6 @@ function Call({ interview }: InterviewProps) {
     });
 
     agentService.on(AgentEvents.AgentAudioDone, () => {
-      console.log("Agent audio done");
       setActiveTurn("user");
     });
 
@@ -360,53 +324,45 @@ function Call({ interview }: InterviewProps) {
   };
 
   const startConversation = async () => {
-    const data = {
-      mins: interview?.time_duration,
-      objective: interview?.objective,
-      questions: interview?.questions.map((q) => q.question).join(", "),
-      name: name || "not provided",
-    };
-    setLoading(true);
-
     const oldUserEmails: string[] = (
       await ResponseService.getAllEmails(interview.id)
-    ).map((item) => item.email);
+    ).map((item: { email: string }) => item.email);
     const OldUser =
       oldUserEmails.includes(email) ||
       (interview?.respondents && !interview?.respondents.includes(email));
 
     if (OldUser) {
       setIsOldUser(true);
-      setLoading(false);
-
       return;
     }
 
+    setLoading(true);
+
     try {
-      // Get interviewer details for personality
+      // Request camera access for recording (non-blocking — denied = no recording).
+      const stream = await requestCameraAccess();
+
       const interviewer = await InterviewerService.getInterviewer(
-        interview.interviewer_id
+        interview.interviewer_id,
       );
 
-      // Initialize Deepgram Agent Service
       const apiKey = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || "";
       if (!apiKey) {
         toast.error("Deepgram API key not configured");
         setLoading(false);
-
         return;
       }
 
       const agent = new DeepgramAgentService(apiKey);
       setAgentService(agent);
 
-      // Generate call ID
-      const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      setCallId(callId);
+      const newCallId = `call_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+      setCallId(newCallId);
       setCallStartTime(Date.now());
-      setTranscript([]); // Reset transcript for new call
+      setTranscript([]);
 
-      // Configure agent with interview data
       agent.configure({
         name: name || "Candidate",
         objective: interview?.objective || "",
@@ -421,68 +377,52 @@ function Call({ interview }: InterviewProps) {
         },
       });
 
-      // Wait for connection to open before starting audio capture
       await new Promise<void>((resolve) => {
-        agent.on(AgentEvents.Open, () => {
-          console.log("Connection opened, starting audio capture...");
-          resolve();
-        });
+        agent.on(AgentEvents.Open, () => resolve());
       });
 
-      // Initialize audio player immediately when starting conversation
-      // This ensures it's ready when audio chunks arrive
-      // We need to get the current audioPlayer from ref or create a new one
       let player = audioPlayerRef.current;
       if (!player) {
-        console.log("Creating new AudioPlayer for conversation");
         player = new AudioPlayer();
         setAudioPlayer(player);
-        audioPlayerRef.current = player; // Update ref immediately
+        audioPlayerRef.current = player;
       }
-      
       try {
         await player.initialize();
-        console.log("AudioPlayer initialized for conversation");
       } catch (error) {
         console.error("Error initializing AudioPlayer:", error);
       }
 
-      // Start audio capture after connection is open
       try {
         await agent.startAudioCapture();
-        console.log("Audio capture started successfully");
-        
-        // Check microphone status after a short delay
-        setTimeout(() => {
-          navigator.mediaDevices.enumerateDevices().then(devices => {
-            const audioInputs = devices.filter(d => d.kind === 'audioinput');
-            console.log("Available audio input devices:", audioInputs.map(d => ({
-              label: d.label,
-              deviceId: d.deviceId,
-            })));
-          });
-        }, 1000);
       } catch (error) {
         console.error("Failed to start audio capture:", error);
-        toast.error("Failed to access microphone. Please check permissions and try again.");
+        toast.error(
+          "Failed to access microphone. Please check permissions and try again.",
+        );
         throw error;
       }
 
-      // Create response record
-        const response = await createResponse({
-          interview_id: interview.id,
-        call_id: callId,
-          email: email,
-          name: name,
-        });
+      // Start camera recording if access was granted.
+      if (stream) {
+        startRecording(stream);
+      }
+
+      await createResponse({
+        interview_id: interview.id,
+        call_id: newCallId,
+        email: email,
+        name: name,
+      });
 
       setIsStarted(true);
       setIsCalling(true);
     } catch (error) {
       console.error("Error starting conversation:", error);
       toast.error("Failed to start interview. Please try again.");
+      stopCamera();
     } finally {
-    setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -503,33 +443,40 @@ function Call({ interview }: InterviewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interview.interviewer_id]);
 
+  // Save response when interview ends.
   useEffect(() => {
     if (isEnded && callId && callStartTime) {
       const updateInterview = async () => {
-        console.log("Saving interview response...", {
-          transcriptEntries: transcript.length,
-          transcriptPreview: transcript.slice(0, 3),
-          callId: callId,
-          interviewId: interview.id,
-        });
-        
-        // Build transcript string from transcript array
         const transcriptString = transcript
-          .map((t) => `${t.role === "agent" ? "Interviewer" : "Candidate"}: ${t.content}`)
+          .map(
+            (t) =>
+              `${t.role === "agent" ? "Interviewer" : "Candidate"}: ${t.content}`,
+          )
           .join("\n");
 
-        console.log("Transcript string length:", transcriptString.length);
-        console.log("Transcript preview:", transcriptString.substring(0, 200));
-
-        // Calculate duration
         const endTime = Date.now();
         const duration = Math.round((endTime - callStartTime) / 1000);
 
+        // Stop recording and upload; get back the public URL (null if no recording).
+        const recordingUrl = await stopAndUpload(callId);
+
+        // Capture final proctoring snapshot.
+        const proctoring = proctoringDataRef.current;
+
         try {
-          const result = await ResponseService.saveResponse(
+          await ResponseService.saveResponse(
             {
               is_ended: true,
-              tab_switch_count: tabSwitchCount,
+              tab_switch_count: proctoring.tabSwitchCount,
+              fullscreen_exit_count: proctoring.fullscreenExitCount,
+              proctoring_events: [
+                ...proctoring.events,
+                // include window switch count inline since we don't have a separate column
+                ...(proctoring.windowSwitchCount > 0
+                  ? [{ type: "window_switch_summary", count: proctoring.windowSwitchCount, timestamp: endTime }]
+                  : []),
+              ],
+              recording_url: recordingUrl,
               details: {
                 transcript: transcriptString,
                 transcript_object: transcript,
@@ -538,12 +485,9 @@ function Call({ interview }: InterviewProps) {
               },
               duration: duration,
             },
-          callId,
-        );
-          
-          console.log("Response saved successfully", result);
-          
-          // Redirect to interview page after a short delay to allow save to complete
+            callId,
+          );
+
           setTimeout(() => {
             window.location.href = `/interviews/${interview.id}?call=${callId}`;
           }, 1000);
@@ -556,11 +500,35 @@ function Call({ interview }: InterviewProps) {
       updateInterview();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEnded, callId, transcript, tabSwitchCount, callStartTime]);
+  }, [isEnded, callId, callStartTime]);
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      {isStarted && <TabSwitchWarning />}
+      {/* Proctoring warning dialog — driven by the single shared hook instance */}
+      {isStarted && (
+        <TabSwitchWarning
+          isDialogOpen={isProctoringDialogOpen}
+          dialogMessage={proctoringDialogMessage}
+          onUnderstand={handleUnderstand}
+        />
+      )}
+
+      {/* Camera preview — small floating thumbnail visible during the interview */}
+      {isStarted && !isEnded && cameraStream && (
+        <div className="fixed bottom-4 right-4 z-50 rounded-lg overflow-hidden border-2 border-indigo-400 shadow-lg bg-black">
+          <video
+            ref={cameraVideoRef}
+            autoPlay
+            muted
+            playsInline
+            className="w-36 h-28 object-cover"
+          />
+          <div className="absolute top-1 right-1">
+            <VideoIcon className="h-3 w-3 text-red-500" />
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-md md:w-[80%] w-[90%]">
         <Card className="h-[88vh] rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all  md:block dark:border-white ">
           <div>
@@ -603,6 +571,8 @@ function Call({ interview }: InterviewProps) {
                 </div>
               )}
             </CardHeader>
+
+            {/* ── Pre-start screen ── */}
             {!isStarted && !isEnded && !isOldUser && (
               <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
                 <div>
@@ -619,12 +589,33 @@ function Call({ interview }: InterviewProps) {
                   )}
                   <div className="p-2 font-normal text-sm mb-4 whitespace-pre-line">
                     {interview?.description}
-                    <p className="font-bold text-sm">
+                    <p className="font-bold text-sm mt-3">
                       {"\n"}Ensure your volume is up and grant microphone access
                       when prompted. Additionally, please make sure you are in a
                       quiet environment.
                       {"\n\n"}Note: Tab switching will be recorded.
                     </p>
+
+                    {/* Camera & proctoring consent notice */}
+                    <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-md text-xs text-yellow-800 font-normal">
+                      <div className="flex items-center gap-1 mb-1 font-semibold">
+                        <VideoIcon className="h-3 w-3" />
+                        Camera & Integrity Monitoring
+                      </div>
+                      <p>
+                        This session will be video-recorded for assessment integrity
+                        purposes. Tab switching, window changes, and fullscreen exits
+                        are also logged. Recordings are only accessible to authorised
+                        assessors. By starting the interview you consent to this
+                        monitoring.
+                      </p>
+                      {cameraError && (
+                        <p className="mt-1 text-red-600 flex items-center gap-1">
+                          <VideoOffIcon className="h-3 w-3" />
+                          {cameraError} The interview will continue without video recording.
+                        </p>
+                      )}
+                    </div>
                   </div>
                   {!interview?.is_anonymous && (
                     <div className="flex flex-col gap-2 justify-center">
@@ -678,7 +669,8 @@ function Call({ interview }: InterviewProps) {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action will exit the interview. You can start a new interview later.
+                          This action will exit the interview. You can start a
+                          new interview later.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -697,6 +689,8 @@ function Call({ interview }: InterviewProps) {
                 </div>
               </div>
             )}
+
+            {/* ── Active interview screen ── */}
             {isStarted && !isEnded && !isOldUser && (
               <div className="flex flex-row p-2 grow">
                 <div className="border-x-2 border-grey w-[50%] my-auto min-h-[70%]">
@@ -708,17 +702,17 @@ function Call({ interview }: InterviewProps) {
                     </div>
                     <div className="flex flex-col mx-auto justify-center items-center align-middle">
                       {interviewerImg ? (
-                      <Image
-                        src={interviewerImg}
-                        alt="Image of the interviewer"
-                        width={120}
-                        height={120}
-                        className={`object-cover object-center mx-auto my-auto ${
-                          activeTurn === "agent"
-                            ? `border-4 border-[${interview.theme_color}] rounded-full`
-                            : ""
-                        }`}
-                      />
+                        <Image
+                          src={interviewerImg}
+                          alt="Image of the interviewer"
+                          width={120}
+                          height={120}
+                          className={`object-cover object-center mx-auto my-auto ${
+                            activeTurn === "agent"
+                              ? `border-4 border-[${interview.theme_color}] rounded-full`
+                              : ""
+                          }`}
+                        />
                       ) : (
                         <div className="w-[120px] h-[120px] bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
                           No Image
@@ -789,6 +783,7 @@ function Call({ interview }: InterviewProps) {
               </div>
             )}
 
+            {/* ── End screen ── */}
             {isEnded && !isOldUser && (
               <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
                 <div>
@@ -822,7 +817,8 @@ function Call({ interview }: InterviewProps) {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Provide Feedback</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Your feedback helps us improve the interview experience.
+                            Your feedback helps us improve the interview
+                            experience.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <FeedbackForm
