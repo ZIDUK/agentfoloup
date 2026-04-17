@@ -1,3 +1,8 @@
+export interface ProctoringEvent {
+  type: "tab_hidden" | "window_blur" | "fullscreen_exit";
+  timestamp: number;
+}
+
 export interface Response {
   id: bigint;
   created_at: Date;
@@ -13,6 +18,12 @@ export interface Response {
   analytics: any;
   candidate_status: string;
   tab_switch_count: number;
+  recording_url: string | null;
+  fullscreen_exit_count: number | null;
+  proctoring_events: ProctoringEvent[] | null;
+  application_id: string | null;
+  dreamit_notified: boolean;
+  processed_by_foloup: boolean;
 }
 
 export type CEFRLevel =

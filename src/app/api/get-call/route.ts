@@ -8,68 +8,118 @@ import {
   SYSTEM_PROMPT,
   getCallAnalysisPrompt,
 } from "@/lib/prompts/call-analysis";
+import { getSupabaseAdminClient } from "@/lib/supabase-client";
+import { InterviewService } from "@/services/interviews.service";
 
 export async function POST(req: Request, res: Response) {
   logger.info("get-call request received");
   const body = await req.json();
 
-  const callDetails: Response = await ResponseService.getResponseByCallId(
-    body.id,
-  );
+  // Use admin client to bypass RLS — this route is public and needs to read
+  // any response regardless of which user owns the interview.
+  const adminSupabase = getSupabaseAdminClient();
+
+  const adminSave = async (payload: any) => {
+    if (adminSupabase) {
+      const { error } = await adminSupabase
+        .from("response")
+        .update(payload)
+        .eq("call_id", body.id);
+      if (error) logger.error("Admin save error:", error);
+    } else {
+      await ResponseService.saveResponse(payload, body.id);
+    }
+  };
+
+  let callDetails: Response | null = null;
+  if (adminSupabase) {
+    const { data } = await adminSupabase
+      .from("response")
+      .select("*")
+      .filter("call_id", "eq", body.id);
+    callDetails = data ? data[0] : null;
+  } else {
+    callDetails = await ResponseService.getResponseByCallId(body.id);
+  }
 
   if (!callDetails) {
-    return NextResponse.json(
-      { error: "Call not found" },
-      { status: 404 },
-    );
+    return NextResponse.json({ error: "Call not found" }, { status: 404 });
   }
 
   let callResponse = callDetails.details || {};
   const interviewId = callDetails?.interview_id;
-  
-  // Extract transcript from callResponse or callDetails
-  const transcript = callResponse.transcript || 
-                     (callDetails.details?.transcript as string) || 
-                     "";
 
-  // If no transcript, return what we have
+  const transcript: string =
+    callResponse.transcript ||
+    (callDetails.details?.transcript as string) ||
+    "";
+
   if (!transcript) {
     return NextResponse.json(
       {
-        callResponse: callResponse,
+        callResponse,
         analytics: callDetails.analytics || null,
-        message: callDetails.is_analysed 
-          ? "Transcript not available." 
+        message: callDetails.is_analysed
+          ? "Transcript not available."
           : "Transcript not available yet. The call may still be in progress.",
       },
       { status: 200 },
     );
   }
 
-  // Calculate duration
-  const duration = callResponse.end_timestamp && callResponse.start_timestamp
-    ? Math.round(
-        (callResponse.end_timestamp / 1000) - (callResponse.start_timestamp / 1000)
-      )
-    : callDetails.duration || 0;
+  const duration =
+    callResponse.end_timestamp && callResponse.start_timestamp
+      ? Math.round(
+          callResponse.end_timestamp / 1000 -
+            callResponse.start_timestamp / 1000,
+        )
+      : callDetails.duration || 0;
 
-  // Generate analytics if not already present
-  let analytics = callDetails.analytics;
-  if (!analytics || !callDetails.is_analysed) {
-  const payload = {
-    callId: body.id,
-    interviewId: interviewId,
-      transcript: transcript,
-    };
-    
-    const result = await generateInterviewAnalytics(payload);
-    analytics = result.analytics;
+  // Pre-fetch the interview questions once with the admin client so both
+  // analytics generation steps share the same data without extra round-trips.
+  let questions: any[] | undefined;
+  if (adminSupabase) {
+    const { data: interviewData } = await adminSupabase
+      .from("interview")
+      .select("questions")
+      .eq("id", interviewId)
+      .single();
+    questions = interviewData?.questions || [];
+  } else {
+    const interview = await InterviewService.getInterviewById(interviewId);
+    questions = interview?.questions || [];
   }
 
-  // Generate call_analysis if not already present (even if already analyzed)
-  // This is important because older responses may not have call_analysis
+  const transcriptObject: any[] =
+    callDetails.details?.transcript_object || [];
+
+  // ── Step 1: Generate analytics (scores, CEFR, question summaries) ──────────
+  let analytics = callDetails.analytics;
+  let analyticsFailed = false;
+
+  if (!analytics || !callDetails.is_analysed) {
+    const result = await generateInterviewAnalytics({
+      callId: body.id,
+      interviewId,
+      transcript,
+      existingAnalytics: callDetails.analytics,
+      transcriptObject,
+      questions,
+    });
+
+    if (result.error || !result.analytics) {
+      analyticsFailed = true;
+      logger.error("Analytics generation failed for call", body.id);
+    } else {
+      analytics = result.analytics;
+    }
+  }
+
+  // ── Step 2: Generate call_analysis (summary, sentiments, completion) ────────
   let callAnalysis = callResponse.call_analysis;
+  let callAnalysisFailed = false;
   let needsSave = false;
+
   if (!callAnalysis && transcript) {
     needsSave = true;
     try {
@@ -83,14 +133,8 @@ export async function POST(req: Request, res: Response) {
       const completion = await mistral.createChatCompletion({
         model: process.env.MISTRAL_MODEL || "mistral-large-latest",
         messages: [
-          {
-            role: "system",
-            content: SYSTEM_PROMPT,
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: prompt },
         ],
         response_format: { type: "json_object" },
       });
@@ -99,45 +143,86 @@ export async function POST(req: Request, res: Response) {
       callAnalysis = JSON.parse(analysisContent);
       logger.info("Call analysis generated successfully");
     } catch (error) {
-      logger.error("Error generating call analysis:", error);
-      // Set default values if generation fails
-      callAnalysis = {
-        call_summary: analytics?.softSkillSummary || "No summary available.",
-        user_sentiment: "Neutral",
-        agent_sentiment: "Positive",
-        agent_task_completion_rating: "Complete",
-        agent_task_completion_rating_reason: "All interview questions were addressed.",
-        call_completion_rating: "Complete",
-        call_completion_rating_reason: "The interview was completed successfully.",
-      };
+      callAnalysisFailed = true;
+      logger.error("Call analysis generation failed for call", body.id, error);
     }
   }
 
-  // Update callResponse with call_analysis
+  const succeeded = !analyticsFailed && !callAnalysisFailed;
+
   const updatedCallResponse = {
     ...callResponse,
-    call_analysis: callAnalysis,
+    ...(callAnalysis ? { call_analysis: callAnalysis } : {}),
   };
 
-  // Only save if we generated new analytics or call_analysis
+  // Only mark processed_by_foloup true when both steps succeeded.
+  // Leaving it false means the retry cron will pick this record up.
   if (!callDetails.is_analysed || needsSave) {
-  await ResponseService.saveResponse(
-    {
-        details: updatedCallResponse,
-      is_analysed: true,
-      duration: duration,
-      analytics: analytics,
-    },
-    body.id,
-  );
-    logger.info("Call analysed and saved successfully");
+    await adminSave({
+      details: updatedCallResponse,
+      is_analysed: succeeded,
+      processed_by_foloup: succeeded,
+      ...(analytics ? { analytics, duration } : {}),
+    });
+
+    if (succeeded) {
+      logger.info("Call fully analysed and saved for call", body.id);
+    } else {
+      logger.warn(
+        `Analysis incomplete for call ${body.id} — analytics_failed=${analyticsFailed} call_analysis_failed=${callAnalysisFailed}`,
+      );
+    }
+  }
+
+  // ── Step 3: Notify DreamIT (only when analysis is complete) ─────────────────
+  if (
+    succeeded &&
+    callDetails.application_id &&
+    !callDetails.dreamit_notified &&
+    analytics
+  ) {
+    const dreamitUrl = process.env.DREAMIT_URL;
+    const secret = process.env.DREAMIT_FOLOUP_SECRET;
+    const serviceRoleKey = process.env.DREAMIT_SUPABASE_SERVICE_ROLE_KEY;
+
+    if (dreamitUrl && secret && serviceRoleKey) {
+      try {
+        const dreamitRes = await fetch(
+          `${dreamitUrl}/functions/v1/process-speaking-test-results`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-foloup-secret": secret,
+              Authorization: `Bearer ${serviceRoleKey}`,
+            },
+            body: JSON.stringify({
+              applicationId: callDetails.application_id,
+              analytics,
+            }),
+          },
+        );
+
+        if (dreamitRes.ok) {
+          await adminSave({ dreamit_notified: true });
+          logger.info(
+            "DreamIT notified for application",
+            callDetails.application_id,
+          );
+        } else {
+          logger.error(
+            "DreamIT notification failed with status",
+            dreamitRes.status,
+          );
+        }
+      } catch (err) {
+        logger.error("DreamIT notification error", err);
+      }
+    }
   }
 
   return NextResponse.json(
-    {
-      callResponse: updatedCallResponse,
-      analytics,
-    },
+    { callResponse: updatedCallResponse, analytics },
     { status: 200 },
   );
 }

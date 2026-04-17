@@ -1,7 +1,8 @@
 "use client";
 
 import { useInterviews } from "@/contexts/interviews.context";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Call from "@/components/call";
 import Image from "next/image";
 import { ArrowUpRightSquareIcon } from "lucide-react";
@@ -81,6 +82,8 @@ function PopUpMessage({ title, description, image }: PopupProps) {
 }
 
 function InterviewInterface({ params }: Props) {
+  const searchParams = useSearchParams();
+  const applicationId = searchParams.get("ref") ?? undefined;
   const [interview, setInterview] = useState<Interview>();
   const [isActive, setIsActive] = useState(true);
   const { getInterviewById } = useInterviews();
@@ -131,7 +134,7 @@ function InterviewInterface({ params }: Props) {
             image="/closed.png"
           />
         ) : (
-          <Call interview={interview} />
+          <Call interview={interview} applicationId={applicationId} />
         )}
       </div>
       <div className=" md:hidden flex flex-col items-center md:h-[0px] justify-center  my-auto">
@@ -159,4 +162,10 @@ function InterviewInterface({ params }: Props) {
   );
 }
 
-export default InterviewInterface;
+export default function Page({ params }: Props) {
+  return (
+    <Suspense fallback={<PopupLoader />}>
+      <InterviewInterface params={params} />
+    </Suspense>
+  );
+}

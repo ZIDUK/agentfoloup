@@ -25,6 +25,12 @@ interface Props {
   setFileName: (fileName: string) => void;
 }
 
+interface BambooJob {
+  id: number;
+  job_id: number;
+  title: string;
+}
+
 function DetailsPopup({
   open,
   setLoading,
@@ -55,6 +61,17 @@ function DetailsPopup({
   );
   const [duration, setDuration] = useState(interviewData.time_duration);
   const [uploadedDocumentContext, setUploadedDocumentContext] = useState("");
+  const [jobs, setJobs] = useState<BambooJob[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(interviewData.job_id ?? null);
+
+  useEffect(() => {
+    fetch("/api/get-dreamit-jobs")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data.jobs)) setJobs(data.jobs); })
+      .catch(() => {})
+      .finally(() => setJobsLoading(false));
+  }, []);
 
   const slideLeft = (id: string, value: number) => {
     var slider = document.getElementById(`${id}`);
@@ -97,6 +114,7 @@ function DetailsPopup({
       }),
     );
 
+    const selectedJob = jobs.find((j) => j.job_id === selectedJobId) ?? null;
     const updatedInterviewData = {
       ...interviewData,
       name: name.trim(),
@@ -107,6 +125,8 @@ function DetailsPopup({
       time_duration: duration,
       description: generatedQuestionsResponse.description,
       is_anonymous: isAnonymous,
+      job_id: selectedJob?.job_id ?? null,
+      job_title: selectedJob?.title ?? null,
     };
     setInterviewData(updatedInterviewData);
   };
@@ -114,6 +134,7 @@ function DetailsPopup({
   const onManual = () => {
     setLoading(true);
 
+    const selectedJob = jobs.find((j) => j.job_id === selectedJobId) ?? null;
     const updatedInterviewData = {
       ...interviewData,
       name: name.trim(),
@@ -124,6 +145,8 @@ function DetailsPopup({
       time_duration: String(duration),
       description: "",
       is_anonymous: isAnonymous,
+      job_id: selectedJob?.job_id ?? null,
+      job_title: selectedJob?.title ?? null,
     };
     setInterviewData(updatedInterviewData);
   };
@@ -137,6 +160,7 @@ function DetailsPopup({
       setNumQuestions("");
       setDuration("");
       setIsClicked(false);
+      setSelectedJobId(null);
     }
   }, [open]);
 
@@ -155,6 +179,30 @@ function DetailsPopup({
               onChange={(e) => setName(e.target.value)}
               onBlur={(e) => setName(e.target.value.trim())}
             />
+          </div>
+          <div className="flex flex-row justify-center items-center mt-3">
+            <h3 className="text-sm font-medium">Job:</h3>
+            <select
+              className="border-b-2 focus:outline-none border-gray-500 px-2 w-80 py-0.5 ml-3 bg-transparent text-sm disabled:opacity-50"
+              value={selectedJobId ?? ""}
+              disabled={jobsLoading}
+              onChange={(e) => setSelectedJobId(e.target.value ? Number(e.target.value) : null)}
+            >
+              {jobsLoading ? (
+                <option value="">Loading jobs…</option>
+              ) : jobs.length === 0 ? (
+                <option value="">No jobs available</option>
+              ) : (
+                <>
+                  <option value="">— No job linked —</option>
+                  {jobs.map((job) => (
+                    <option key={job.job_id} value={job.job_id}>
+                      {job.title}
+                    </option>
+                  ))}
+                </>
+              )}
+            </select>
           </div>
           <h3 className="text-sm mt-3 font-medium">Select an Interviewer:</h3>
           <div className="relative flex items-center mt-1">

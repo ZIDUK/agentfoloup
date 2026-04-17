@@ -19,7 +19,7 @@ import { InterviewService } from "@/services/interviews.service";
 import EditInterview from "@/components/dashboard/interview/editInterview";
 import Modal from "@/components/dashboard/Modal";
 import { toast } from "sonner";
-import { ChromePicker } from "react-color";
+import { HexColorPicker } from "react-colorful";
 import SharePopup from "@/components/dashboard/interview/sharePopup";
 import {
   Tooltip,
@@ -277,8 +277,8 @@ function InterviewHome({ params, searchParams }: Props) {
     setIsSharePopupOpen(false);
   };
 
-  const handleColorChange = (color: any) => {
-    setThemeColor(color.hex);
+  const handleColorChange = (color: string) => {
+    setThemeColor(color);
   };
 
   const applyColorChange = () => {
@@ -614,15 +614,10 @@ function InterviewHome({ params, searchParams }: Props) {
           <h3 className="text-lg font-semibold mb-4 text-center">
             Choose a Theme Color
           </h3>
-          <ChromePicker
-            disableAlpha={true}
+          <HexColorPicker
             color={themeColor}
-            styles={{
-              default: {
-                picker: { width: "100%" },
-              },
-            }}
             onChange={handleColorChange}
+            style={{ width: "100%" }}
           />
         </div>
       </Modal>

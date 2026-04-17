@@ -197,12 +197,15 @@ export type Database = {
           details: Json | null;
           duration: number | null;
           email: string | null;
+          fullscreen_exit_count: number | null;
           id: number;
           interview_id: string | null;
           is_analysed: boolean | null;
           is_ended: boolean | null;
           is_viewed: boolean | null;
           name: string | null;
+          proctoring_events: Json | null;
+          recording_url: string | null;
           tab_switch_count: number | null;
         };
         Insert: {
@@ -213,12 +216,15 @@ export type Database = {
           details?: Json | null;
           duration?: number | null;
           email?: string | null;
+          fullscreen_exit_count?: number | null;
           id?: number;
           interview_id?: string | null;
           is_analysed?: boolean | null;
           is_ended?: boolean | null;
           is_viewed?: boolean | null;
           name?: string | null;
+          proctoring_events?: Json | null;
+          recording_url?: string | null;
           tab_switch_count?: number | null;
         };
         Update: {
@@ -229,12 +235,15 @@ export type Database = {
           details?: Json | null;
           duration?: number | null;
           email?: string | null;
+          fullscreen_exit_count?: number | null;
           id?: number;
           interview_id?: string | null;
           is_analysed?: boolean | null;
           is_ended?: boolean | null;
           is_viewed?: boolean | null;
           name?: string | null;
+          proctoring_events?: Json | null;
+          recording_url?: string | null;
           tab_switch_count?: number | null;
         };
         Relationships: [

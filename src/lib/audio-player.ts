@@ -4,6 +4,7 @@
 
 export class AudioPlayer {
   private audioContext: AudioContext | null = null;
+  private recordingDestination: MediaStreamAudioDestinationNode | null = null;
   private audioBuffer: ArrayBuffer[] = [];
   private isPlaying: boolean = false;
   private audioChunkCount: number = 0;
@@ -20,7 +21,15 @@ export class AudioPlayer {
     if (!this.audioContext) {
       this.audioContext = new AudioContext({ sampleRate: 16000 });
     }
+    if (!this.recordingDestination) {
+      this.recordingDestination = this.audioContext.createMediaStreamDestination();
+    }
     return this.audioContext;
+  }
+
+  /** Returns the MediaStream that carries the AI audio — used to mix into the recording. */
+  getRecordingStream(): MediaStream | null {
+    return this.recordingDestination?.stream ?? null;
   }
 
   /**
@@ -224,6 +233,10 @@ export class AudioPlayer {
           const source = this.audioContext.createBufferSource();
           source.buffer = audioBuffer;
           source.connect(this.audioContext.destination);
+          // Also route to recording destination so the AI voice is captured in the video.
+          if (this.recordingDestination) {
+            source.connect(this.recordingDestination);
+          }
 
           // Calculate chunk duration
           const chunkDuration = float32Array.length / 16000; // seconds
@@ -298,12 +311,16 @@ export class AudioPlayer {
    */
   async stop() {
     this.clearBuffer();
-    this.nextPlayTime = 0; // Reset scheduling
+    this.nextPlayTime = 0;
+    this.isPlaying = false;
+    this.recordingDestination = null;
     if (this.audioContext) {
-      await this.audioContext.close();
+      // Suspend first to immediately silence any already-scheduled sources,
+      // then close to release all resources.
+      await this.audioContext.suspend().catch(() => {});
+      await this.audioContext.close().catch(() => {});
       this.audioContext = null;
     }
-    this.isPlaying = false;
   }
 }
 
