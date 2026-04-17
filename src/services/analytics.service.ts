@@ -109,52 +109,55 @@ export const generateInterviewAnalytics = async (payload: {
   callId: string;
   interviewId: string;
   transcript: string;
+  // Pre-fetched data from the caller (avoids redundant DB round-trips and RLS issues)
+  existingAnalytics?: Analytics | null;
+  transcriptObject?: any[];
+  questions?: Question[];
 }) => {
-  const { callId, interviewId, transcript } = payload;
+  const { callId, interviewId, transcript, existingAnalytics, transcriptObject: passedTranscriptObject, questions: passedQuestions } = payload;
 
   try {
-    const response = await ResponseService.getResponseByCallId(callId);
-    const interview = await InterviewService.getInterviewById(interviewId);
-
-    if (response.analytics) {
-      return { analytics: response.analytics as Analytics, status: 200 };
+    // Use pre-fetched analytics if available, otherwise fall back to DB fetch
+    if (existingAnalytics) {
+      return { analytics: existingAnalytics, status: 200 };
     }
 
-    const interviewTranscript = transcript || response.details?.transcript;
-    const questions = interview?.questions || [];
-    const mainInterviewQuestions = questions
+    // Only hit the DB if the caller didn't supply questions
+    let questions = passedQuestions;
+    if (!questions) {
+      const interview = await InterviewService.getInterviewById(interviewId);
+      questions = interview?.questions || [];
+    }
+
+    // Only hit the DB if the caller didn't supply transcript_object
+    let transcriptObject = passedTranscriptObject;
+    if (!transcriptObject) {
+      const response = await ResponseService.getResponseByCallId(callId);
+      transcriptObject = response?.details?.transcript_object || [];
+    }
+
+    const mainInterviewQuestions = (questions ?? [])
       .map((q: Question, index: number) => `${index + 1}. ${q.question}`)
       .join("\n");
 
     const mistral = getMistralClient();
 
-    const prompt = getInterviewAnalyticsPrompt(
-      interviewTranscript,
-      mainInterviewQuestions,
-    );
+    const prompt = getInterviewAnalyticsPrompt(transcript, mainInterviewQuestions);
 
     const baseCompletion = await mistral.createChatCompletion({
       model: process.env.MISTRAL_MODEL || "mistral-large-latest",
       messages: [
-        {
-          role: "system",
-          content: SYSTEM_PROMPT,
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: prompt },
       ],
       response_format: { type: "json_object" },
-      max_tokens: 16000, // Sufficient for large JSON responses with multiple questions
+      max_tokens: 16000,
     });
 
     const basePromptOutput = baseCompletion.choices[0] || {};
     const content = basePromptOutput.message?.content || "";
     const analyticsResponse = JSON.parse(content);
 
-    // Calculate WPM and bad pauses for each question using timing data
-    const transcriptObject = response.details?.transcript_object || [];
     if (
       analyticsResponse.questionSummaries &&
       Array.isArray(analyticsResponse.questionSummaries) &&
@@ -164,33 +167,19 @@ export const generateInterviewAnalytics = async (payload: {
         (qs: QuestionSummary, index: number) => {
           if (qs.questionTranscript) {
             const { wpm, badPauses, averageWordDuration, speechVariability } =
-              calculateQuestionFluencyMetrics(
-                qs.questionTranscript,
-                transcriptObject,
-                index,
-              );
-            return {
-              ...qs,
-              wordsPerMinute: wpm,
-              badPauses: badPauses,
-              // Additional Deepgram-based metrics (can be used for enhanced fluency analysis)
-              averageWordDuration: averageWordDuration,
-              speechVariability: speechVariability,
-            };
+              calculateQuestionFluencyMetrics(qs.questionTranscript, transcriptObject, index);
+            return { ...qs, wordsPerMinute: wpm, badPauses, averageWordDuration, speechVariability };
           }
           return qs;
         },
       );
     }
 
-    analyticsResponse.mainInterviewQuestions = questions.map(
-      (q: Question) => q.question,
-    );
+    analyticsResponse.mainInterviewQuestions = (questions ?? []).map((q: Question) => q.question);
 
     return { analytics: analyticsResponse, status: 200 };
   } catch (error) {
     console.error("Error in Mistral request:", error);
-
     return { error: "internal server error", status: 500 };
   }
 };

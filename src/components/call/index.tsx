@@ -44,6 +44,7 @@ import { useCameraRecording } from "@/hooks/useCameraRecording";
 
 type InterviewProps = {
   interview: Interview;
+  applicationId?: string;
 };
 
 type transcriptType = {
@@ -51,7 +52,7 @@ type transcriptType = {
   content: string;
 };
 
-function Call({ interview }: InterviewProps) {
+function Call({ interview, applicationId }: InterviewProps) {
   const { createResponse } = useResponses();
   const [lastInterviewerResponse, setLastInterviewerResponse] =
     useState<string>("");
@@ -336,6 +337,20 @@ function Call({ interview }: InterviewProps) {
       return;
     }
 
+    // If this interview was opened via a DreamIT application link, block if already submitted
+    if (applicationId) {
+      const checkRes = await fetch("/api/check-response", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ applicationId }),
+      });
+      const { exists } = await checkRes.json();
+      if (exists) {
+        setIsOldUser(true);
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -414,6 +429,7 @@ function Call({ interview }: InterviewProps) {
         call_id: newCallId,
         email: email,
         name: name,
+        ...(applicationId ? { application_id: applicationId } : {}),
       });
 
       setIsStarted(true);

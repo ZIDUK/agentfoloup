@@ -21,6 +21,9 @@ export interface Response {
   recording_url: string | null;
   fullscreen_exit_count: number | null;
   proctoring_events: ProctoringEvent[] | null;
+  application_id: string | null;
+  dreamit_notified: boolean;
+  processed_by_foloup: boolean;
 }
 
 export type CEFRLevel =

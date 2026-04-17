@@ -18,6 +18,7 @@ const publicRoutes = [
   "/call",
   "/api/register-call",
   "/api/get-call",
+  "/api/check-response",
   "/api/generate-interview-questions",
   "/api/create-interviewer",
   "/api/analyze-communication",
