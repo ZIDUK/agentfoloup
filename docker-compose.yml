@@ -1,5 +1,6 @@
 services:
   foloup:
+    container_name: foloup-app
     build: .
     ports:
       - "${DOCKER_PORT:-3001}:3000"
