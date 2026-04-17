@@ -1,3 +1,0 @@
--- This migration intentionally left empty.
--- analysis_failed column was removed in favour of using processed_by_foloup = false
--- to identify responses that need analysis retried.
