@@ -21,6 +21,8 @@ const CreateEmptyInterviewData = (): InterviewBase => ({
   questions: [],
   description: "",
   response_count: BigInt(0),
+  job_id: null,
+  job_title: null,
 });
 
 function CreateInterviewModal({ open, setOpen }: Props) {
