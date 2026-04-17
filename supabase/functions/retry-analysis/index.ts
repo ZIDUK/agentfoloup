@@ -9,6 +9,15 @@ const ANALYTICS_SYSTEM_PROMPT =
 const CALL_ANALYSIS_SYSTEM_PROMPT =
   "You are an expert conversation analyst. Return a JSON object summarizing the call. IMPORTANT: Respond with valid JSON only.";
 
+function log(level: "INFO" | "WARN" | "ERROR", msg: string, data?: unknown) {
+  const entry: Record<string, unknown> = { ts: new Date().toISOString(), level, fn: "retry-analysis", msg };
+  if (data !== undefined) entry.data = data;
+  const out = JSON.stringify(entry);
+  if (level === "ERROR") console.error(out);
+  else if (level === "WARN") console.warn(out);
+  else console.log(out);
+}
+
 function buildAnalyticsPrompt(transcript: string, questions: string): string {
   return `Analyze this interview transcript and return a JSON object with:
 - overallScore (0-10)
@@ -56,6 +65,7 @@ ${transcript}`;
 async function mistralComplete(
   mistral: Mistral,
   messages: Array<{ role: "system" | "user"; content: string }>,
+  label: string,
   maxTokens?: number,
 ): Promise<string> {
   const request: any = {
@@ -65,23 +75,49 @@ async function mistralComplete(
     ...(maxTokens ? { maxTokens } : {}),
   };
 
+  log("INFO", `Mistral request started`, { label, model: MISTRAL_MODEL, maxTokens, userPromptChars: messages[1]?.content?.length });
+  const t0 = Date.now();
+
   try {
     const completion = await mistral.chat.complete(request);
-    return (completion.choices?.[0]?.message?.content as string) || "{}";
+    const content = (completion.choices?.[0]?.message?.content as string) || "{}";
+    log("INFO", `Mistral request succeeded`, {
+      label,
+      durationMs: Date.now() - t0,
+      responseChars: content.length,
+      finishReason: completion.choices?.[0]?.finish_reason,
+      usage: completion.usage,
+    });
+    return content;
   } catch (err: any) {
+    log("WARN", `Mistral request failed, retrying without responseFormat`, {
+      label,
+      durationMs: Date.now() - t0,
+      status: err?.status,
+      message: err?.message,
+    });
+
     // Some models reject responseFormat — retry without it
     if (err?.status === 400 || err?.message?.includes("responseFormat")) {
-      const retryCompletion = await mistral.chat.complete({
-        ...request,
-        responseFormat: undefined,
+      const t1 = Date.now();
+      const retryCompletion = await mistral.chat.complete({ ...request, responseFormat: undefined });
+      const content = (retryCompletion.choices?.[0]?.message?.content as string) || "{}";
+      log("INFO", `Mistral retry succeeded`, {
+        label,
+        durationMs: Date.now() - t1,
+        responseChars: content.length,
+        usage: retryCompletion.usage,
       });
-      return (retryCompletion.choices?.[0]?.message?.content as string) || "{}";
+      return content;
     }
     throw err;
   }
 }
 
 Deno.serve(async (_req) => {
+  const fnStart = Date.now();
+  log("INFO", "Function invoked");
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -90,11 +126,24 @@ Deno.serve(async (_req) => {
     const foloupSecret = Deno.env.get("DREAMIT_FOLOUP_SECRET");
     const dreamitServiceRoleKey = Deno.env.get("DREAMIT_SUPABASE_SERVICE_ROLE_KEY");
 
+    log("INFO", "Env vars loaded", {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasServiceRoleKey: !!serviceRoleKey,
+      hasMistralApiKey: !!mistralApiKey,
+      mistralModel: MISTRAL_MODEL,
+      hasDreamitUrl: !!dreamitUrl,
+      hasFoloupSecret: !!foloupSecret,
+      hasDreamitServiceRoleKey: !!dreamitServiceRoleKey,
+    });
+
     if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not configured");
+      const msg = "SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not configured";
+      log("ERROR", msg);
+      throw new Error(msg);
     }
 
     if (!mistralApiKey) {
+      log("ERROR", "MISTRAL_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "MISTRAL_API_KEY not configured" }),
         { status: 500, headers: { "Content-Type": "application/json" } },
@@ -107,43 +156,70 @@ Deno.serve(async (_req) => {
 
     const mistral = new Mistral({ apiKey: mistralApiKey });
 
-    // Fetch all ended responses that haven't been fully analysed yet
+    log("INFO", "Fetching pending responses from DB");
+    const dbFetchStart = Date.now();
     const { data: responses, error } = await supabase
       .from("response")
       .select("call_id, interview_id, details, analytics, application_id")
       .eq("processed_by_foloup", false)
       .eq("is_ended", true);
 
+    log("INFO", "DB fetch complete", {
+      durationMs: Date.now() - dbFetchStart,
+      rowCount: responses?.length ?? 0,
+      error: error?.message ?? null,
+    });
+
     if (error) {
       throw new Error(`DB fetch error: ${error.message}`);
     }
 
     if (!responses || responses.length === 0) {
+      log("INFO", "No pending analyses found, exiting early");
       return new Response(
         JSON.stringify({ message: "No pending analyses", processed: 0 }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       );
     }
 
+    log("INFO", `Processing ${responses.length} response(s)`);
+
     let succeeded = 0;
     let failed = 0;
 
-    for (const response of responses) {
+    for (let i = 0; i < responses.length; i++) {
+      const response = responses[i];
+      const callId = response.call_id;
+      const appId = response.application_id ?? null;
+      const iterLabel = `[${i + 1}/${responses.length}] call_id=${callId}`;
+
+      log("INFO", `${iterLabel} Starting`, { interview_id: response.interview_id, application_id: appId });
+
       const transcript: string = response.details?.transcript || "";
 
       if (!transcript) {
-        console.warn(`No transcript for call ${response.call_id}, skipping`);
+        log("WARN", `${iterLabel} No transcript found, skipping`, { details_keys: Object.keys(response.details ?? {}) });
         failed++;
         continue;
       }
 
+      log("INFO", `${iterLabel} Transcript found`, { transcriptChars: transcript.length });
+
       try {
         // Fetch interview questions
-        const { data: interviewData } = await supabase
+        log("INFO", `${iterLabel} Fetching interview questions`, { interview_id: response.interview_id });
+        const interviewFetchStart = Date.now();
+        const { data: interviewData, error: interviewError } = await supabase
           .from("interview")
           .select("questions")
           .eq("id", response.interview_id)
           .single();
+
+        log("INFO", `${iterLabel} Interview fetch complete`, {
+          durationMs: Date.now() - interviewFetchStart,
+          questionCount: interviewData?.questions?.length ?? 0,
+          error: interviewError?.message ?? null,
+        });
 
         const questions: any[] = interviewData?.questions || [];
         const questionsText = questions
@@ -153,37 +229,70 @@ Deno.serve(async (_req) => {
         // ── Step 1: Generate analytics ──────────────────────────────────────
         let analytics = response.analytics;
         if (!analytics) {
+          log("INFO", `${iterLabel} Step 1: Generating analytics (no existing analytics)`);
           const content = await mistralComplete(
             mistral,
             [
               { role: "system", content: ANALYTICS_SYSTEM_PROMPT },
               { role: "user", content: buildAnalyticsPrompt(transcript, questionsText) },
             ],
+            `${iterLabel}/analytics`,
             16000,
           );
-          analytics = JSON.parse(content);
-          analytics.mainInterviewQuestions = questions.map((q: any) => q.question);
+          try {
+            analytics = JSON.parse(content);
+            analytics.mainInterviewQuestions = questions.map((q: any) => q.question);
+            log("INFO", `${iterLabel} Analytics parsed`, {
+              overallScore: analytics.overallScore,
+              cefrLevel: analytics.cefrLevel,
+              ieltsEstimate: analytics.ieltsEstimate,
+              questionSummaryCount: analytics.questionSummaries?.length ?? 0,
+            });
+          } catch (parseErr) {
+            log("ERROR", `${iterLabel} Failed to parse analytics JSON`, { raw: content.slice(0, 500) });
+            throw parseErr;
+          }
+        } else {
+          log("INFO", `${iterLabel} Step 1: Analytics already present, skipping Mistral call`);
         }
 
         // ── Step 2: Generate call_analysis ──────────────────────────────────
         let callAnalysis = response.details?.call_analysis;
         if (!callAnalysis) {
-          const content = await mistralComplete(mistral, [
-            { role: "system", content: CALL_ANALYSIS_SYSTEM_PROMPT },
-            {
-              role: "user",
-              content: buildCallAnalysisPrompt(
-                transcript,
-                analytics?.overallScore,
-                analytics?.overallFeedback,
-              ),
-            },
-          ]);
-          callAnalysis = JSON.parse(content);
+          log("INFO", `${iterLabel} Step 2: Generating call analysis`);
+          const content = await mistralComplete(
+            mistral,
+            [
+              { role: "system", content: CALL_ANALYSIS_SYSTEM_PROMPT },
+              {
+                role: "user",
+                content: buildCallAnalysisPrompt(
+                  transcript,
+                  analytics?.overallScore,
+                  analytics?.overallFeedback,
+                ),
+              },
+            ],
+            `${iterLabel}/call_analysis`,
+          );
+          try {
+            callAnalysis = JSON.parse(content);
+            log("INFO", `${iterLabel} Call analysis parsed`, {
+              user_sentiment: callAnalysis.user_sentiment,
+              call_completion_rating: callAnalysis.call_completion_rating,
+            });
+          } catch (parseErr) {
+            log("ERROR", `${iterLabel} Failed to parse call_analysis JSON`, { raw: content.slice(0, 500) });
+            throw parseErr;
+          }
+        } else {
+          log("INFO", `${iterLabel} Step 2: Call analysis already present, skipping Mistral call`);
         }
 
         // Save results
-        await supabase
+        log("INFO", `${iterLabel} Saving results to DB`);
+        const saveStart = Date.now();
+        const { error: saveError } = await supabase
           .from("response")
           .update({
             analytics,
@@ -191,10 +300,18 @@ Deno.serve(async (_req) => {
             is_analysed: true,
             processed_by_foloup: true,
           })
-          .eq("call_id", response.call_id);
+          .eq("call_id", callId);
+
+        if (saveError) {
+          log("ERROR", `${iterLabel} DB save failed`, { error: saveError.message, code: saveError.code });
+          throw new Error(`DB save error: ${saveError.message}`);
+        }
+        log("INFO", `${iterLabel} DB save succeeded`, { durationMs: Date.now() - saveStart });
 
         // Notify DreamIT if applicable
         if (response.application_id && dreamitUrl && foloupSecret && dreamitServiceRoleKey) {
+          log("INFO", `${iterLabel} Notifying DreamIT`, { application_id: appId, dreamitUrl });
+          const dreamitStart = Date.now();
           const dreamitRes = await fetch(
             `${dreamitUrl}/functions/v1/process-speaking-test-results`,
             {
@@ -208,30 +325,62 @@ Deno.serve(async (_req) => {
             },
           );
 
+          const dreamitStatus = dreamitRes.status;
+          log("INFO", `${iterLabel} DreamIT responded`, {
+            status: dreamitStatus,
+            ok: dreamitRes.ok,
+            durationMs: Date.now() - dreamitStart,
+          });
+
           if (dreamitRes.ok) {
-            await supabase
+            const { error: notifyError } = await supabase
               .from("response")
               .update({ dreamit_notified: true })
-              .eq("call_id", response.call_id);
+              .eq("call_id", callId);
+
+            if (notifyError) {
+              log("WARN", `${iterLabel} Failed to set dreamit_notified flag`, { error: notifyError.message });
+            } else {
+              log("INFO", `${iterLabel} dreamit_notified flag set`);
+            }
           } else {
-            console.error(`DreamIT rejected application ${response.application_id}: ${dreamitRes.status}`);
+            const body = await dreamitRes.text().catch(() => "(unreadable)");
+            log("ERROR", `${iterLabel} DreamIT rejected request`, {
+              application_id: appId,
+              status: dreamitStatus,
+              responseBody: body.slice(0, 500),
+            });
           }
+        } else {
+          log("INFO", `${iterLabel} Skipping DreamIT notification`, {
+            hasApplicationId: !!response.application_id,
+            hasDreamitUrl: !!dreamitUrl,
+            hasFoloupSecret: !!foloupSecret,
+            hasDreamitServiceRoleKey: !!dreamitServiceRoleKey,
+          });
         }
 
         succeeded++;
+        log("INFO", `${iterLabel} Completed successfully`);
       } catch (err) {
-        console.error(`Retry failed for call ${response.call_id}:`, err);
+        const msg = err instanceof Error ? err.message : String(err);
+        const stack = err instanceof Error ? err.stack : undefined;
+        log("ERROR", `${iterLabel} Failed`, { error: msg, stack });
         failed++;
       }
     }
 
+    const summary = { processed: responses.length, succeeded, failed, totalDurationMs: Date.now() - fnStart };
+    log("INFO", "Function complete", summary);
+
     return new Response(
-      JSON.stringify({ processed: responses.length, succeeded, failed }),
+      JSON.stringify(summary),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("retry-analysis fatal error:", message);
+    const stack = err instanceof Error ? err.stack : undefined;
+    log("ERROR", "Fatal error", { error: message, stack, totalDurationMs: Date.now() - fnStart });
     return new Response(
       JSON.stringify({ error: message }),
       { status: 500, headers: { "Content-Type": "application/json" } },

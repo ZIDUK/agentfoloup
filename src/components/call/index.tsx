@@ -505,6 +505,15 @@ function Call({ interview, applicationId }: InterviewProps) {
             callId,
           );
 
+          // Trigger analysis immediately after save — keepalive ensures the request
+          // completes even if the user closes the tab before the redirect fires.
+          fetch("/api/get-call", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: callId }),
+            keepalive: true,
+          }).catch(() => {});
+
           setTimeout(() => {
             window.location.href = `/interviews/${interview.id}?call=${callId}`;
           }, 1000);
