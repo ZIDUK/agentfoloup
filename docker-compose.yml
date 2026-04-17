@@ -1,11 +1,39 @@
 services:
   foloup:
     container_name: foloup-app
-    build: .
-    ports:
-      - "${DOCKER_PORT:-3001}:3000"
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+      args:
+        - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        - NEXT_PUBLIC_DEEPGRAM_API_KEY=${NEXT_PUBLIC_DEEPGRAM_API_KEY}
+        - NEXT_PUBLIC_CLERK_SIGN_UP_URL=${NEXT_PUBLIC_CLERK_SIGN_UP_URL}
+        - NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=${NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL}
+        - NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=${NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL}
+        - NEXT_PUBLIC_LIVE_URL=${NEXT_PUBLIC_LIVE_URL}
+        - CACHEBUST=${CACHEBUST:-1}
+    expose:
+      - "3000"
     env_file:
       - .env
     environment:
       - NODE_ENV=production
+      - VIRTUAL_HOST=foloup.agenticdream.com
+      - LETSENCRYPT_HOST=foloup.agenticdream.com
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.foloup.rule=Host(`foloup.agenticdream.com`)"
+      - "traefik.http.routers.foloup.entrypoints=web,websecure"
+      - "traefik.http.routers.foloup.tls=true"
+      - "traefik.http.routers.foloup.tls.certresolver=letsencrypt"
+      - "traefik.http.services.foloup.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     restart: unless-stopped
