@@ -1,5 +1,5 @@
 services:
-  app:
+  foloup:
     container_name: foloup-app
     build:
       context: .
