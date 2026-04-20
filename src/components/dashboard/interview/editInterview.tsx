@@ -137,7 +137,12 @@ function EditInterview({ interview }: EditInterviewProps) {
     }
 
     try {
-      await InterviewService.deleteInterview(interview.id);
+      const res = await fetch("/api/delete-interview", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: interview.id }),
+      });
+      if (!res.ok) throw new Error("Delete failed");
       router.push("/dashboard");
     } catch (error) {
       console.error("Error deleting interview:", error);
@@ -200,8 +205,8 @@ function EditInterview({ interview }: EditInterviewProps) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    this interview.
+                    This will hide the interview from your dashboard. Existing
+                    response data will be preserved.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
