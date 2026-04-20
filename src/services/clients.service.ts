@@ -8,7 +8,7 @@ const updateOrganization = async (payload: any, id: string) => {
     .update({ ...payload })
     .eq("id", id);
   if (error) {
-    console.log(error);
+    console.error(error);
 
     return [];
   }
@@ -25,17 +25,17 @@ const getClientById = async (
     const supabase = getSupabaseClient();
     if (!supabase) return null;
     const { data, error } = await supabase
-      .from("user")
+      .from("users")
       .select(`*`)
       .filter("id", "eq", id);
 
     if (!data || (data.length === 0 && email)) {
       const { error, data } = await supabase
-        .from("user")
+        .from("users")
         .insert({ id: id, email: email, organization_id: organization_id });
 
       if (error) {
-        console.log(error);
+        console.error(error);
 
         return [];
       }
@@ -45,12 +45,12 @@ const getClientById = async (
 
     if (data[0].organization_id !== organization_id) {
       const { error, data } = await supabase
-        .from("user")
+        .from("users")
         .update({ organization_id: organization_id })
         .eq("id", id);
 
       if (error) {
-        console.log(error);
+        console.error(error);
 
         return [];
       }
@@ -60,7 +60,7 @@ const getClientById = async (
 
     return data ? data[0] : null;
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
     return [];
   }
@@ -84,7 +84,7 @@ const getOrganizationById = async (
         .insert({ id: organization_id, name: organization_name });
 
       if (error) {
-        console.log(error);
+        console.error(error);
 
         return [];
       }
@@ -99,7 +99,7 @@ const getOrganizationById = async (
         .eq("id", organization_id);
 
       if (error) {
-        console.log(error);
+        console.error(error);
 
         return [];
       }
@@ -109,7 +109,7 @@ const getOrganizationById = async (
 
     return data ? data[0] : null;
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
     return [];
   }

@@ -3,10 +3,11 @@ import { getSupabaseClient } from "@/lib/supabase-client";
 const getAllInterviews = async (userId: string, organizationId: string) => {
   try {
     const supabase = getSupabaseClient();
-    const { data: clientData, error: clientError } = await supabase
+    const { data: clientData } = await supabase
       .from("interview")
       .select(`*`)
       .or(`organization_id.eq.${organizationId},user_id.eq.${userId}`)
+      .eq("is_deleted", false)
       .order("created_at", { ascending: false });
 
     return [...(clientData || [])];
@@ -19,15 +20,14 @@ const getAllInterviews = async (userId: string, organizationId: string) => {
 const getInterviewById = async (id: string) => {
   try {
     const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("interview")
       .select(`*`)
       .or(`id.eq.${id},readable_slug.eq.${id}`);
 
     return data ? data[0] : null;
   } catch (error) {
-    console.log(error);
-
+    console.error("getInterviewById error", error);
     return [];
   }
 };
@@ -39,8 +39,7 @@ const updateInterview = async (payload: any, id: string) => {
     .update({ ...payload })
     .eq("id", id);
   if (error) {
-    console.log(error);
-
+    console.error("updateInterview error", error);
     return [];
   }
 
@@ -49,13 +48,13 @@ const updateInterview = async (payload: any, id: string) => {
 
 const deleteInterview = async (id: string) => {
   const supabase = getSupabaseClient();
+
   const { error, data } = await supabase
     .from("interview")
-    .delete()
+    .update({ is_deleted: true })
     .eq("id", id);
   if (error) {
-    console.log(error);
-
+    console.error("[deleteInterview] Supabase soft-delete error:", error);
     return [];
   }
 
@@ -65,15 +64,14 @@ const deleteInterview = async (id: string) => {
 const getAllRespondents = async (interviewId: string) => {
   try {
     const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("interview")
       .select(`respondents`)
       .eq("interview_id", interviewId);
 
     return data || [];
   } catch (error) {
-    console.log(error);
-
+    console.error("getAllRespondents error", error);
     return [];
   }
 };
@@ -84,8 +82,7 @@ const createInterview = async (payload: any) => {
     .from("interview")
     .insert({ ...payload });
   if (error) {
-    console.log(error);
-
+    console.error("createInterview error", error);
     return [];
   }
 
@@ -99,7 +96,7 @@ const deactivateInterviewsByOrgId = async (organizationId: string) => {
       .from("interview")
       .update({ is_active: false })
       .eq("organization_id", organizationId)
-      .eq("is_active", true); // Optional: only update if currently active
+      .eq("is_active", true);
 
     if (error) {
       console.error("Failed to deactivate interviews:", error);

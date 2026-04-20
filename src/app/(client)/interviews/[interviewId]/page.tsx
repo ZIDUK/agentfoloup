@@ -214,26 +214,31 @@ function InterviewHome({ params, searchParams }: Props) {
   };
 
   const handleToggle = async () => {
-    try {
-      const updatedIsActive = !isActive;
-      setIsActive(updatedIsActive);
+    const updatedIsActive = !isActive;
+    setIsActive(updatedIsActive);
 
-      await InterviewService.updateInterview(
-        { is_active: updatedIsActive },
-        params.interviewId,
-      );
+    try {
+      const res = await fetch("/api/toggle-interview-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: params.interviewId, is_active: updatedIsActive }),
+      });
+
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({}));
+        throw new Error(error || "Failed to update status");
+      }
 
       toast.success("Interview status updated", {
-        description: `The interview is now ${
-          updatedIsActive ? "active" : "inactive"
-        }.`,
+        description: `The interview is now ${updatedIsActive ? "active" : "inactive"}.`,
         position: "bottom-right",
         duration: 3000,
       });
-    } catch (error) {
+    } catch (error: any) {
+      setIsActive(!updatedIsActive);
       console.error(error);
       toast.error("Error", {
-        description: "Failed to update the interview status.",
+        description: error?.message || "Failed to update the interview status.",
         duration: 3000,
       });
     }

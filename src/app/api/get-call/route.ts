@@ -13,7 +13,13 @@ import { InterviewService } from "@/services/interviews.service";
 
 export async function POST(req: Request, res: Response) {
   logger.info("get-call request received");
-  const body = await req.json();
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    logger.error("get-call: invalid or empty request body");
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
 
   // Use admin client to bypass RLS — this route is public and needs to read
   // any response regardless of which user owns the interview.
