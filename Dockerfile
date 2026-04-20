@@ -5,72 +5,70 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package.json yarn.lock ./
+COPY package*.json ./
 
 # Install dependencies
-RUN yarn install --frozen-lockfile
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Build arguments for Next.js public environment variables (baked in at build time)
-ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-ARG NEXT_PUBLIC_DEEPGRAM_API_KEY
-ARG NEXT_PUBLIC_CLERK_SIGN_UP_URL
-ARG NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL
-ARG NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL
-ARG NEXT_PUBLIC_LIVE_URL
-ARG NEXT_PUBLIC_SKIP_AUTH
+# Build arguments for Vite environment variables
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+
+# Build arguments for Supabase CLI
+ARG SUPABASE_PROJECT_ID
+ARG SUPABASE_ACCESS_TOKEN
+ARG SUPABASE_DB_PASSWORD
 
 # Set environment variables for build
-ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-ENV NEXT_PUBLIC_DEEPGRAM_API_KEY=$NEXT_PUBLIC_DEEPGRAM_API_KEY
-ENV NEXT_PUBLIC_CLERK_SIGN_UP_URL=$NEXT_PUBLIC_CLERK_SIGN_UP_URL
-ENV NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=$NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL
-ENV NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=$NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL
-ENV NEXT_PUBLIC_LIVE_URL=$NEXT_PUBLIC_LIVE_URL
-ENV NEXT_PUBLIC_SKIP_AUTH=$NEXT_PUBLIC_SKIP_AUTH
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+ENV SUPABASE_PROJECT_ID=$SUPABASE_PROJECT_ID
+ENV SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN
+ENV SUPABASE_DB_PASSWORD=$SUPABASE_DB_PASSWORD
 ENV CI=true
 
 # Validate required environment variables
-RUN if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then \
-      echo "ERROR: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set" && \
+RUN if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then \
+      echo "ERROR: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set" && \
       exit 1; \
     fi
 
+# Update browserslist database to avoid warnings
+RUN npx update-browserslist-db@latest || true
+
 # Build the application with verbose output
-RUN yarn build || (echo "Build failed. Check the error above." && exit 1)
+RUN npm run build || (echo "Build failed. Check the error above." && exit 1)
 
-# Stage 2: Production image with Node.js
-FROM node:20-alpine AS production
+# Install Supabase CLI
+RUN apk add --no-cache curl
+RUN curl -fsSL https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz \
+  | tar -xz -C /usr/local/bin
 
-WORKDIR /app
+# Link to Supabase project and deploy migrations + functions (NON-INTERACTIVE)
+RUN supabase link --project-ref $SUPABASE_PROJECT_ID
+RUN npm run supabase:deploy
 
-ENV NODE_ENV production
+# Stage 2: Production image with nginx
+FROM nginx:alpine AS production
 
-# Add a non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+# Copy built assets from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy built app
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/next.config.js ./next.config.js
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-USER nextjs
+# Expose port 80
+EXPOSE 80
 
-# Expose the application port
-EXPOSE 3000
+# Install curl for healthcheck
+RUN apk add --no-cache curl
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget -qO- http://localhost:3000/ || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost/health || exit 1
 
-# Start the application
-CMD ["yarn", "start"]
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
