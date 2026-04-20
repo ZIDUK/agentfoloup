@@ -30,20 +30,20 @@ services:
         - DREAMIT_SUPABASE_SERVICE_ROLE_KEY=${DREAMIT_SUPABASE_SERVICE_ROLE_KEY}
         - CACHEBUST=${CACHEBUST:-1}
     expose:
-      - "80"
+      - "3000"
     environment:
       - NODE_ENV=production
-      - VIRTUAL_HOST=dreamit.agenticdream.com
-      - LETSENCRYPT_HOST=dreamit.agenticdream.com
+      - VIRTUAL_HOST=foloup.agenticdream.com
+      - LETSENCRYPT_HOST=foloup.agenticdream.com
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.foloup.rule=Host(`foloup.agenticdream.com`)"
       - "traefik.http.routers.foloup.entrypoints=web,websecure"
       - "traefik.http.routers.foloup.tls=true"
       - "traefik.http.routers.foloup.tls.certresolver=letsencrypt"
-      - "traefik.http.services.foloup.loadbalancer.server.port=80"
+      - "traefik.http.services.foloup.loadbalancer.server.port=3000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
