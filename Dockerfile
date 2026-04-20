@@ -3,8 +3,8 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
 
 COPY . .
 
@@ -67,7 +67,7 @@ RUN if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KE
 
 RUN npx update-browserslist-db@latest || true
 
-RUN npm run build || (echo "Build failed. Check the error above." && exit 1)
+RUN yarn build || (echo "Build failed. Check the error above." && exit 1)
 
 # Install Supabase CLI and link project
 RUN apk add --no-cache curl
@@ -94,4 +94,4 @@ RUN apk add --no-cache curl
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:3000/ || exit 1
 
-CMD ["npm", "run", "start"]
+CMD ["yarn", "start"]
