@@ -11,7 +11,6 @@ export interface Quote {
 
 export interface InterviewBase {
   user_id: string;
-  organization_id: string;
   name: string;
   interviewer_id: bigint;
   objective: string;
@@ -23,6 +22,8 @@ export interface InterviewBase {
   response_count: bigint;
   job_id?: number | null;
   job_title?: string | null;
+  created_by?: string | null;
+  updated_by?: string | null;
 }
 
 export interface InterviewDetails {
@@ -33,6 +34,7 @@ export interface InterviewDetails {
   quotes: Quote[];
   details: any;
   is_active: boolean;
+  is_deleted: boolean;
   theme_color: string;
   logo_url: string;
   respondents: string[];

@@ -56,24 +56,6 @@ const getAllResponses = async (interviewId: string) => {
   }
 };
 
-const getResponseCountByOrganizationId = async (
-  organizationId: string,
-): Promise<number> => {
-  try {
-    const supabase = getSupabaseClient();
-    if (!supabase) return 0;
-    const { count, error } = await supabase
-      .from("interview")
-      .select("response(id)", { count: "exact", head: true }) // join + count
-      .eq("organization_id", organizationId);
-
-    return count ?? 0;
-  } catch (error) {
-    console.log(error);
-
-    return 0;
-  }
-};
 
 const getAllEmailAddressesForInterview = async (interviewId: string) => {
   try {
@@ -148,6 +130,5 @@ export const ResponseService = {
   getAllResponses,
   getResponseByCallId,
   deleteResponse,
-  getResponseCountByOrganizationId,
   getAllEmails: getAllEmailAddressesForInterview,
 };

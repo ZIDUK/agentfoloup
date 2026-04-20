@@ -54,7 +54,7 @@ Deno.serve(async (_req) => {
     const dbFetchStart = Date.now();
     const { data: responses, error } = await supabase
       .from("response")
-      .select("call_id, application_id, analytics")
+      .select("call_id, application_id, analytics, tab_switch_count, fullscreen_exit_count, proctoring_events")
       .eq("processed_by_foloup", true)
       .eq("dreamit_notified", false)
       .not("application_id", "is", null)
@@ -116,7 +116,14 @@ Deno.serve(async (_req) => {
             },
             body: JSON.stringify({
               applicationId: appId,
-              analytics: response.analytics,
+              analytics: {
+                ...response.analytics,
+                tab_switch_count: response.analytics.tab_switch_count ?? response.tab_switch_count ?? 0,
+                full_screen_events: response.analytics.full_screen_events ?? response.fullscreen_exit_count ?? 0,
+                proctoring_events: response.analytics.proctoring_events ?? response.proctoring_events ?? [],
+                camera_covered: response.analytics.camera_covered ??
+                  (response.proctoring_events ?? []).some((e: any) => e.type === "camera_covered"),
+              },
             }),
           },
         );

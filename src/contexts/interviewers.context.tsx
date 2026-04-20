@@ -30,7 +30,6 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
   const [user, setUser] = useState<any>(null);
   const supabase = getSupabaseClient();
   const [interviewersLoading, setInterviewersLoading] = useState(true);
-  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
   const fetchInterviewers = async () => {
     try {
@@ -49,23 +48,11 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
   };
 
   useEffect(() => {
-    // If SKIP_AUTH is enabled, use a mock user and fetch interviewers immediately
-    if (SKIP_AUTH) {
-      const mockUser = {
-        id: "dev-user-123",
-        email: "dev@example.com",
-      };
-      setUser(mockUser);
-      // Fetch interviewers immediately when SKIP_AUTH is enabled
-      fetchInterviewers();
-      return;
-    }
-
     const getUser = async () => {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
     };
 
     getUser();
@@ -77,10 +64,10 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase, SKIP_AUTH]);
+  }, [supabase]);
 
   useEffect(() => {
-    if (user?.id && !SKIP_AUTH) {
+    if (user?.id) {
       fetchInterviewers();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

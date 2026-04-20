@@ -66,6 +66,7 @@ function CallInfo({
   const [tabSwitchCount, setTabSwitchCount] = useState<number>();
   const [fullscreenExitCount, setFullscreenExitCount] = useState<number>();
   const [windowSwitchCount, setWindowSwitchCount] = useState<number>();
+  const [cameraCovered, setCameraCovered] = useState<boolean>(false);
   const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
   const [proctoringEvents, setProctoringEvents] = useState<any[]>([]);
 
@@ -106,10 +107,9 @@ function CallInfo({
         // Derive window switch count from proctoring events
         const events: any[] = response.proctoring_events ?? [];
         setProctoringEvents(events);
-        const windowSummary = events.find(
-          (e: any) => e.type === "window_switch_summary",
-        );
+        const windowSummary = events.find((e: any) => e.type === "window_switch_summary");
         setWindowSwitchCount(windowSummary?.count ?? 0);
+        setCameraCovered(events.some((e: any) => e.type === "camera_covered"));
       } catch (error) {
         console.error(error);
       } finally {
@@ -350,39 +350,6 @@ function CallInfo({
                       </div>
                     </div>
                   )}
-                  {/* Proctoring event log */}
-                  {proctoringEvents.length > 0 && (
-                    <div>
-                      <p className="font-semibold text-sm mb-1">
-                        Proctoring Event Log
-                      </p>
-                      <div className="max-h-36 overflow-y-auto bg-slate-50 rounded-md border border-slate-200 p-2 text-xs space-y-1">
-                        {proctoringEvents
-                          .filter((e) => e.type !== "window_switch_summary")
-                          .map((event: any, idx: number) => (
-                            <div
-                              key={idx}
-                              className="flex justify-between text-slate-600"
-                            >
-                              <span className="font-medium">
-                                {event.type === "tab_hidden"
-                                  ? "Tab switch"
-                                  : event.type === "window_blur"
-                                  ? "Window switch"
-                                  : event.type === "fullscreen_exit"
-                                  ? "Fullscreen exit"
-                                  : event.type}
-                              </span>
-                              <span>
-                                {event.timestamp
-                                  ? new Date(event.timestamp).toLocaleTimeString()
-                                  : "—"}
-                              </span>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -600,6 +567,65 @@ function CallInfo({
                   )}
                 </div>
               )}
+              {/* Integrity & Proctoring */}
+              <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-slate-50">
+                <p className="font-semibold text-lg mb-1">Integrity & Proctoring</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-gray-500 font-mono">tab_switch_count</p>
+                    <p className={`font-semibold ${(tabSwitchCount ?? 0) > 0 ? "text-red-600" : "text-green-600"}`}>
+                      {tabSwitchCount ?? 0}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-mono">full_screen_events</p>
+                    <p className={`font-semibold ${(fullscreenExitCount ?? 0) > 0 ? "text-orange-600" : "text-green-600"}`}>
+                      {fullscreenExitCount ?? 0}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-mono">window_switch_count</p>
+                    <p className={`font-semibold ${(windowSwitchCount ?? 0) > 0 ? "text-orange-600" : "text-green-600"}`}>
+                      {windowSwitchCount ?? 0}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-mono">camera_covered</p>
+                    <p className={`font-semibold ${cameraCovered ? "text-red-600" : "text-green-600"}`}>
+                      {cameraCovered ? "Yes" : "No"}
+                    </p>
+                  </div>
+                </div>
+                {proctoringEvents.filter((e) => e.type !== "window_switch_summary").length > 0 && (
+                  <div className="mt-1">
+                    <p className="text-xs text-gray-500 font-mono mb-1">proctoring_events</p>
+                    <div className="max-h-28 overflow-y-auto bg-white rounded border border-slate-200 p-2 space-y-1">
+                      {proctoringEvents
+                        .filter((e) => e.type !== "window_switch_summary")
+                        .map((event: any, idx: number) => (
+                          <div key={idx} className="flex justify-between text-xs text-slate-600">
+                            <span className="font-medium">
+                              {event.type === "tab_hidden"
+                                ? "Tab switch"
+                                : event.type === "window_blur"
+                                ? "Window switch"
+                                : event.type === "fullscreen_exit"
+                                ? "Fullscreen exit"
+                                : event.type === "camera_covered"
+                                ? "Camera covered"
+                                : event.type}
+                            </span>
+                            <span>
+                              {event.timestamp
+                                ? new Date(event.timestamp).toLocaleTimeString()
+                                : "—"}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-slate-50">
                 <div className="flex flex-row gap-2  align-middle">
                   <p className="my-auto">User Sentiment: </p>

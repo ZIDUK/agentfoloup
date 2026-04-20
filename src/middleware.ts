@@ -2,9 +2,6 @@ import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Set to true to skip authentication (for development)
-const SKIP_AUTH = process.env.SKIP_AUTH === "true";
-
 // Check if Supabase is configured (for build time)
 const SUPABASE_CONFIGURED =
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -13,25 +10,16 @@ const SUPABASE_CONFIGURED =
 const publicRoutes = [
   "/",
   "/sign-in",
-  "/sign-up",
-  "/interview",
   "/call",
+  "/result",
   "/api/register-call",
-  "/api/get-call",
   "/api/check-response",
-  "/api/generate-interview-questions",
-  "/api/create-interviewer",
-  "/api/analyze-communication",
+  "/api/get-call",
 ];
 
 const protectedRoutes = ["/dashboard", "/interview"];
 
 export async function middleware(req: NextRequest) {
-  // Skip authentication if SKIP_AUTH is enabled
-  if (SKIP_AUTH) {
-    return NextResponse.next();
-  }
-
   // During build time or if Supabase is not configured, allow all requests
   // This prevents build errors when environment variables are not available
   if (!SUPABASE_CONFIGURED) {
@@ -65,8 +53,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Redirect to dashboard if accessing sign-in/sign-up with session
-  if ((pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up")) && session) {
+  // Redirect sign-up to sign-in (sign-up is not supported)
+  if (pathname.startsWith("/sign-up")) {
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = "/sign-in";
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // Redirect to dashboard if accessing sign-in with active session
+  if (pathname.startsWith("/sign-in") && session) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
     return NextResponse.redirect(redirectUrl);

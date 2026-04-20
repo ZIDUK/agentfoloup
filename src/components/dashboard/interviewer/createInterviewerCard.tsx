@@ -27,27 +27,16 @@ const createInterviewerCard = () => {
   const [user, setUser] = useStateHook<any>(null);
   const supabase = getSupabaseClient();
   const [isClicked, setIsClicked] = useState(false);
-  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
   useEffect(() => {
-    // If SKIP_AUTH is enabled, use a mock user
-    if (SKIP_AUTH) {
-      const mockUser = {
-        id: "dev-user-123",
-        email: "dev@example.com",
-      };
-      setUser(mockUser);
-      return;
-    }
-
     const getUser = async () => {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
     };
     getUser();
-  }, [supabase, SKIP_AUTH]);
+  }, [supabase]);
 
   useEffect(() => {
     if (!open) {

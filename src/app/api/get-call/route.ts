@@ -13,7 +13,13 @@ import { InterviewService } from "@/services/interviews.service";
 
 export async function POST(req: Request, res: Response) {
   logger.info("get-call request received");
-  const body = await req.json();
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    logger.error("get-call: invalid or empty request body");
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
 
   // Use admin client to bypass RLS — this route is public and needs to read
   // any response regardless of which user owns the interview.
@@ -115,6 +121,19 @@ export async function POST(req: Request, res: Response) {
     }
   }
 
+  // Enrich analytics with proctoring fields so they are stored in the analytics
+  // column and forwarded to DreamIT as part of the same object.
+  if (analytics) {
+    const proctoringEvents: any[] = callDetails.proctoring_events ?? [];
+    analytics = {
+      ...analytics,
+      tab_switch_count: callDetails.tab_switch_count ?? 0,
+      full_screen_events: callDetails.fullscreen_exit_count ?? 0,
+      proctoring_events: proctoringEvents,
+      camera_covered: proctoringEvents.some((e: any) => e.type === "camera_covered"),
+    };
+  }
+
   // ── Step 2: Generate call_analysis (summary, sentiments, completion) ────────
   let callAnalysis = callResponse.call_analysis;
   let callAnalysisFailed = false;
@@ -174,12 +193,13 @@ export async function POST(req: Request, res: Response) {
     }
   }
 
-  // ── Step 3: Notify DreamIT (only when analysis is complete) ─────────────────
+  // ── Step 3: Notify DreamIT (only for real candidate responses) ──────────────
   if (
     succeeded &&
     callDetails.application_id &&
     !callDetails.dreamit_notified &&
-    analytics
+    analytics &&
+    !callDetails.is_test_response
   ) {
     const dreamitUrl = process.env.DREAMIT_URL;
     const secret = process.env.DREAMIT_FOLOUP_SECRET;

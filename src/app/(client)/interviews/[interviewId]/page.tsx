@@ -3,13 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import React, { useState, useEffect } from "react";
-import { getSupabaseClient } from "@/lib/supabase-client";
 import { useInterviews } from "@/contexts/interviews.context";
 import { Share2, Filter, Pencil, UserIcon, Eye, Palette } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { ResponseService } from "@/services/responses.service";
-import { ClientService } from "@/services/clients.service";
 import { Interview } from "@/types/interview";
 import { Response } from "@/types/response";
 import { formatTimestampToDateHHMM } from "@/lib/utils";
@@ -56,7 +54,6 @@ function InterviewHome({ params, searchParams }: Props) {
   const [isSharePopupOpen, setIsSharePopupOpen] = useState(false);
   const router = useRouter();
   const [isActive, setIsActive] = useState<boolean>(true);
-  const [currentPlan, setCurrentPlan] = useState<string>("");
   const [isGeneratingInsights, setIsGeneratingInsights] =
     useState<boolean>(false);
   const [isViewed, setIsViewed] = useState<boolean>(false);
@@ -64,29 +61,8 @@ function InterviewHome({ params, searchParams }: Props) {
   const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
   const [themeColor, setThemeColor] = useState<string>("#4F46E5");
   const [iconColor, seticonColor] = useState<string>("#4F46E5");
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const supabase = getSupabaseClient();
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
-  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
-
-  useEffect(() => {
-    // If SKIP_AUTH is enabled, use a mock organization
-    if (SKIP_AUTH) {
-      setOrganizationId("dev-org-123");
-      return;
-    }
-
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const orgId = user.user_metadata?.organization_id || user.id;
-        setOrganizationId(orgId);
-      }
-    };
-    getUser();
-  }, [supabase, SKIP_AUTH]);
+  const [responseType, setResponseType] = useState<string>("CANDIDATE");
 
   const seeInterviewPreviewPage = () => {
     if (!interview) {
@@ -143,22 +119,6 @@ function InterviewHome({ params, searchParams }: Props) {
   }, [getInterviewById, params.interviewId, isGeneratingInsights]);
 
   useEffect(() => {
-    const fetchOrganizationData = async () => {
-      try {
-        if (organizationId) {
-          const data = await ClientService.getOrganizationById(organizationId);
-          if (data?.plan) {
-            setCurrentPlan(data.plan);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching organization data:", error);
-      }
-    };
-
-    fetchOrganizationData();
-  }, [organizationId]);
-  useEffect(() => {
     const fetchResponses = async () => {
       try {
         const response = await ResponseService.getAllResponses(
@@ -214,26 +174,31 @@ function InterviewHome({ params, searchParams }: Props) {
   };
 
   const handleToggle = async () => {
-    try {
-      const updatedIsActive = !isActive;
-      setIsActive(updatedIsActive);
+    const updatedIsActive = !isActive;
+    setIsActive(updatedIsActive);
 
-      await InterviewService.updateInterview(
-        { is_active: updatedIsActive },
-        params.interviewId,
-      );
+    try {
+      const res = await fetch("/api/toggle-interview-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: params.interviewId, is_active: updatedIsActive }),
+      });
+
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({}));
+        throw new Error(error || "Failed to update status");
+      }
 
       toast.success("Interview status updated", {
-        description: `The interview is now ${
-          updatedIsActive ? "active" : "inactive"
-        }.`,
+        description: `The interview is now ${updatedIsActive ? "active" : "inactive"}.`,
         position: "bottom-right",
         duration: 3000,
       });
-    } catch (error) {
+    } catch (error: any) {
+      setIsActive(!updatedIsActive);
       console.error(error);
       toast.error("Error", {
-        description: "Failed to update the interview status.",
+        description: error?.message || "Failed to update the interview status.",
         duration: 3000,
       });
     }
@@ -290,16 +255,21 @@ function InterviewHome({ params, searchParams }: Props) {
   };
 
   const filterResponses = () => {
-    if (!responses) {
-      return [];
-    }
-    if (filterStatus == "ALL") {
-      return responses;
+    if (!responses) return [];
+
+    let filtered = responses;
+
+    if (responseType === "CANDIDATE") {
+      filtered = filtered.filter((r) => !r.is_test_response);
+    } else if (responseType === "TEST") {
+      filtered = filtered.filter((r) => r.is_test_response === true);
     }
 
-    return responses?.filter(
-      (response) => response?.candidate_status == filterStatus,
-    );
+    if (filterStatus !== "ALL") {
+      filtered = filtered.filter((r) => r.candidate_status === filterStatus);
+    }
+
+    return filtered;
   };
 
   return (
@@ -421,37 +391,35 @@ function InterviewHome({ params, searchParams }: Props) {
             </TooltipProvider>
 
             <label className="inline-flex cursor-pointer">
-              {currentPlan == "free_trial_over" ? (
-                <>
-                  <span className="ms-3 my-auto text-sm">Inactive</span>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipContent
-                        className="bg-zinc-300"
-                        side="bottom"
-                        sideOffset={4}
-                      >
-                        Upgrade your plan to reactivate
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </>
-              ) : (
-                <>
-                  <span className="ms-3 my-auto text-sm">Active</span>
-                  <Switch
-                    checked={isActive}
-                    className={`ms-3 my-auto ${
-                      isActive ? "bg-indigo-600" : "bg-[#E6E7EB]"
-                    }`}
-                    onCheckedChange={handleToggle}
-                  />
-                </>
-              )}
+              <span className="ms-3 my-auto text-sm">Active</span>
+              <Switch
+                checked={isActive}
+                className={`ms-3 my-auto ${
+                  isActive ? "bg-indigo-600" : "bg-[#E6E7EB]"
+                }`}
+                onCheckedChange={handleToggle}
+              />
             </label>
           </div>
           <div className="flex flex-row w-full p-2 h-[85%] gap-1 ">
             <div className="w-[20%] flex flex-col p-2 divide-y-2 rounded-sm border-2 border-slate-100">
+              <div className="flex w-full justify-center py-2">
+                <Select
+                  defaultValue="CANDIDATE"
+                  onValueChange={(newValue: string) => {
+                    setResponseType(newValue);
+                  }}
+                >
+                  <SelectTrigger className="w-[95%] bg-slate-100 rounded-lg">
+                    <SelectValue placeholder="Response Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CANDIDATE">Candidate Responses</SelectItem>
+                    <SelectItem value="TEST">Test Responses</SelectItem>
+                    <SelectItem value="ALL">All Responses</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex w-full justify-center py-2">
                 <Select
                   onValueChange={async (newValue: string) => {
@@ -598,7 +566,7 @@ function InterviewHome({ params, searchParams }: Props) {
                 ) : searchParams.edit ? (
                   <EditInterview interview={interview} />
                 ) : (
-                  <SummaryInfo responses={responses} interview={interview} />
+                  <SummaryInfo responses={filterResponses()} interview={interview} />
                 )}
               </div>
             )}

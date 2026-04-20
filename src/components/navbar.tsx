@@ -15,31 +15,32 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 function Navbar() {
   const [user, setUser] = useState<any>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const supabase = getSupabaseClient();
   const router = useRouter();
-  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
+
+  const resolvePhoto = async (email: string) => {
+    if (!supabase) return;
+    const { data } = await supabase
+      .from("users")
+      .select("employee_photo")
+      .eq("email", email.toLowerCase())
+      .single();
+    if (data?.employee_photo) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      setPhotoUrl(`${supabaseUrl}/storage/v1/object/public/${data.employee_photo}`);
+    }
+  };
 
   useEffect(() => {
-    // If SKIP_AUTH is enabled, use a mock user
-    if (SKIP_AUTH) {
-      const mockUser = {
-        id: "dev-user-123",
-        email: "dev@example.com",
-        user_metadata: {
-          avatar_url: null,
-        },
-      };
-      setUser(mockUser);
-      setLoading(false);
-      return;
-    }
-
     const getUser = async () => {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
       setUser(user);
+      if (user?.email) await resolvePhoto(user.email);
       setLoading(false);
     };
 
@@ -49,10 +50,12 @@ function Navbar() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user?.email) resolvePhoto(session.user.email);
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase, SKIP_AUTH]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -86,18 +89,20 @@ function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar>
-                    <AvatarImage src={user.user_metadata?.avatar_url} />
+                    <AvatarImage src={photoUrl || "/user-icon.png"} />
                     <AvatarFallback>
                       {getInitials(user.email || "U")}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium">{user.email}</p>
-                  </div>
+              <DropdownMenuContent className="w-auto min-w-56" align="end" forceMount>
+                <div className="flex items-center gap-3 p-3">
+                  <Avatar className="h-9 w-9 shrink-0">
+                    <AvatarImage src={photoUrl || "/user-icon.png"} />
+                    <AvatarFallback>{getInitials(user.email || "U")}</AvatarFallback>
+                  </Avatar>
+                  <p className="text-sm font-medium whitespace-nowrap">{user.email}</p>
                 </div>
                 <DropdownMenuItem onClick={handleSignOut}>
                   Sign out

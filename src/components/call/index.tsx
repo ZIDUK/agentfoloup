@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowUpRightSquareIcon,
   AlarmClockIcon,
   XCircleIcon,
   CheckCircleIcon,
@@ -45,6 +44,9 @@ import { useCameraRecording } from "@/hooks/useCameraRecording";
 type InterviewProps = {
   interview: Interview;
   applicationId?: string;
+  isTestResponse?: boolean;
+  prefillEmail?: string;
+  prefillName?: string;
 };
 
 type transcriptType = {
@@ -52,7 +54,7 @@ type transcriptType = {
   content: string;
 };
 
-function Call({ interview, applicationId }: InterviewProps) {
+function Call({ interview, applicationId, isTestResponse = false, prefillEmail = "", prefillName = "" }: InterviewProps) {
   const { createResponse } = useResponses();
   const [lastInterviewerResponse, setLastInterviewerResponse] =
     useState<string>("");
@@ -63,8 +65,8 @@ function Call({ interview, applicationId }: InterviewProps) {
   const [isStarted, setIsStarted] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
   const [isCalling, setIsCalling] = useState(false);
-  const [email, setEmail] = useState<string>("");
-  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>(prefillEmail);
+  const [name, setName] = useState<string>(prefillName);
   const [isValidEmail, setIsValidEmail] = useState<boolean>(false);
   const [isOldUser, setIsOldUser] = useState<boolean>(false);
   const [callId, setCallId] = useState<string>("");
@@ -79,6 +81,8 @@ function Call({ interview, applicationId }: InterviewProps) {
   const [agentService, setAgentService] = useState<DeepgramAgentService | null>(null);
   const [audioPlayer, setAudioPlayer] = useState<AudioPlayer | null>(null);
   const audioPlayerRef = useRef<AudioPlayer | null>(null);
+  const [isCameraCovered, setIsCameraCovered] = useState(false);
+  const cameraCoveredRef = useRef(false);
 
   // Proctoring — isStarted drives activation so events aren't captured pre-interview.
   const {
@@ -324,30 +328,82 @@ function Call({ interview, applicationId }: InterviewProps) {
     }
   };
 
+  // Block duplicate submissions on page load when an applicationId is present.
+  useEffect(() => {
+    if (!applicationId) return;
+    fetch("/api/check-response", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ applicationId }),
+    })
+      .then((r) => r.json())
+      .then(({ exists }) => { if (exists) setIsOldUser(true); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applicationId]);
+
+  // Detect covered camera during interview by sampling video frame brightness.
+  useEffect(() => {
+    if (!isStarted || isEnded || !cameraStream) return;
+    let blackFrameCount = 0;
+    const checkFrame = () => {
+      const video = cameraVideoRef.current;
+      if (!video || video.readyState < 2) return;
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = 64;
+        canvas.height = 48;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(video, 0, 0, 64, 48);
+        const { data } = ctx.getImageData(0, 0, 64, 48);
+        let sum = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
+        }
+        const avgBrightness = sum / (data.length / 4);
+        if (avgBrightness < 15) {
+          blackFrameCount++;
+          if (blackFrameCount >= 3) {
+            setIsCameraCovered(true);
+            cameraCoveredRef.current = true;
+          }
+        } else {
+          blackFrameCount = 0;
+          setIsCameraCovered(false);
+        }
+      } catch { /* ignore canvas security errors */ }
+    };
+    const id = setInterval(checkFrame, 2000);
+    return () => clearInterval(id);
+  }, [isStarted, isEnded, cameraStream]);
+
   const startConversation = async () => {
-    const oldUserEmails: string[] = (
-      await ResponseService.getAllEmails(interview.id)
-    ).map((item: { email: string }) => item.email);
-    const OldUser =
-      oldUserEmails.includes(email) ||
-      (interview?.respondents && !interview?.respondents.includes(email));
+    if (!isTestResponse) {
+      const oldUserEmails: string[] = (
+        await ResponseService.getAllEmails(interview.id)
+      ).map((item: { email: string }) => item.email);
+      const OldUser =
+        oldUserEmails.includes(email) ||
+        (interview?.respondents && !interview?.respondents.includes(email));
 
-    if (OldUser) {
-      setIsOldUser(true);
-      return;
-    }
-
-    // If this interview was opened via a DreamIT application link, block if already submitted
-    if (applicationId) {
-      const checkRes = await fetch("/api/check-response", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ applicationId }),
-      });
-      const { exists } = await checkRes.json();
-      if (exists) {
+      if (OldUser) {
         setIsOldUser(true);
         return;
+      }
+
+      // If this interview was opened via a DreamIT application link, block if already submitted
+      if (applicationId) {
+        const checkRes = await fetch("/api/check-response", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ applicationId }),
+        });
+        const { exists } = await checkRes.json();
+        if (exists) {
+          setIsOldUser(true);
+          return;
+        }
       }
     }
 
@@ -430,6 +486,7 @@ function Call({ interview, applicationId }: InterviewProps) {
         email: email,
         name: name,
         ...(applicationId ? { application_id: applicationId } : {}),
+        ...(isTestResponse ? { is_test_response: true } : {}),
       });
 
       setIsStarted(true);
@@ -488,9 +545,11 @@ function Call({ interview, applicationId }: InterviewProps) {
               fullscreen_exit_count: proctoring.fullscreenExitCount,
               proctoring_events: [
                 ...proctoring.events,
-                // include window switch count inline since we don't have a separate column
                 ...(proctoring.windowSwitchCount > 0
                   ? [{ type: "window_switch_summary", count: proctoring.windowSwitchCount, timestamp: endTime }]
+                  : []),
+                ...(cameraCoveredRef.current
+                  ? [{ type: "camera_covered", timestamp: endTime }]
                   : []),
               ],
               recording_url: recordingUrl,
@@ -515,7 +574,9 @@ function Call({ interview, applicationId }: InterviewProps) {
           }).catch(() => {});
 
           setTimeout(() => {
-            window.location.href = `/interviews/${interview.id}?call=${callId}`;
+            window.location.href = isTestResponse
+              ? `/interviews/${interview.id}`
+              : `/result/${callId}`;
           }, 1000);
         } catch (error) {
           console.error("Error saving response:", error);
@@ -529,7 +590,7 @@ function Call({ interview, applicationId }: InterviewProps) {
   }, [isEnded, callId, callStartTime]);
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+    <div className="flex justify-center items-center h-full bg-gray-100">
       {/* Proctoring warning dialog — driven by the single shared hook instance */}
       {isStarted && (
         <TabSwitchWarning
@@ -552,26 +613,23 @@ function Call({ interview, applicationId }: InterviewProps) {
           <div className="absolute top-1 right-1">
             <VideoIcon className="h-3 w-3 text-red-500" />
           </div>
+          {isCameraCovered && (
+            <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center text-white text-xs text-center p-1 gap-1">
+              <VideoOffIcon className="h-4 w-4 text-red-400" />
+              <span>Camera appears covered</span>
+            </div>
+          )}
         </div>
       )}
 
-      <div className="bg-white rounded-md md:w-[80%] w-[90%]">
-        <Card className="h-[88vh] rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all  md:block dark:border-white ">
-          <div>
-            <div className="m-4 h-[15px] rounded-lg border-[1px]  border-black">
-              <div
-                className=" bg-indigo-600 h-[15px] rounded-lg"
-                style={{
-                  width: isEnded
-                    ? "100%"
-                    : `${
-                        (Number(currentTimeDuration) /
-                          (Number(interviewTimeDuration) * 60)) *
-                        100
-                      }%`,
-                }}
-              />
-            </div>
+      <div className="bg-white rounded-md md:w-[80%] w-[90%] h-full">
+        {isTestResponse && (
+          <div className="bg-amber-100 border border-amber-300 text-amber-800 text-xs font-semibold text-center py-1 rounded-t-lg">
+            Test Mode — This response will be stored as a test response
+          </div>
+        )}
+        <Card className={`h-full rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all md:block dark:border-white ${isTestResponse ? "rounded-t-none" : ""}`}>
+          <div className="flex flex-col h-full">
             <CardHeader className="items-center p-1">
               {!isEnded && (
                 <CardTitle className="flex flex-row items-center text-lg md:text-xl font-bold mb-2">
@@ -644,29 +702,35 @@ function Call({ interview, applicationId }: InterviewProps) {
                     </div>
                   </div>
                   {!interview?.is_anonymous && (
-                    <div className="flex flex-col gap-2 justify-center">
-                      <div className="flex justify-center">
-                        <input
-                          value={email}
-                          className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
-                          placeholder="Enter your email address"
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
+                    isTestResponse ? (
+                      <div className="text-center text-sm text-gray-600 py-2">
+                        Testing as: <span className="font-semibold">{name}</span> ({email})
                       </div>
-                      <div className="flex justify-center">
-                        <input
-                          value={name}
-                          className="h-fit mb-4 mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
-                          placeholder="Enter your first name"
-                          onChange={(e) => setName(e.target.value)}
-                        />
+                    ) : (
+                      <div className="flex flex-col gap-2 justify-center">
+                        <div className="flex justify-center">
+                          <input
+                            value={email}
+                            className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
+                            placeholder="Enter your email address"
+                            onChange={(e) => setEmail(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex justify-center">
+                          <input
+                            value={name}
+                            className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
+                            placeholder="Enter your first name"
+                            onChange={(e) => setName(e.target.value)}
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )
                   )}
                 </div>
-                <div className="w-[80%] flex flex-row mx-auto justify-center items-center align-middle">
+                <div className="w-[80%] flex flex-row mx-auto justify-center items-center align-middle py-3">
                   <Button
-                    className="min-w-20 h-10 rounded-lg flex flex-row justify-center mb-8"
+                    className="min-w-20 h-10 rounded-lg flex flex-row justify-center"
                     style={{
                       backgroundColor: interview.theme_color ?? "#4F46E5",
                       color: isLightColor(interview.theme_color ?? "#4F46E5")
@@ -675,7 +739,7 @@ function Call({ interview, applicationId }: InterviewProps) {
                     }}
                     disabled={
                       Loading ||
-                      (!interview?.is_anonymous && (!isValidEmail || !name))
+                      (!isTestResponse && !interview?.is_anonymous && (!isValidEmail || !name))
                     }
                     onClick={startConversation}
                   >
@@ -684,7 +748,7 @@ function Call({ interview, applicationId }: InterviewProps) {
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
-                        className="bg-white border ml-2 text-black min-w-15 h-10 rounded-lg flex flex-row justify-center mb-8"
+                        className="bg-white border ml-2 text-black min-w-15 h-10 rounded-lg flex flex-row justify-center"
                         style={{ borderColor: interview.theme_color }}
                         disabled={Loading}
                       >
@@ -712,6 +776,27 @@ function Call({ interview, applicationId }: InterviewProps) {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                </div>
+              </div>
+            )}
+
+            {/* ── Timing bar — visible only during active interview ── */}
+            {isStarted && !isEnded && !isOldUser && (
+              <div className="mx-4 mt-2 mb-1">
+                <div className="h-2 rounded-full bg-indigo-100 border border-indigo-200 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-indigo-600 transition-all duration-1000"
+                    style={{
+                      width: `${Math.min(
+                        (Number(currentTimeDuration) / (Number(interviewTimeDuration) * 60)) * 100,
+                        100,
+                      )}%`,
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-gray-400 mt-0.5 font-normal">
+                  <span>{Math.floor(Number(currentTimeDuration) / 60)}m {Number(currentTimeDuration) % 60}s</span>
+                  <span>{interviewTimeDuration}m limit</span>
                 </div>
               </div>
             )}
@@ -778,7 +863,7 @@ function Call({ interview, applicationId }: InterviewProps) {
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
-                      className="w-full bg-white text-black border border-indigo-600 h-10 mx-auto flex flex-row justify-center mb-8"
+                      className="w-full bg-white text-black border border-indigo-600 h-10 mx-auto flex flex-row justify-center"
                       disabled={Loading}
                     >
                       End Interview{" "}
@@ -816,17 +901,21 @@ function Call({ interview, applicationId }: InterviewProps) {
                   <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
                     <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
                     <p className="text-lg font-semibold text-center">
-                      {isStarted
+                      {isTestResponse
+                        ? "Test completed. Redirecting to responses..."
+                        : isStarted
                         ? `Thank you for taking the time to participate in this interview`
                         : "Thank you very much for considering."}
                     </p>
-                    <p className="text-center">
-                      {"\n"}
-                      You can close this tab now.
-                    </p>
+                    {!isTestResponse && (
+                      <p className="text-center">
+                        {"\n"}
+                        You can close this tab now.
+                      </p>
+                    )}
                   </div>
 
-                  {!isFeedbackSubmitted && (
+                  {!isTestResponse && !isFeedbackSubmitted && (
                     <AlertDialog
                       open={isDialogOpen}
                       onOpenChange={setIsDialogOpen}
@@ -876,19 +965,6 @@ function Call({ interview, applicationId }: InterviewProps) {
             )}
           </div>
         </Card>
-        <a
-          className="flex flex-row justify-center align-middle mt-3"
-          href="https://folo-up.co/"
-          target="_blank"
-        >
-          <div className="text-center text-md font-semibold mr-2  ">
-            Powered by{" "}
-            <span className="font-bold">
-              Folo<span className="text-indigo-600">Up</span>
-            </span>
-          </div>
-          <ArrowUpRightSquareIcon className="h-[1.5rem] w-[1.5rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
-        </a>
       </div>
     </div>
   );
