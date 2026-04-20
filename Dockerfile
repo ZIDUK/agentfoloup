@@ -1,16 +1,11 @@
 # Stage 1: Build the application
 FROM node:20-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
 
-# Install dependencies
-RUN npm ci
-
-# Copy source code
 COPY . .
 
 # Build arguments — public (baked into bundle)
@@ -70,38 +65,35 @@ RUN if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KE
       exit 1; \
     fi
 
-# Update browserslist database to avoid warnings
 RUN npx update-browserslist-db@latest || true
 
-# Build the application with verbose output
-RUN npm run build || (echo "Build failed. Check the error above." && exit 1)
+RUN yarn build || (echo "Build failed. Check the error above." && exit 1)
 
-# Install Supabase CLI
+# Install Supabase CLI and link project
 RUN apk add --no-cache curl
 RUN curl -fsSL https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz \
   | tar -xz -C /usr/local/bin
-
-# Link to Supabase project and deploy migrations + functions (NON-INTERACTIVE)
 RUN supabase link --project-ref $SUPABASE_PROJECT_ID
 
-# Stage 2: Production image with nginx
-FROM nginx:alpine AS production
+# Stage 2: Production image with Node.js (Next.js requires a Node server)
+FROM node:20-alpine AS production
 
-# Copy built assets from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+WORKDIR /app
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 
-# Expose port 80
-EXPOSE 80
+# standalone output includes its own minimal node_modules — no full copy needed
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
-# Install curl for healthcheck
+EXPOSE 3000
+
 RUN apk add --no-cache curl
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:3000/ || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server.js"]
