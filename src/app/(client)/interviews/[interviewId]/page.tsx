@@ -62,6 +62,7 @@ function InterviewHome({ params, searchParams }: Props) {
   const [themeColor, setThemeColor] = useState<string>("#4F46E5");
   const [iconColor, seticonColor] = useState<string>("#4F46E5");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const [responseType, setResponseType] = useState<string>("CANDIDATE");
 
   const seeInterviewPreviewPage = () => {
     if (!interview) {
@@ -254,16 +255,21 @@ function InterviewHome({ params, searchParams }: Props) {
   };
 
   const filterResponses = () => {
-    if (!responses) {
-      return [];
-    }
-    if (filterStatus == "ALL") {
-      return responses;
+    if (!responses) return [];
+
+    let filtered = responses;
+
+    if (responseType === "CANDIDATE") {
+      filtered = filtered.filter((r) => !r.is_test_response);
+    } else if (responseType === "TEST") {
+      filtered = filtered.filter((r) => r.is_test_response === true);
     }
 
-    return responses?.filter(
-      (response) => response?.candidate_status == filterStatus,
-    );
+    if (filterStatus !== "ALL") {
+      filtered = filtered.filter((r) => r.candidate_status === filterStatus);
+    }
+
+    return filtered;
   };
 
   return (
@@ -397,6 +403,23 @@ function InterviewHome({ params, searchParams }: Props) {
           </div>
           <div className="flex flex-row w-full p-2 h-[85%] gap-1 ">
             <div className="w-[20%] flex flex-col p-2 divide-y-2 rounded-sm border-2 border-slate-100">
+              <div className="flex w-full justify-center py-2">
+                <Select
+                  defaultValue="CANDIDATE"
+                  onValueChange={(newValue: string) => {
+                    setResponseType(newValue);
+                  }}
+                >
+                  <SelectTrigger className="w-[95%] bg-slate-100 rounded-lg">
+                    <SelectValue placeholder="Response Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CANDIDATE">Candidate Responses</SelectItem>
+                    <SelectItem value="TEST">Test Responses</SelectItem>
+                    <SelectItem value="ALL">All Responses</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex w-full justify-center py-2">
                 <Select
                   onValueChange={async (newValue: string) => {
@@ -543,7 +566,7 @@ function InterviewHome({ params, searchParams }: Props) {
                 ) : searchParams.edit ? (
                   <EditInterview interview={interview} />
                 ) : (
-                  <SummaryInfo responses={responses} interview={interview} />
+                  <SummaryInfo responses={filterResponses()} interview={interview} />
                 )}
               </div>
             )}

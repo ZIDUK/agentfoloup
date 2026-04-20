@@ -24,6 +24,7 @@ export interface Response {
   application_id: string | null;
   dreamit_notified: boolean;
   processed_by_foloup: boolean;
+  is_test_response: boolean;
 }
 
 export type CEFRLevel =

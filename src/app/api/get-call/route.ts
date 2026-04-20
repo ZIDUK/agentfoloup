@@ -193,12 +193,13 @@ export async function POST(req: Request, res: Response) {
     }
   }
 
-  // ── Step 3: Notify DreamIT (only when analysis is complete) ─────────────────
+  // ── Step 3: Notify DreamIT (only for real candidate responses) ──────────────
   if (
     succeeded &&
     callDetails.application_id &&
     !callDetails.dreamit_notified &&
-    analytics
+    analytics &&
+    !callDetails.is_test_response
   ) {
     const dreamitUrl = process.env.DREAMIT_URL;
     const secret = process.env.DREAMIT_FOLOUP_SECRET;

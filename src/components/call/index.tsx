@@ -44,6 +44,9 @@ import { useCameraRecording } from "@/hooks/useCameraRecording";
 type InterviewProps = {
   interview: Interview;
   applicationId?: string;
+  isTestResponse?: boolean;
+  prefillEmail?: string;
+  prefillName?: string;
 };
 
 type transcriptType = {
@@ -51,7 +54,7 @@ type transcriptType = {
   content: string;
 };
 
-function Call({ interview, applicationId }: InterviewProps) {
+function Call({ interview, applicationId, isTestResponse = false, prefillEmail = "", prefillName = "" }: InterviewProps) {
   const { createResponse } = useResponses();
   const [lastInterviewerResponse, setLastInterviewerResponse] =
     useState<string>("");
@@ -62,8 +65,8 @@ function Call({ interview, applicationId }: InterviewProps) {
   const [isStarted, setIsStarted] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
   const [isCalling, setIsCalling] = useState(false);
-  const [email, setEmail] = useState<string>("");
-  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>(prefillEmail);
+  const [name, setName] = useState<string>(prefillName);
   const [isValidEmail, setIsValidEmail] = useState<boolean>(false);
   const [isOldUser, setIsOldUser] = useState<boolean>(false);
   const [callId, setCallId] = useState<string>("");
@@ -376,29 +379,31 @@ function Call({ interview, applicationId }: InterviewProps) {
   }, [isStarted, isEnded, cameraStream]);
 
   const startConversation = async () => {
-    const oldUserEmails: string[] = (
-      await ResponseService.getAllEmails(interview.id)
-    ).map((item: { email: string }) => item.email);
-    const OldUser =
-      oldUserEmails.includes(email) ||
-      (interview?.respondents && !interview?.respondents.includes(email));
+    if (!isTestResponse) {
+      const oldUserEmails: string[] = (
+        await ResponseService.getAllEmails(interview.id)
+      ).map((item: { email: string }) => item.email);
+      const OldUser =
+        oldUserEmails.includes(email) ||
+        (interview?.respondents && !interview?.respondents.includes(email));
 
-    if (OldUser) {
-      setIsOldUser(true);
-      return;
-    }
-
-    // If this interview was opened via a DreamIT application link, block if already submitted
-    if (applicationId) {
-      const checkRes = await fetch("/api/check-response", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ applicationId }),
-      });
-      const { exists } = await checkRes.json();
-      if (exists) {
+      if (OldUser) {
         setIsOldUser(true);
         return;
+      }
+
+      // If this interview was opened via a DreamIT application link, block if already submitted
+      if (applicationId) {
+        const checkRes = await fetch("/api/check-response", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ applicationId }),
+        });
+        const { exists } = await checkRes.json();
+        if (exists) {
+          setIsOldUser(true);
+          return;
+        }
       }
     }
 
@@ -481,6 +486,7 @@ function Call({ interview, applicationId }: InterviewProps) {
         email: email,
         name: name,
         ...(applicationId ? { application_id: applicationId } : {}),
+        ...(isTestResponse ? { is_test_response: true } : {}),
       });
 
       setIsStarted(true);
@@ -568,7 +574,9 @@ function Call({ interview, applicationId }: InterviewProps) {
           }).catch(() => {});
 
           setTimeout(() => {
-            window.location.href = `/result/${callId}`;
+            window.location.href = isTestResponse
+              ? `/interviews/${interview.id}`
+              : `/result/${callId}`;
           }, 1000);
         } catch (error) {
           console.error("Error saving response:", error);
@@ -615,7 +623,12 @@ function Call({ interview, applicationId }: InterviewProps) {
       )}
 
       <div className="bg-white rounded-md md:w-[80%] w-[90%] h-full">
-        <Card className="h-full rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all md:block dark:border-white">
+        {isTestResponse && (
+          <div className="bg-amber-100 border border-amber-300 text-amber-800 text-xs font-semibold text-center py-1 rounded-t-lg">
+            Test Mode — This response will be stored as a test response
+          </div>
+        )}
+        <Card className={`h-full rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all md:block dark:border-white ${isTestResponse ? "rounded-t-none" : ""}`}>
           <div className="flex flex-col h-full">
             <CardHeader className="items-center p-1">
               {!isEnded && (
@@ -689,24 +702,30 @@ function Call({ interview, applicationId }: InterviewProps) {
                     </div>
                   </div>
                   {!interview?.is_anonymous && (
-                    <div className="flex flex-col gap-2 justify-center">
-                      <div className="flex justify-center">
-                        <input
-                          value={email}
-                          className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
-                          placeholder="Enter your email address"
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
+                    isTestResponse ? (
+                      <div className="text-center text-sm text-gray-600 py-2">
+                        Testing as: <span className="font-semibold">{name}</span> ({email})
                       </div>
-                      <div className="flex justify-center">
-                        <input
-                          value={name}
-                          className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
-                          placeholder="Enter your first name"
-                          onChange={(e) => setName(e.target.value)}
-                        />
+                    ) : (
+                      <div className="flex flex-col gap-2 justify-center">
+                        <div className="flex justify-center">
+                          <input
+                            value={email}
+                            className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
+                            placeholder="Enter your email address"
+                            onChange={(e) => setEmail(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex justify-center">
+                          <input
+                            value={name}
+                            className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
+                            placeholder="Enter your first name"
+                            onChange={(e) => setName(e.target.value)}
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )
                   )}
                 </div>
                 <div className="w-[80%] flex flex-row mx-auto justify-center items-center align-middle py-3">
@@ -720,7 +739,7 @@ function Call({ interview, applicationId }: InterviewProps) {
                     }}
                     disabled={
                       Loading ||
-                      (!interview?.is_anonymous && (!isValidEmail || !name))
+                      (!isTestResponse && !interview?.is_anonymous && (!isValidEmail || !name))
                     }
                     onClick={startConversation}
                   >
@@ -882,17 +901,21 @@ function Call({ interview, applicationId }: InterviewProps) {
                   <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
                     <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
                     <p className="text-lg font-semibold text-center">
-                      {isStarted
+                      {isTestResponse
+                        ? "Test completed. Redirecting to responses..."
+                        : isStarted
                         ? `Thank you for taking the time to participate in this interview`
                         : "Thank you very much for considering."}
                     </p>
-                    <p className="text-center">
-                      {"\n"}
-                      You can close this tab now.
-                    </p>
+                    {!isTestResponse && (
+                      <p className="text-center">
+                        {"\n"}
+                        You can close this tab now.
+                      </p>
+                    )}
                   </div>
 
-                  {!isFeedbackSubmitted && (
+                  {!isTestResponse && !isFeedbackSubmitted && (
                     <AlertDialog
                       open={isDialogOpen}
                       onOpenChange={setIsDialogOpen}

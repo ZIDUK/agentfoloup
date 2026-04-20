@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Copy, ArrowUpRight } from "lucide-react";
-import { CopyCheck } from "lucide-react";
+import { FlaskConical } from "lucide-react";
 import { ResponseService } from "@/services/responses.service";
 import axios from "axios";
 import MiniLoader from "@/components/loaders/mini-loader/miniLoader";
@@ -18,10 +16,8 @@ interface Props {
   readableSlug: string;
 }
 
-const base_url = process.env.NEXT_PUBLIC_LIVE_URL;
-
-function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
-  const [copied, setCopied] = useState(false);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function InterviewCard({ name, interviewerId, id, url: _url, readableSlug: _readableSlug }: Props) {
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [img, setImg] = useState("");
@@ -72,38 +68,10 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const copyToClipboard = () => {
-    navigator.clipboard
-      .writeText(
-        readableSlug ? `${base_url}/call/${readableSlug}` : (url as string),
-      )
-      .then(
-        () => {
-          setCopied(true);
-          toast.success(
-            "The link to your interview has been copied to your clipboard.",
-            {
-              position: "bottom-right",
-              duration: 3000,
-            },
-          );
-          setTimeout(() => {
-            setCopied(false);
-          }, 2000);
-        },
-        (err) => {
-          console.log("failed to copy", err.mesage);
-        },
-      );
-  };
-
-  const handleJumpToInterview = (event: React.MouseEvent) => {
+  const handleTestInterview = (event: React.MouseEvent) => {
     event.stopPropagation();
     event.preventDefault();
-    const interviewUrl = readableSlug
-      ? `/call/${readableSlug}`
-      : `/call/${url}`;
-    window.open(interviewUrl, "_blank");
+    window.location.href = `/interviews/${id}/test`;
   };
 
   return (
@@ -145,24 +113,12 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
           </div>
           <div className="absolute top-2 right-2 flex gap-1">
             <Button
-              className="text-xs text-indigo-600 px-1 h-6"
+              className="text-xs text-indigo-600 px-2 h-6 gap-1"
               variant={"secondary"}
-              onClick={handleJumpToInterview}
+              onClick={handleTestInterview}
             >
-              <ArrowUpRight size={16} />
-            </Button>
-            <Button
-              className={`text-xs text-indigo-600 px-1 h-6  ${
-                copied ? "bg-indigo-300 text-white" : ""
-              }`}
-              variant={"secondary"}
-              onClick={(event) => {
-                event.stopPropagation();
-                event.preventDefault();
-                copyToClipboard();
-              }}
-            >
-              {copied ? <CopyCheck size={16} /> : <Copy size={16} />}
+              <FlaskConical size={14} />
+              Test
             </Button>
           </div>
         </CardContent>
