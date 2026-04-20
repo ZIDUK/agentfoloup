@@ -7,7 +7,7 @@ const getClientByEmail = async (email: string) => {
     const { data, error } = await supabase
       .from("users")
       .select(`*`)
-      .eq("email", email)
+      .eq("email", email.toLowerCase())
       .single();
 
     if (error || !data) return null;

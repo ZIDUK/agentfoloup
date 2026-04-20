@@ -27,13 +27,15 @@ export function ClientProvider({ children }: ClientProviderProps) {
     const handleAuthUser = async (authUser: any) => {
       if (!authUser?.email) return;
 
-      if (!authUser.email.endsWith("@agenticdream.com")) {
+      const email = authUser.email.toLowerCase();
+
+      if (!email.endsWith("@agenticdream.com")) {
         await supabase.auth.signOut();
         router.push("/sign-in?error=unauthorized");
         return;
       }
 
-      const userData = await ClientService.getClientByEmail(authUser.email);
+      const userData = await ClientService.getClientByEmail(email);
       if (!userData) {
         await supabase.auth.signOut();
         router.push("/sign-in?error=unauthorized");
