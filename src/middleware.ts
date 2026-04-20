@@ -13,15 +13,11 @@ const SUPABASE_CONFIGURED =
 const publicRoutes = [
   "/",
   "/sign-in",
-  "/sign-up",
-  "/interview",
   "/call",
+  "/result",
   "/api/register-call",
-  "/api/get-call",
   "/api/check-response",
-  "/api/generate-interview-questions",
-  "/api/create-interviewer",
-  "/api/analyze-communication",
+  "/api/get-call",
 ];
 
 const protectedRoutes = ["/dashboard", "/interview"];
@@ -65,8 +61,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Redirect to dashboard if accessing sign-in/sign-up with session
-  if ((pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up")) && session) {
+  // Redirect sign-up to sign-in (sign-up is not supported)
+  if (pathname.startsWith("/sign-up")) {
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = "/sign-in";
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // Redirect to dashboard if accessing sign-in with active session
+  if (pathname.startsWith("/sign-in") && session) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
     return NextResponse.redirect(redirectUrl);

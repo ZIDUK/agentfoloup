@@ -11,6 +11,7 @@ function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
+  const isUnauthorized = searchParams.get("error") === "unauthorized";
 
   const handleGoogleSignIn = async () => {
     try {
@@ -39,9 +40,16 @@ function SignInPage() {
           <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
             Welcome to Folo<span className="text-indigo-600">Up</span>
           </h1>
-          <p className="text-gray-600 mb-8 text-center">
-            Sign in to continue to your dashboard
-          </p>
+          {isUnauthorized ? (
+            <p className="text-red-500 mb-8 text-center text-sm">
+              Your account is not authorized to access this application.
+              Please contact your administrator.
+            </p>
+          ) : (
+            <p className="text-gray-600 mb-8 text-center">
+              Sign in to continue to your dashboard
+            </p>
+          )}
           <Button
             onClick={handleGoogleSignIn}
             disabled={loading}

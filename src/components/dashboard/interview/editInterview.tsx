@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Plus, SaveIcon, TrashIcon } from "lucide-react";
 import { useInterviewers } from "@/contexts/interviewers.context";
+import { useClient } from "@/contexts/clients.context";
 import QuestionCard from "@/components/dashboard/interview/create-popup/questionCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ type EditInterviewProps = {
 function EditInterview({ interview }: EditInterviewProps) {
   const { interviewers } = useInterviewers();
   const { fetchInterviews } = useInterviews();
+  const { client } = useClient();
 
   const [description, setDescription] = useState<string>(
     interview?.description || "",
@@ -109,6 +111,7 @@ function EditInterview({ interview }: EditInterviewProps) {
       time_duration: Number(duration),
       description: description,
       is_anonymous: isAnonymous,
+      updated_by: client?.id || null,
     };
 
     try {

@@ -52,11 +52,9 @@ export default function RootLayout({
         suppressHydrationWarning
         >
           <Providers>
-            {!pathname.includes("/sign-in") &&
-              !pathname.includes("/sign-up") && <Navbar />}
+            {!pathname.includes("/sign-in") && <Navbar />}
             <div className="flex flex-row h-screen">
-              {!pathname.includes("/sign-in") &&
-                !pathname.includes("/sign-up") && <SideMenu />}
+              {!pathname.includes("/sign-in") && <SideMenu />}
               <div className="ml-[200px] pt-[64px] h-full overflow-y-auto flex-grow">
                 {children}
               </div>

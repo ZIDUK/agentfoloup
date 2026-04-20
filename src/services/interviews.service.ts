@@ -1,12 +1,11 @@
 import { getSupabaseClient } from "@/lib/supabase-client";
 
-const getAllInterviews = async (userId: string) => {
+const getAllInterviews = async () => {
   try {
     const supabase = getSupabaseClient();
     const { data: clientData } = await supabase
       .from("interview")
       .select(`*`)
-      .eq("user_id", userId)
       .eq("is_deleted", false)
       .order("created_at", { ascending: false });
 

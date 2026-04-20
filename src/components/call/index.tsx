@@ -515,7 +515,7 @@ function Call({ interview, applicationId }: InterviewProps) {
           }).catch(() => {});
 
           setTimeout(() => {
-            window.location.href = `/interviews/${interview.id}?call=${callId}`;
+            window.location.href = `/result/${callId}`;
           }, 1000);
         } catch (error) {
           console.error("Error saving response:", error);

@@ -64,11 +64,9 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
   }, [supabase, SKIP_AUTH]);
 
   const fetchInterviews = async () => {
-    if (!user?.id) return;
-
     try {
       setInterviewsLoading(true);
-      const response = await InterviewService.getAllInterviews(user.id);
+      const response = await InterviewService.getAllInterviews();
       setInterviews(response);
     } catch (error) {
       console.error(error);

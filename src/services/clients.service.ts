@@ -1,34 +1,23 @@
 import { getSupabaseClient } from "@/lib/supabase-client";
 
-const getClientById = async (id: string, email?: string | null) => {
+const getClientByEmail = async (email: string) => {
   try {
     const supabase = getSupabaseClient();
     if (!supabase) return null;
     const { data, error } = await supabase
       .from("users")
       .select(`*`)
-      .filter("id", "eq", id);
+      .eq("email", email)
+      .single();
 
-    if (!data || (data.length === 0 && email)) {
-      const { error, data } = await supabase
-        .from("users")
-        .insert({ id: id, email: email });
-
-      if (error) {
-        console.error(error);
-        return [];
-      }
-
-      return data ? data[0] : null;
-    }
-
-    return data ? data[0] : null;
+    if (error || !data) return null;
+    return data;
   } catch (error) {
     console.error(error);
-    return [];
+    return null;
   }
 };
 
 export const ClientService = {
-  getClientById,
+  getClientByEmail,
 };

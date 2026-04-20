@@ -59,6 +59,8 @@ export type Database = {
           time_duration: string | null;
           url: string | null;
           user_id: string | null;
+          created_by: string | null;
+          updated_by: string | null;
         };
         Insert: {
           created_at?: string;
@@ -82,6 +84,8 @@ export type Database = {
           time_duration?: string | null;
           url?: string | null;
           user_id?: string | null;
+          created_by?: string | null;
+          updated_by?: string | null;
         };
         Update: {
           created_at?: string;
@@ -105,6 +109,8 @@ export type Database = {
           time_duration?: string | null;
           url?: string | null;
           user_id?: string | null;
+          created_by?: string | null;
+          updated_by?: string | null;
         };
         Relationships: [
           {
