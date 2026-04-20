@@ -35,6 +35,17 @@ services:
       - NODE_ENV=production
       - VIRTUAL_HOST=foloup.agenticdream.com
       - LETSENCRYPT_HOST=foloup.agenticdream.com
+      - SKIP_AUTH=${SKIP_AUTH}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
+      - DEEPGRAM_PROJECT_ID=${DEEPGRAM_PROJECT_ID}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - MISTRAL_MODEL=${MISTRAL_MODEL}
+      - DREAMIT_URL=${DREAMIT_URL}
+      - DREAMIT_FOLOUP_SECRET=${DREAMIT_FOLOUP_SECRET}
+      - DREAMIT_SUPABASE_SERVICE_ROLE_KEY=${DREAMIT_SUPABASE_SERVICE_ROLE_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET_KEY=${GOOGLE_CLIENT_SECRET_KEY}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.foloup.rule=Host(`foloup.agenticdream.com`)"
