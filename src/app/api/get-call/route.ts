@@ -121,6 +121,19 @@ export async function POST(req: Request, res: Response) {
     }
   }
 
+  // Enrich analytics with proctoring fields so they are stored in the analytics
+  // column and forwarded to DreamIT as part of the same object.
+  if (analytics) {
+    const proctoringEvents: any[] = callDetails.proctoring_events ?? [];
+    analytics = {
+      ...analytics,
+      tab_switch_count: callDetails.tab_switch_count ?? 0,
+      full_screen_events: callDetails.fullscreen_exit_count ?? 0,
+      proctoring_events: proctoringEvents,
+      camera_covered: proctoringEvents.some((e: any) => e.type === "camera_covered"),
+    };
+  }
+
   // ── Step 2: Generate call_analysis (summary, sentiments, completion) ────────
   let callAnalysis = callResponse.call_analysis;
   let callAnalysisFailed = false;

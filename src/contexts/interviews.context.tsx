@@ -36,9 +36,9 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
   useEffect(() => {
     const getUser = async () => {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
     };
 
     getUser();

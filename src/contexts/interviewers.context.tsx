@@ -50,9 +50,9 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
   useEffect(() => {
     const getUser = async () => {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
     };
 
     getUser();

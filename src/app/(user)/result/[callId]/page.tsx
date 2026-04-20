@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { ResponseService } from "@/services/responses.service";
 import { InterviewService } from "@/services/interviews.service";
 import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText";
-import { ArrowUpRightSquareIcon } from "lucide-react";
 
 type Props = {
   params: {
@@ -69,18 +68,6 @@ export default function ResultPage({ params }: Props) {
           Thank you for completing the interview. Your responses have been
           recorded and will be reviewed shortly.
         </p>
-        <a
-          href="https://folo-up.co/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 mt-10 text-sm text-gray-400 hover:text-indigo-600 transition-colors"
-        >
-          Powered by{" "}
-          <span className="font-semibold">
-            Folo<span className="text-indigo-600">Up</span>
-          </span>
-          <ArrowUpRightSquareIcon className="w-4 h-4" />
-        </a>
       </div>
     </div>
   );

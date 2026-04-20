@@ -44,8 +44,8 @@ export function ClientProvider({ children }: ClientProviderProps) {
       setClient(userData);
     };
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) handleAuthUser(user);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) handleAuthUser(session.user);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {

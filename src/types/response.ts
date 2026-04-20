@@ -1,5 +1,5 @@
 export interface ProctoringEvent {
-  type: "tab_hidden" | "window_blur" | "fullscreen_exit";
+  type: "tab_hidden" | "window_blur" | "fullscreen_exit" | "camera_covered";
   timestamp: number;
 }
 
@@ -63,6 +63,11 @@ export interface Analytics {
   generalIntelligence: string;
   softSkillSummary: string;
   questionSummaries: QuestionSummary[];
+  // Integrity & Proctoring
+  tab_switch_count?: number;
+  full_screen_events?: number;
+  proctoring_events?: Array<{ type: string; timestamp: number; count?: number }>;
+  camera_covered?: boolean;
   // Answer Quality Metrics
   averageAnswerLength?: number;
   answerRelevanceScore?: number;

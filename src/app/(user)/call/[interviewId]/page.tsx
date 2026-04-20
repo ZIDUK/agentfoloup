@@ -5,7 +5,6 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Call from "@/components/call";
 import Image from "next/image";
-import { ArrowUpRightSquareIcon } from "lucide-react";
 import { Interview } from "@/types/interview";
 import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText";
 
@@ -29,20 +28,6 @@ function PopupLoader() {
           <LoaderWithText />
         </div>
       </div>
-      <a
-        className="flex flex-row justify-center align-middle mt-3"
-        href="https://folo-up.co/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <div className="text-center text-md font-semibold mr-2">
-          Powered by{" "}
-          <span className="font-bold">
-            Folo<span className="text-indigo-600">Up</span>
-          </span>
-        </div>
-        <ArrowUpRightSquareIcon className="h-[1.5rem] w-[1.5rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500" />
-      </a>
     </div>
   );
 }
@@ -63,20 +48,6 @@ function PopUpMessage({ title, description, image }: PopupProps) {
           <p>{description}</p>
         </div>
       </div>
-      <a
-        className="flex flex-row justify-center align-middle mt-3"
-        href="https://folo-up.co/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <div className="text-center text-md font-semibold mr-2">
-          Powered by{" "}
-          <span className="font-bold">
-            Folo<span className="text-indigo-600">Up</span>
-          </span>
-        </div>
-        <ArrowUpRightSquareIcon className="h-[1.5rem] w-[1.5rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500" />
-      </a>
     </div>
   );
 }
@@ -115,8 +86,8 @@ function InterviewInterface({ params }: Props) {
   }, []);
 
   return (
-    <div>
-      <div className="hidden md:block p-8 mx-auto form-container">
+    <div className="h-screen overflow-hidden">
+      <div className="hidden md:block p-4 h-full form-container">
         {!interview ? (
           interviewNotFound ? (
             <PopUpMessage
@@ -146,16 +117,6 @@ function InterviewInterface({ params }: Props) {
             Please use a PC to respond to the interview. Apologies for any
             inconvenience caused.{" "}
           </p>
-        </div>
-        <div className="text-center text-md font-semibold mr-2 my-5">
-          Powered by{" "}
-          <a
-            className="font-bold underline"
-            href="www.folo-up.co"
-            target="_blank"
-          >
-            Folo<span className="text-indigo-600">Up</span>
-          </a>
         </div>
       </div>
     </div>
