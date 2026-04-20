@@ -15,14 +15,8 @@ export async function POST(req: Request, res: Response) {
 
     const payload = body.interviewData;
 
-    let readableSlug = null;
-    if (body.organizationName) {
-      const interviewNameSlug = payload.name?.toLowerCase().replace(/\s/g, "-");
-      const orgNameSlug = body.organizationName
-        ?.toLowerCase()
-        .replace(/\s/g, "-");
-      readableSlug = `${orgNameSlug}-${interviewNameSlug}`;
-    }
+    const interviewNameSlug = payload.name?.toLowerCase().replace(/\s/g, "-");
+    const readableSlug = interviewNameSlug ? `${interviewNameSlug}-${url_id}` : null;
 
     if (payload.job_id) {
       const dreamitUrl = process.env.DREAMIT_URL;

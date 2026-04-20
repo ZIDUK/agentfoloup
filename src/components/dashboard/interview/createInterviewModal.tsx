@@ -11,7 +11,6 @@ interface Props {
 
 const CreateEmptyInterviewData = (): InterviewBase => ({
   user_id: "",
-  organization_id: "",
   name: "",
   interviewer_id: BigInt(0),
   objective: "",

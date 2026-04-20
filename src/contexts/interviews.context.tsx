@@ -30,23 +30,18 @@ interface InterviewProviderProps {
 export function InterviewProvider({ children }: InterviewProviderProps) {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [user, setUser] = useState<any>(null);
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const supabase = getSupabaseClient();
   const [interviewsLoading, setInterviewsLoading] = useState(false);
   const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
   useEffect(() => {
-    // If SKIP_AUTH is enabled, use a mock user
     if (SKIP_AUTH) {
       const mockUser = {
         id: "dev-user-123",
         email: "dev@example.com",
-        user_metadata: {
-          organization_id: "dev-org-123",
-        },
+        user_metadata: {},
       };
       setUser(mockUser);
-      setOrganizationId(mockUser.user_metadata.organization_id);
       return;
     }
 
@@ -55,10 +50,6 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
-      if (user) {
-        const orgId = user.user_metadata?.organization_id || user.id;
-        setOrganizationId(orgId);
-      }
     };
 
     getUser();
@@ -67,44 +58,35 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        const orgId = session.user.user_metadata?.organization_id || session.user.id;
-        setOrganizationId(orgId);
-      }
     });
 
     return () => subscription.unsubscribe();
   }, [supabase, SKIP_AUTH]);
 
   const fetchInterviews = async () => {
-    if (!user?.id || !organizationId) return;
-    
+    if (!user?.id) return;
+
     try {
       setInterviewsLoading(true);
-      const response = await InterviewService.getAllInterviews(
-        user.id,
-        organizationId,
-      );
-      setInterviewsLoading(false);
+      const response = await InterviewService.getAllInterviews(user.id);
       setInterviews(response);
     } catch (error) {
       console.error(error);
+    } finally {
+      setInterviewsLoading(false);
     }
-    setInterviewsLoading(false);
   };
 
   const getInterviewById = async (interviewId: string) => {
-    const response = await InterviewService.getInterviewById(interviewId);
-
-    return response;
+    return InterviewService.getInterviewById(interviewId);
   };
 
   useEffect(() => {
-    if (organizationId && user?.id) {
+    if (user?.id) {
       fetchInterviews();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organizationId, user?.id]);
+  }, [user?.id]);
 
   return (
     <InterviewContext.Provider
@@ -124,6 +106,5 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
 
 export const useInterviews = () => {
   const value = useContext(InterviewContext);
-
   return value;
 };

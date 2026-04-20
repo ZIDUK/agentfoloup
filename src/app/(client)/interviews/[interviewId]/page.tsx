@@ -3,13 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import React, { useState, useEffect } from "react";
-import { getSupabaseClient } from "@/lib/supabase-client";
 import { useInterviews } from "@/contexts/interviews.context";
 import { Share2, Filter, Pencil, UserIcon, Eye, Palette } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { ResponseService } from "@/services/responses.service";
-import { ClientService } from "@/services/clients.service";
 import { Interview } from "@/types/interview";
 import { Response } from "@/types/response";
 import { formatTimestampToDateHHMM } from "@/lib/utils";
@@ -56,7 +54,6 @@ function InterviewHome({ params, searchParams }: Props) {
   const [isSharePopupOpen, setIsSharePopupOpen] = useState(false);
   const router = useRouter();
   const [isActive, setIsActive] = useState<boolean>(true);
-  const [currentPlan, setCurrentPlan] = useState<string>("");
   const [isGeneratingInsights, setIsGeneratingInsights] =
     useState<boolean>(false);
   const [isViewed, setIsViewed] = useState<boolean>(false);
@@ -64,29 +61,7 @@ function InterviewHome({ params, searchParams }: Props) {
   const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
   const [themeColor, setThemeColor] = useState<string>("#4F46E5");
   const [iconColor, seticonColor] = useState<string>("#4F46E5");
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const supabase = getSupabaseClient();
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
-  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
-
-  useEffect(() => {
-    // If SKIP_AUTH is enabled, use a mock organization
-    if (SKIP_AUTH) {
-      setOrganizationId("dev-org-123");
-      return;
-    }
-
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const orgId = user.user_metadata?.organization_id || user.id;
-        setOrganizationId(orgId);
-      }
-    };
-    getUser();
-  }, [supabase, SKIP_AUTH]);
 
   const seeInterviewPreviewPage = () => {
     if (!interview) {
@@ -142,22 +117,6 @@ function InterviewHome({ params, searchParams }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getInterviewById, params.interviewId, isGeneratingInsights]);
 
-  useEffect(() => {
-    const fetchOrganizationData = async () => {
-      try {
-        if (organizationId) {
-          const data = await ClientService.getOrganizationById(organizationId);
-          if (data?.plan) {
-            setCurrentPlan(data.plan);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching organization data:", error);
-      }
-    };
-
-    fetchOrganizationData();
-  }, [organizationId]);
   useEffect(() => {
     const fetchResponses = async () => {
       try {
@@ -426,33 +385,14 @@ function InterviewHome({ params, searchParams }: Props) {
             </TooltipProvider>
 
             <label className="inline-flex cursor-pointer">
-              {currentPlan == "free_trial_over" ? (
-                <>
-                  <span className="ms-3 my-auto text-sm">Inactive</span>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipContent
-                        className="bg-zinc-300"
-                        side="bottom"
-                        sideOffset={4}
-                      >
-                        Upgrade your plan to reactivate
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </>
-              ) : (
-                <>
-                  <span className="ms-3 my-auto text-sm">Active</span>
-                  <Switch
-                    checked={isActive}
-                    className={`ms-3 my-auto ${
-                      isActive ? "bg-indigo-600" : "bg-[#E6E7EB]"
-                    }`}
-                    onCheckedChange={handleToggle}
-                  />
-                </>
-              )}
+              <span className="ms-3 my-auto text-sm">Active</span>
+              <Switch
+                checked={isActive}
+                className={`ms-3 my-auto ${
+                  isActive ? "bg-indigo-600" : "bg-[#E6E7EB]"
+                }`}
+                onCheckedChange={handleToggle}
+              />
             </label>
           </div>
           <div className="flex flex-row w-full p-2 h-[85%] gap-1 ">

@@ -18,22 +18,17 @@ interface Props {
 
 function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
   const [user, setUser] = useState<any>(null);
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const supabase = getSupabaseClient();
   const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
   useEffect(() => {
-    // If SKIP_AUTH is enabled, use a mock user
     if (SKIP_AUTH) {
       const mockUser = {
         id: "dev-user-123",
         email: "dev@example.com",
-        user_metadata: {
-          organization_id: "dev-org-123",
-        },
+        user_metadata: {},
       };
       setUser(mockUser);
-      setOrganizationId(mockUser.user_metadata.organization_id);
       return;
     }
 
@@ -42,10 +37,6 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
-      if (user) {
-        const orgId = user.user_metadata?.organization_id || user.id;
-        setOrganizationId(orgId);
-      }
     };
     getUser();
   }, [supabase, SKIP_AUTH]);
@@ -97,8 +88,6 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
   const onSave = async () => {
     try {
       interviewData.user_id = user?.id || "";
-      interviewData.organization_id = organizationId || "";
-
       interviewData.questions = questions;
       interviewData.description = description;
 
@@ -111,7 +100,6 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
       };
 
       const response = await axios.post("/api/create-interview", {
-        organizationName: user?.user_metadata?.organization_name || "My Organization",
         interviewData: sanitizedInterviewData,
       });
       setIsClicked(false);

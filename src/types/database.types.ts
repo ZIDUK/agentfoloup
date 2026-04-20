@@ -49,7 +49,6 @@ export type Database = {
           logo_url: string | null;
           name: string | null;
           objective: string | null;
-          organization_id: string | null;
           question_count: number | null;
           questions: Json | null;
           quotes: Json[] | null;
@@ -73,7 +72,6 @@ export type Database = {
           logo_url?: string | null;
           name?: string | null;
           objective?: string | null;
-          organization_id?: string | null;
           question_count?: number | null;
           questions?: Json | null;
           quotes?: Json[] | null;
@@ -97,7 +95,6 @@ export type Database = {
           logo_url?: string | null;
           name?: string | null;
           objective?: string | null;
-          organization_id?: string | null;
           question_count?: number | null;
           questions?: Json | null;
           quotes?: Json[] | null;
@@ -158,33 +155,6 @@ export type Database = {
           name?: string;
           rapport?: number;
           speed?: number;
-        };
-        Relationships: [];
-      };
-      organization: {
-        Row: {
-          allowed_responses_count: number | null;
-          created_at: string;
-          id: string;
-          image_url: string | null;
-          name: string | null;
-          plan: Database["public"]["Enums"]["plan"] | null;
-        };
-        Insert: {
-          allowed_responses_count?: number | null;
-          created_at?: string;
-          id: string;
-          image_url?: string | null;
-          name?: string | null;
-          plan?: Database["public"]["Enums"]["plan"] | null;
-        };
-        Update: {
-          allowed_responses_count?: number | null;
-          created_at?: string;
-          id?: string;
-          image_url?: string | null;
-          name?: string | null;
-          plan?: Database["public"]["Enums"]["plan"] | null;
         };
         Relationships: [];
       };
@@ -256,24 +226,45 @@ export type Database = {
           },
         ];
       };
-      user: {
+      users: {
         Row: {
-          created_at: string;
-          email: string | null;
           id: string;
-          organization_id: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+          email: string | null;
+          name: string;
+          bamboo_id: number | null;
+          role: string;
+          job_title: string | null;
+          department: string;
+          employee_photo: string | null;
+          employment_status: string;
         };
         Insert: {
-          created_at?: string;
+          id?: string;
+          created_at?: string | null;
+          updated_at?: string | null;
           email?: string | null;
-          id: string;
-          organization_id?: string | null;
+          name: string;
+          bamboo_id?: number | null;
+          role?: string;
+          job_title?: string | null;
+          department?: string;
+          employee_photo?: string | null;
+          employment_status?: string;
         };
         Update: {
-          created_at?: string;
-          email?: string | null;
           id?: string;
-          organization_id?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+          email?: string | null;
+          name?: string;
+          bamboo_id?: number | null;
+          role?: string;
+          job_title?: string | null;
+          department?: string;
+          employee_photo?: string | null;
+          employment_status?: string;
         };
         Relationships: [];
       };
@@ -456,7 +447,7 @@ export type Database = {
       };
     };
     Enums: {
-      plan: "free" | "pro" | "free_trial_over";
+      [_ in never]: never;
     };
     CompositeTypes: {
       [_ in never]: never;
