@@ -18,23 +18,8 @@ function Navbar() {
   const [loading, setLoading] = useState(true);
   const supabase = getSupabaseClient();
   const router = useRouter();
-  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
   useEffect(() => {
-    // If SKIP_AUTH is enabled, use a mock user
-    if (SKIP_AUTH) {
-      const mockUser = {
-        id: "dev-user-123",
-        email: "dev@example.com",
-        user_metadata: {
-          avatar_url: null,
-        },
-      };
-      setUser(mockUser);
-      setLoading(false);
-      return;
-    }
-
     const getUser = async () => {
       const {
         data: { user },
@@ -52,7 +37,7 @@ function Navbar() {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase, SKIP_AUTH]);
+  }, [supabase]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();

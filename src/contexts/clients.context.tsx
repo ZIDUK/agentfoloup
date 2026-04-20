@@ -18,34 +18,20 @@ interface ClientProviderProps {
   children: ReactNode;
 }
 
-const MOCK_CLIENT: User = {
-  id: "dev-user-123",
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-  email: "dev@example.com",
-  name: "Dev User",
-  bamboo_id: null,
-  role: "admin",
-  job_title: "Developer",
-  department: "Engineering",
-  employee_photo: null,
-  employment_status: "active",
-};
-
 export function ClientProvider({ children }: ClientProviderProps) {
   const [client, setClient] = useState<User>();
   const supabase = getSupabaseClient();
   const router = useRouter();
-  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
   useEffect(() => {
-    if (SKIP_AUTH) {
-      setClient(MOCK_CLIENT);
-      return;
-    }
-
     const handleAuthUser = async (authUser: any) => {
       if (!authUser?.email) return;
+
+      if (!authUser.email.endsWith("@agenticdream.com")) {
+        await supabase.auth.signOut();
+        router.push("/sign-in?error=unauthorized");
+        return;
+      }
 
       const userData = await ClientService.getClientByEmail(authUser.email);
       if (!userData) {
@@ -69,7 +55,7 @@ export function ClientProvider({ children }: ClientProviderProps) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase, SKIP_AUTH]);
+  }, [supabase]);
 
   return (
     <ClientContext.Provider value={{ client }}>

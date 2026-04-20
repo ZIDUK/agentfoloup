@@ -2,9 +2,6 @@ import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Set to true to skip authentication (for development)
-const SKIP_AUTH = process.env.SKIP_AUTH === "true";
-
 // Check if Supabase is configured (for build time)
 const SUPABASE_CONFIGURED =
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -23,11 +20,6 @@ const publicRoutes = [
 const protectedRoutes = ["/dashboard", "/interview"];
 
 export async function middleware(req: NextRequest) {
-  // Skip authentication if SKIP_AUTH is enabled
-  if (SKIP_AUTH) {
-    return NextResponse.next();
-  }
-
   // During build time or if Supabase is not configured, allow all requests
   // This prevents build errors when environment variables are not available
   if (!SUPABASE_CONFIGURED) {

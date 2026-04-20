@@ -32,19 +32,8 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
   const [user, setUser] = useState<any>(null);
   const supabase = getSupabaseClient();
   const [interviewsLoading, setInterviewsLoading] = useState(false);
-  const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
   useEffect(() => {
-    if (SKIP_AUTH) {
-      const mockUser = {
-        id: "dev-user-123",
-        email: "dev@example.com",
-        user_metadata: {},
-      };
-      setUser(mockUser);
-      return;
-    }
-
     const getUser = async () => {
       const {
         data: { user },
@@ -61,7 +50,7 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase, SKIP_AUTH]);
+  }, [supabase]);
 
   const fetchInterviews = async () => {
     try {
