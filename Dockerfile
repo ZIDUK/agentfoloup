@@ -83,7 +83,6 @@ RUN curl -fsSL https://github.com/supabase/cli/releases/latest/download/supabase
 
 # Link to Supabase project and deploy migrations + functions (NON-INTERACTIVE)
 RUN supabase link --project-ref $SUPABASE_PROJECT_ID
-RUN npm run supabase:deploy
 
 # Stage 2: Production image with nginx
 FROM nginx:alpine AS production
