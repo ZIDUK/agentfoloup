@@ -40,6 +40,7 @@ import { DeepgramAgentService } from "@/services/deepgram-agent.service";
 import { AudioPlayer } from "@/lib/audio-player";
 import { AgentEvents } from "@deepgram/sdk";
 import { useCameraRecording } from "@/hooks/useCameraRecording";
+import { useFaceDetection } from "@/hooks/useFaceDetection";
 
 type InterviewProps = {
   interview: Interview;
@@ -119,6 +120,14 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       cameraVideoRef.current.srcObject = cameraStream;
     }
   }, [cameraStream]);
+
+  // Face detection — runs only while interview is active.
+  const { noFaceCount, multipleFacesCount, getFaceDetectionData } =
+    useFaceDetection(cameraVideoRef, isStarted && !isEnded);
+  const faceDetectionDataRef = useRef(getFaceDetectionData());
+  useEffect(() => {
+    faceDetectionDataRef.current = getFaceDetectionData();
+  }, [getFaceDetectionData]);
 
   const lastUserResponseRef = useRef<HTMLDivElement | null>(null);
 
@@ -511,7 +520,15 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       const interviewer = await InterviewerService.getInterviewer(
         interview.interviewer_id,
       );
-      setInterviewerImg(interviewer.image);
+      const img: string = interviewer?.image ?? "";
+      // Only accept paths that next/image can serve (leading slash or absolute URL).
+      // Anything else (e.g. legacy "employee-photos/233.jpg") falls back to the
+      // local public/interviewers default.
+      setInterviewerImg(
+        img && (img.startsWith("/") || img.startsWith("http"))
+          ? img
+          : "/interviewers/Bob.png",
+      );
     };
     fetchInterviewer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -536,6 +553,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
 
         // Capture final proctoring snapshot.
         const proctoring = proctoringDataRef.current;
+        const faceDetection = faceDetectionDataRef.current;
 
         try {
           await ResponseService.saveResponse(
@@ -543,8 +561,11 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
               is_ended: true,
               tab_switch_count: proctoring.tabSwitchCount,
               fullscreen_exit_count: proctoring.fullscreenExitCount,
+              no_face_count: faceDetection.noFaceCount,
+              multiple_faces_count: faceDetection.multipleFacesCount,
               proctoring_events: [
                 ...proctoring.events,
+                ...faceDetection.events,
                 ...(proctoring.windowSwitchCount > 0
                   ? [{ type: "window_switch_summary", count: proctoring.windowSwitchCount, timestamp: endTime }]
                   : []),
@@ -660,7 +681,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
             {!isStarted && !isEnded && !isOldUser && (
               <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
                 <div>
-                  {interview?.logo_url && (
+                  {interview?.logo_url && (interview.logo_url.startsWith("/") || interview.logo_url.startsWith("http")) && (
                     <div className="p-1 flex justify-center">
                       <Image
                         src={interview.logo_url}
@@ -812,24 +833,28 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
                       {lastInterviewerResponse}
                     </div>
                     <div className="flex flex-col mx-auto justify-center items-center align-middle">
-                      {interviewerImg ? (
+                      <div
+                        className={`w-[120px] h-[120px] rounded-full overflow-hidden ${
+                          activeTurn === "agent"
+                            ? `border-4 border-[${interview.theme_color}]`
+                            : ""
+                        }`}
+                      >
                         <Image
-                          src={interviewerImg}
+                          src={
+                            interviewerImg &&
+                            (interviewerImg.startsWith("/") || interviewerImg.startsWith("http"))
+                              ? interviewerImg
+                              : "/interviewers/Bob.png"
+                          }
+                          onError={() => setInterviewerImg("/interviewers/Bob.png")}
                           alt="Image of the interviewer"
                           width={120}
                           height={120}
-                          className={`object-cover object-center mx-auto my-auto ${
-                            activeTurn === "agent"
-                              ? `border-4 border-[${interview.theme_color}] rounded-full`
-                              : ""
-                          }`}
+                          className="w-full h-full object-cover object-center"
                         />
-                      ) : (
-                        <div className="w-[120px] h-[120px] bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
-                          No Image
-                        </div>
-                      )}
-                      <div className="font-semibold">Interviewer</div>
+                      </div>
+                      <div className="font-semibold mt-1">Interviewer</div>
                     </div>
                   </div>
                 </div>

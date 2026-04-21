@@ -148,7 +148,7 @@ Deno.serve(async (_req) => {
     const dbFetchStart = Date.now();
     const { data: responses, error } = await supabase
       .from("response")
-      .select("call_id, interview_id, details, analytics, application_id")
+      .select("call_id, interview_id, details, analytics, application_id, tab_switch_count, fullscreen_exit_count, proctoring_events, no_face_count, multiple_faces_count")
       .eq("processed_by_foloup", false)
       .eq("is_ended", true);
 
@@ -412,7 +412,19 @@ Deno.serve(async (_req) => {
                 "x-foloup-secret": foloupSecret,
                 Authorization: `Bearer ${dreamitServiceRoleKey}`,
               },
-              body: JSON.stringify({ applicationId: response.application_id, analytics }),
+              body: JSON.stringify({
+                applicationId: response.application_id,
+                analytics: {
+                  ...analytics,
+                  tab_switch_count: analytics?.tab_switch_count ?? response.tab_switch_count ?? 0,
+                  full_screen_events: analytics?.full_screen_events ?? response.fullscreen_exit_count ?? 0,
+                  proctoring_events: analytics?.proctoring_events ?? response.proctoring_events ?? [],
+                  camera_covered: analytics?.camera_covered ??
+                    (response.proctoring_events ?? []).some((e: any) => e.type === "camera_covered"),
+                  no_face_count: analytics?.no_face_count ?? response.no_face_count ?? 0,
+                  multiple_faces_count: analytics?.multiple_faces_count ?? response.multiple_faces_count ?? 0,
+                },
+              }),
             },
           );
 

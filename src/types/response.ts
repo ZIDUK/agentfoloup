@@ -1,5 +1,11 @@
 export interface ProctoringEvent {
-  type: "tab_hidden" | "window_blur" | "fullscreen_exit" | "camera_covered";
+  type:
+    | "tab_hidden"
+    | "window_blur"
+    | "fullscreen_exit"
+    | "camera_covered"
+    | "no_face"
+    | "multiple_faces";
   timestamp: number;
 }
 
@@ -21,6 +27,8 @@ export interface Response {
   recording_url: string | null;
   fullscreen_exit_count: number | null;
   proctoring_events: ProctoringEvent[] | null;
+  no_face_count: number | null;
+  multiple_faces_count: number | null;
   application_id: string | null;
   dreamit_notified: boolean;
   processed_by_foloup: boolean;
