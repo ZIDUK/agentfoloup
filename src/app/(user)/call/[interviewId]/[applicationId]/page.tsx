@@ -10,6 +10,7 @@ import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText
 type Props = {
   params: {
     interviewId: string;
+    applicationId: string;
   };
 };
 
@@ -52,20 +53,22 @@ function PopUpMessage({ title, description, image }: PopupProps) {
 }
 
 function InterviewInterface({ params }: Props) {
+  const { interviewId, applicationId } = params;
   const [interview, setInterview] = useState<Interview>();
   const [isActive, setIsActive] = useState(true);
   const { getInterviewById } = useInterviews();
   const [interviewNotFound, setInterviewNotFound] = useState(false);
+
   useEffect(() => {
     if (interview) {
       setIsActive(interview?.is_active === true);
     }
-  }, [interview, params.interviewId]);
+  }, [interview, interviewId]);
 
   useEffect(() => {
     const fetchinterview = async () => {
       try {
-        const response = await getInterviewById(params.interviewId);
+        const response = await getInterviewById(interviewId);
         if (response) {
           setInterview(response);
           document.title = response.name;
@@ -102,7 +105,7 @@ function InterviewInterface({ params }: Props) {
             image="/closed.png"
           />
         ) : (
-          <Call interview={interview} />
+          <Call interview={interview} applicationId={applicationId} />
         )}
       </div>
       <div className=" md:hidden flex flex-col items-center md:h-[0px] justify-center  my-auto">
