@@ -11,8 +11,7 @@ function CreateInterviewerButton() {
 
   const createInterviewers = async () => {
     setIsLoading(true);
-    const response = await axios.get("/api/create-interviewer", {});
-    console.log(response);
+    await axios.get("/api/create-interviewer", {});
     setIsLoading(false);
     InterviewerService.getAllInterviewers();
   };

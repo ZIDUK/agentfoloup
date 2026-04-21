@@ -87,8 +87,8 @@ export default function ResultPage({ params }: Props) {
         if (response?.details?.transcript_object) {
           setTranscript(response.details.transcript_object);
         }
-      } catch (err) {
-        console.error(err);
+      } catch {
+        // fetch failure handled by fallback UI
       } finally {
         setLoading(false);
       }

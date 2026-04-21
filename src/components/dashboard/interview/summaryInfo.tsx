@@ -168,11 +168,8 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id: response.call_id }),
               });
-            } catch (error) {
-              console.error(
-                `Error generating call_analysis for ${response.call_id}:`,
-                error,
-              );
+            } catch {
+              // analysis generation failure is non-fatal
             }
           }),
         );

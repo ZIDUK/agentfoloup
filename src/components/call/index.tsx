@@ -70,6 +70,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
   const [name, setName] = useState<string>(prefillName);
   const [isValidEmail, setIsValidEmail] = useState<boolean>(false);
   const [isOldUser, setIsOldUser] = useState<boolean>(false);
+  const [isCompiling, setIsCompiling] = useState<boolean>(false);
   const [callId, setCallId] = useState<string>("");
   const [callStartTime, setCallStartTime] = useState<number | null>(null);
   const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(false);
@@ -191,7 +192,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
         agentService.close();
       }
       if (audioPlayerRef.current) {
-        audioPlayerRef.current.stop().catch(console.error);
+        audioPlayerRef.current.stop().catch(() => {});
       }
       setIsEnded(true);
     }
@@ -216,8 +217,8 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
     const initAudio = async () => {
       try {
         await player.initialize();
-      } catch (error) {
-        console.error("Error initializing AudioPlayer:", error);
+      } catch {
+        // audio init failure is non-fatal
       }
     };
 
@@ -314,8 +315,8 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
           arrayBuffer = converted as ArrayBuffer;
         }
         await player.addAudioChunk(arrayBuffer);
-      } catch (error) {
-        console.error("Error adding audio chunk:", error);
+      } catch {
+        // non-fatal audio chunk error
       }
     });
 
@@ -323,12 +324,10 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       setActiveTurn("user");
     });
 
-    agentService.on(AgentEvents.Error, (error: any) => {
-      console.error("Deepgram Agent Error:", error);
+    agentService.on(AgentEvents.Error, () => {
       agentService.close();
       setIsEnded(true);
       setIsCalling(false);
-      toast.error("An error occurred during the call");
     });
 
     return () => {
@@ -567,14 +566,13 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       }
       try {
         await player.initialize();
-      } catch (error) {
-        console.error("Error initializing AudioPlayer:", error);
+      } catch {
+        // non-fatal
       }
 
       try {
         await agent.startAudioCapture();
       } catch (error) {
-        console.error("Failed to start audio capture:", error);
         toast.error(
           "Failed to access microphone. Please check permissions and try again.",
         );
@@ -599,7 +597,6 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       setIsStarted(true);
       setIsCalling(true);
     } catch (error) {
-      console.error("Error starting conversation:", error);
       toast.error("Failed to start interview. Please try again.");
       stopCamera();
     } finally {
@@ -657,6 +654,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
         const proctoring = proctoringDataRef.current;
         const faceDetection = faceDetectionDataRef.current;
 
+        setIsCompiling(true);
         try {
           await ResponseService.saveResponse(
             {
@@ -687,20 +685,20 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
             callId,
           );
 
-          // Wait for analysis to complete before redirecting so the result page
-          // can display results immediately without polling.
+          // keepalive ensures analysis completes even if the user closes the tab.
           await fetch("/api/get-call", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: callId }),
+            keepalive: true,
           }).catch(() => {});
 
           window.location.href = isTestResponse
             ? `/interviews/${interview.id}`
             : `/result/${callId}`;
-        } catch (error) {
-          console.error("Error saving response:", error);
+        } catch {
           toast.error("Error saving interview. Please try again.");
+          setIsCompiling(false);
         }
       };
 
@@ -1045,50 +1043,56 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
             {isEnded && !isOldUser && (
               <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
                 <div>
-                  <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
-                    <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
-                    <p className="text-lg font-semibold text-center">
-                      {isTestResponse
-                        ? "Test completed. Redirecting to responses..."
-                        : isStarted
-                        ? `Thank you for taking the time to participate in this interview`
-                        : "Thank you very much for considering."}
-                    </p>
-                    {!isTestResponse && (
-                      <p className="text-center">
-                        {"\n"}
-                        You can close this tab now.
+                  {isCompiling ? (
+                    <div className="p-6 flex flex-col items-center gap-4">
+                      <MiniLoader />
+                      <p className="text-lg font-semibold text-center text-gray-700">
+                        Compiling your results…
                       </p>
-                    )}
-                  </div>
+                      <p className="text-sm text-center text-gray-500">
+                        Please wait while we prepare your feedback. You will be redirected automatically.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
+                        <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
+                        <p className="text-lg font-semibold text-center">
+                          {isTestResponse
+                            ? "Test completed. Redirecting to responses..."
+                            : "Thank you for completing the interview."}
+                        </p>
+                      </div>
 
-                  {!isTestResponse && !isFeedbackSubmitted && (
-                    <AlertDialog
-                      open={isDialogOpen}
-                      onOpenChange={setIsDialogOpen}
-                    >
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          className="w-full bg-indigo-600 text-white h-10 mt-4 mb-4"
-                          onClick={() => setIsDialogOpen(true)}
+                      {!isTestResponse && !isFeedbackSubmitted && (
+                        <AlertDialog
+                          open={isDialogOpen}
+                          onOpenChange={setIsDialogOpen}
                         >
-                          Provide Feedback
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Provide Feedback</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Your feedback helps us improve the interview
-                            experience.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <FeedbackForm
-                          email={email}
-                          onSubmit={handleFeedbackSubmit}
-                        />
-                      </AlertDialogContent>
-                    </AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              className="w-full bg-indigo-600 text-white h-10 mt-4 mb-4"
+                              onClick={() => setIsDialogOpen(true)}
+                            >
+                              Provide Feedback
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Provide Feedback</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Your feedback helps us improve the interview
+                                experience.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <FeedbackForm
+                              email={email}
+                              onSubmit={handleFeedbackSubmit}
+                            />
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

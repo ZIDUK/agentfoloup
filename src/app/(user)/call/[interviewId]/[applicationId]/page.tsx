@@ -75,8 +75,7 @@ function InterviewInterface({ params }: Props) {
         } else {
           setInterviewNotFound(true);
         }
-      } catch (error) {
-        console.error(error);
+      } catch {
         setInterviewNotFound(true);
       }
     };

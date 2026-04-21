@@ -10,8 +10,7 @@ const getAllInterviews = async () => {
       .order("created_at", { ascending: false });
 
     return [...(clientData || [])];
-  } catch (error) {
-    console.error("getAllInterviews error", error);
+  } catch {
     return [];
   }
 };
@@ -25,8 +24,7 @@ const getInterviewById = async (id: string) => {
       .or(`id.eq.${id},readable_slug.eq.${id}`);
 
     return data ? data[0] : null;
-  } catch (error) {
-    console.error("getInterviewById error", error);
+  } catch {
     return [];
   }
 };
@@ -37,10 +35,7 @@ const updateInterview = async (payload: any, id: string) => {
     .from("interview")
     .update({ ...payload })
     .eq("id", id);
-  if (error) {
-    console.error("updateInterview error", error);
-    return [];
-  }
+  if (error) return [];
 
   return data;
 };
@@ -52,10 +47,7 @@ const deleteInterview = async (id: string) => {
     .from("interview")
     .update({ is_deleted: true })
     .eq("id", id);
-  if (error) {
-    console.error("[deleteInterview] Supabase soft-delete error:", error);
-    return [];
-  }
+  if (error) return [];
 
   return data;
 };
@@ -69,8 +61,7 @@ const getAllRespondents = async (interviewId: string) => {
       .eq("interview_id", interviewId);
 
     return data || [];
-  } catch (error) {
-    console.error("getAllRespondents error", error);
+  } catch {
     return [];
   }
 };
@@ -80,10 +71,7 @@ const createInterview = async (payload: any) => {
   const { error, data } = await supabase
     .from("interview")
     .insert({ ...payload });
-  if (error) {
-    console.error("createInterview error", error);
-    return [];
-  }
+  if (error) return [];
 
   return data;
 };

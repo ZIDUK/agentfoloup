@@ -23,11 +23,7 @@ function SignInPage() {
         },
       });
 
-      if (error) {
-        console.error("Error signing in:", error);
-      }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
     } finally {
       setLoading(false);
     }

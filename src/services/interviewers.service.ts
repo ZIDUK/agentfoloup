@@ -1,6 +1,5 @@
 import { getSupabaseClient } from "@/lib/supabase-client";
 
-
 const getAllInterviewers = async (clientId: string = "") => {
   try {
     const supabase = getSupabaseClient();
@@ -9,32 +8,18 @@ const getAllInterviewers = async (clientId: string = "") => {
       .from("interviewer")
       .select(`*`);
 
-    if (clientError) {
-      console.error(
-        `Error fetching interviewers for clientId ${clientId}:`,
-        clientError,
-      );
-
-      return [];
-    }
+    if (clientError) return [];
 
     return clientData || [];
-  } catch (error) {
-    console.log(error);
-
+  } catch {
     return [];
   }
 };
 
 const createInterviewer = async (payload: any) => {
   const supabase = getSupabaseClient();
-  if (!supabase) {
-    console.error("Supabase client is not available. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.");
-    return null;
-  }
-  
-  // Check for existing interviewer with the same name
-  // Only check agent_id if it's provided
+  if (!supabase) return null;
+
   let query = supabase
     .from("interviewer")
     .select("*")
@@ -47,22 +32,17 @@ const createInterviewer = async (payload: any) => {
   const { data: existingInterviewer, error: checkError } = await query.single();
 
   if (checkError && checkError.code !== "PGRST116") {
-    console.error("Error checking existing interviewer:", checkError);
-    // Continue anyway, might be a different error
+    // non-fatal check error, continue
   }
 
   if (existingInterviewer) {
-    console.log("An interviewer with this name already exists, skipping creation");
     return existingInterviewer;
   }
 
-  // Ensure agent_id is set (can be null for development)
   const insertPayload = {
     ...payload,
     agent_id: payload.agent_id || null,
   };
-
-  console.log("Creating interviewer with payload:", insertPayload);
 
   const { error, data } = await supabase
     .from("interviewer")
@@ -70,22 +50,16 @@ const createInterviewer = async (payload: any) => {
     .select()
     .single();
 
-  if (error) {
-    console.error("Error creating interviewer:", error);
-    console.error("Error details:", JSON.stringify(error, null, 2));
-    return null;
-  }
+  if (error) return null;
 
-  console.log("Interviewer created successfully:", data);
   return data;
 };
 
 const getInterviewer = async (interviewerId: bigint | number | string) => {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
-  // Convert to number for Supabase query (Supabase handles number IDs better)
-  const id = typeof interviewerId === 'bigint' 
-    ? Number(interviewerId) 
+  const id = typeof interviewerId === 'bigint'
+    ? Number(interviewerId)
     : typeof interviewerId === 'string'
     ? Number(interviewerId)
     : interviewerId;
@@ -96,10 +70,7 @@ const getInterviewer = async (interviewerId: bigint | number | string) => {
     .eq("id", id)
     .single();
 
-  if (interviewerError) {
-    console.error("Error fetching interviewer:", interviewerError);
-    return null;
-  }
+  if (interviewerError) return null;
 
   return interviewerData;
 };

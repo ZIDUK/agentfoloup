@@ -8,11 +8,7 @@ const createResponse = async (payload: any) => {
     .insert({ ...payload })
     .select("id");
 
-  if (error) {
-    console.log(error);
-
-    return [];
-  }
+  if (error) return [];
 
   return data[0]?.id;
 };
@@ -24,11 +20,7 @@ const saveResponse = async (payload: any, call_id: string) => {
     .from("response")
     .update({ ...payload })
     .eq("call_id", call_id);
-  if (error) {
-    console.log(error);
-
-    return [];
-  }
+  if (error) return [];
 
   return data;
 };
@@ -44,32 +36,25 @@ const getAllResponses = async (interviewId: string) => {
       .eq("is_ended", true)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching responses:", error);
-      return [];
-    }
+    if (error) return [];
 
     return data || [];
-  } catch (error) {
-    console.error("Error in getAllResponses:", error);
+  } catch {
     return [];
   }
 };
-
 
 const getAllEmailAddressesForInterview = async (interviewId: string) => {
   try {
     const supabase = getSupabaseClient();
     if (!supabase) return [];
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("response")
       .select(`email`)
       .eq("interview_id", interviewId);
 
     return data || [];
-  } catch (error) {
-    console.log(error);
-
+  } catch {
     return [];
   }
 };
@@ -78,15 +63,13 @@ const getResponseByCallId = async (id: string) => {
   try {
     const supabase = getSupabaseClient();
     if (!supabase) return null;
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("response")
       .select(`*`)
       .filter("call_id", "eq", id);
 
     return data ? data[0] : null;
-  } catch (error) {
-    console.log(error);
-
+  } catch {
     return [];
   }
 };
@@ -98,11 +81,7 @@ const deleteResponse = async (id: string) => {
     .from("response")
     .delete()
     .eq("call_id", id);
-  if (error) {
-    console.log(error);
-
-    return [];
-  }
+  if (error) return [];
 
   return data;
 };
@@ -114,11 +93,7 @@ const updateResponse = async (payload: any, call_id: string) => {
     .from("response")
     .update({ ...payload })
     .eq("call_id", call_id);
-  if (error) {
-    console.log(error);
-
-    return [];
-  }
+  if (error) return [];
 
   return data;
 };
