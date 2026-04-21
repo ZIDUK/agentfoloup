@@ -8,6 +8,7 @@ export interface AgentConfig {
   questions: string[];
   duration: string;
   interviewerName?: string;
+  voiceModel?: string;
   interviewerPersonality?: {
     empathy: number;
     rapport: number;
@@ -87,7 +88,7 @@ export class DeepgramAgentService {
           speak: {
             provider: {
               type: "deepgram",
-              model: "aura-2-thalia-en",
+              model: config.voiceModel ?? "aura-2-thalia-en",
             },
           },
           greeting: `Hello ${config.name}! Let's start the interview.`,
