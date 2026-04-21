@@ -520,7 +520,15 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       const interviewer = await InterviewerService.getInterviewer(
         interview.interviewer_id,
       );
-      setInterviewerImg(interviewer.image);
+      const img: string = interviewer?.image ?? "";
+      // Only accept paths that next/image can serve (leading slash or absolute URL).
+      // Anything else (e.g. legacy "employee-photos/233.jpg") falls back to the
+      // local public/interviewers default.
+      setInterviewerImg(
+        img && (img.startsWith("/") || img.startsWith("http"))
+          ? img
+          : "/interviewers/Bob.png",
+      );
     };
     fetchInterviewer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -673,7 +681,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
             {!isStarted && !isEnded && !isOldUser && (
               <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
                 <div>
-                  {interview?.logo_url && (
+                  {interview?.logo_url && (interview.logo_url.startsWith("/") || interview.logo_url.startsWith("http")) && (
                     <div className="p-1 flex justify-center">
                       <Image
                         src={interview.logo_url}
@@ -825,24 +833,28 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
                       {lastInterviewerResponse}
                     </div>
                     <div className="flex flex-col mx-auto justify-center items-center align-middle">
-                      {interviewerImg ? (
+                      <div
+                        className={`w-[120px] h-[120px] rounded-full overflow-hidden ${
+                          activeTurn === "agent"
+                            ? `border-4 border-[${interview.theme_color}]`
+                            : ""
+                        }`}
+                      >
                         <Image
-                          src={interviewerImg}
+                          src={
+                            interviewerImg &&
+                            (interviewerImg.startsWith("/") || interviewerImg.startsWith("http"))
+                              ? interviewerImg
+                              : "/interviewers/Bob.png"
+                          }
+                          onError={() => setInterviewerImg("/interviewers/Bob.png")}
                           alt="Image of the interviewer"
                           width={120}
                           height={120}
-                          className={`object-cover object-center mx-auto my-auto ${
-                            activeTurn === "agent"
-                              ? `border-4 border-[${interview.theme_color}] rounded-full`
-                              : ""
-                          }`}
+                          className="w-full h-full object-cover object-center"
                         />
-                      ) : (
-                        <div className="w-[120px] h-[120px] bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
-                          No Image
-                        </div>
-                      )}
-                      <div className="font-semibold">Interviewer</div>
+                      </div>
+                      <div className="font-semibold mt-1">Interviewer</div>
                     </div>
                   </div>
                 </div>

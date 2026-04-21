@@ -16,6 +16,11 @@ const nextConfig = {
         protocol: "https",
         hostname: "img.clerk.com",
       },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
   },
   eslint: {
@@ -34,6 +39,12 @@ const nextConfig = {
         resource.request = resource.request.replace(/^node:/, "");
       }),
     );
+
+    // face-api.js uses dynamic require() internally — suppress the expected warning.
+    webpackConfig.ignoreWarnings = [
+      ...(webpackConfig.ignoreWarnings ?? []),
+      { module: /@vladmandic\/face-api/ },
+    ];
 
     return webpackConfig;
   },
