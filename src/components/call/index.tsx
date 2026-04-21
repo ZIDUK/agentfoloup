@@ -75,6 +75,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
   const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [interviewerImg, setInterviewerImg] = useState("");
+  const [interviewerFallbackImg, setInterviewerFallbackImg] = useState("/interviewers/Lisa.png");
   const [interviewTimeDuration, setInterviewTimeDuration] =
     useState<string>("1");
   const [time, setTime] = useState(0);
@@ -366,12 +367,21 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
         if (!ctx) return;
         ctx.drawImage(video, 0, 0, 64, 48);
         const { data } = ctx.getImageData(0, 0, 64, 48);
+        const pixelCount = data.length / 4;
         let sum = 0;
         for (let i = 0; i < data.length; i += 4) {
           sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
         }
-        const avgBrightness = sum / (data.length / 4);
-        if (avgBrightness < 15) {
+        const avgBrightness = sum / pixelCount;
+        let varianceSum = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          const b = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          varianceSum += (b - avgBrightness) ** 2;
+        }
+        const variance = varianceSum / pixelCount;
+        // All-black / very dark frame OR uniformly-colored frame (e.g. grey blocked feed)
+        const isBlocked = avgBrightness < 30 || variance < 100;
+        if (isBlocked) {
           blackFrameCount++;
           if (blackFrameCount >= 3) {
             setIsCameraCovered(true);
@@ -449,6 +459,9 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
         questions: interview?.questions.map((q) => q.question) || [],
         duration: interview?.time_duration || "15",
         interviewerName: interviewer?.name || "Interviewer",
+        voiceModel: interviewer?.audio?.toLowerCase().includes("bob")
+          ? "aura-2-orion-en"
+          : "aura-2-thalia-en",
         interviewerPersonality: {
           empathy: interviewer?.empathy || 7,
           rapport: interviewer?.rapport || 7,
@@ -524,10 +537,14 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       // Only accept paths that next/image can serve (leading slash or absolute URL).
       // Anything else (e.g. legacy "employee-photos/233.jpg") falls back to the
       // local public/interviewers default.
+      const fallbackImg = interviewer?.audio?.toLowerCase().includes("bob")
+        ? "/interviewers/Bob.png"
+        : "/interviewers/Lisa.png";
+      setInterviewerFallbackImg(fallbackImg);
       setInterviewerImg(
         img && (img.startsWith("/") || img.startsWith("http"))
           ? img
-          : "/interviewers/Bob.png",
+          : fallbackImg,
       );
     };
     fetchInterviewer();
@@ -845,9 +862,9 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
                             interviewerImg &&
                             (interviewerImg.startsWith("/") || interviewerImg.startsWith("http"))
                               ? interviewerImg
-                              : "/interviewers/Bob.png"
+                              : interviewerFallbackImg
                           }
-                          onError={() => setInterviewerImg("/interviewers/Bob.png")}
+                          onError={() => setInterviewerImg(interviewerFallbackImg)}
                           alt="Image of the interviewer"
                           width={120}
                           height={120}
