@@ -29,8 +29,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // @ts-expect-error - Deepgram SDK types may not include manage API
-    const { result, error } = await deepgram.listen.manage.createProjectKey(
+    const { result, error } = await deepgram.manage.createProjectKey(
       process.env.DEEPGRAM_PROJECT_ID,
       {
         comment: "Temporary token for interview",
@@ -57,7 +56,7 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (error) {
-    logger.error("Error generating Deepgram token:", error);
+    logger.error(`Error generating Deepgram token: ${error}`);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -47,7 +47,7 @@ function SharePopup({ open, onClose, shareContent }: SharePopupProps) {
         setTimeout(() => onClose(), 1000);
       },
 
-      (err) => console.error("Failed to copy", err.message),
+      () => {},
     );
   };
 
@@ -66,7 +66,7 @@ function SharePopup({ open, onClose, shareContent }: SharePopupProps) {
         setTimeout(() => setCopiedEmbed(false), 2000);
         setTimeout(() => onClose(), 1000);
       },
-      (err) => console.error("Failed to copy", err.message),
+      () => {},
     );
   };
 

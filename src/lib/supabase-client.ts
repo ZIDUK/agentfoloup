@@ -73,9 +73,7 @@ export const getSupabaseClient = () => {
     // Dynamic import to avoid evaluation during build if not needed
     const { createClientComponentClient } = require("@supabase/auth-helpers-nextjs");
     return createClientComponentClient();
-  } catch (error) {
-    // If import fails (shouldn't happen, but just in case), return mock
-    console.warn("Failed to create Supabase client, using mock:", error);
+  } catch {
     return mockClient as any;
   }
 };

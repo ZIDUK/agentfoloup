@@ -49,18 +49,15 @@ function InterviewCard({ name, interviewerId, id, url: _url, readableSlug: _read
                 if (result.status !== 200) {
                   throw new Error(`HTTP error! status: ${result.status}`);
                 }
-              } catch (error) {
-                console.error(
-                  `Failed to call api/get-call for response id ${response.call_id}:`,
-                  error,
-                );
+              } catch {
+                // analysis trigger failure is non-fatal
               }
             }
           }
           setIsFetching(false);
         }
-      } catch (error) {
-        console.error(error);
+      } catch {
+        // fetch failure handled silently
       }
     };
 

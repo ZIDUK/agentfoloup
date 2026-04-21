@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
     .upload(fileName, file, { contentType: mimeType, upsert: true });
 
   if (error) {
-    console.error("[upload-recording] Supabase upload error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

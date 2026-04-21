@@ -70,11 +70,14 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
   const [name, setName] = useState<string>(prefillName);
   const [isValidEmail, setIsValidEmail] = useState<boolean>(false);
   const [isOldUser, setIsOldUser] = useState<boolean>(false);
+  const [isCompiling, setIsCompiling] = useState<boolean>(false);
+  const [isCheckingApplication, setIsCheckingApplication] = useState<boolean>(!!applicationId);
   const [callId, setCallId] = useState<string>("");
   const [callStartTime, setCallStartTime] = useState<number | null>(null);
   const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [interviewerImg, setInterviewerImg] = useState("");
+  const [interviewerFallbackImg, setInterviewerFallbackImg] = useState("/interviewers/Lisa.png");
   const [interviewTimeDuration, setInterviewTimeDuration] =
     useState<string>("1");
   const [time, setTime] = useState(0);
@@ -84,6 +87,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
   const audioPlayerRef = useRef<AudioPlayer | null>(null);
   const [isCameraCovered, setIsCameraCovered] = useState(false);
   const cameraCoveredRef = useRef(false);
+  const [permissionStatus, setPermissionStatus] = useState<"unknown" | "granted" | "denied">("unknown");
 
   // Proctoring — isStarted drives activation so events aren't captured pre-interview.
   const {
@@ -120,6 +124,24 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       cameraVideoRef.current.srcObject = cameraStream;
     }
   }, [cameraStream]);
+
+  // Proactively check camera + mic permission state on mount.
+  useEffect(() => {
+    if (!("permissions" in navigator)) return;
+    Promise.all([
+      navigator.permissions.query({ name: "camera" as PermissionName }),
+      navigator.permissions.query({ name: "microphone" as PermissionName }),
+    ]).then(([cam, mic]) => {
+      const update = (c: PermissionState, m: PermissionState) => {
+        if (c === "denied" || m === "denied") setPermissionStatus("denied");
+        else if (c === "granted" && m === "granted") setPermissionStatus("granted");
+        else setPermissionStatus("unknown");
+      };
+      update(cam.state, mic.state);
+      cam.addEventListener("change", () => update(cam.state, mic.state));
+      mic.addEventListener("change", () => update(cam.state, mic.state));
+    }).catch(() => {});
+  }, []);
 
   // Face detection — runs only while interview is active.
   const { noFaceCount, multipleFacesCount, getFaceDetectionData } =
@@ -171,7 +193,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
         agentService.close();
       }
       if (audioPlayerRef.current) {
-        audioPlayerRef.current.stop().catch(console.error);
+        audioPlayerRef.current.stop().catch(() => {});
       }
       setIsEnded(true);
     }
@@ -181,9 +203,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
   }, [isCalling, time, currentTimeDuration]);
 
   useEffect(() => {
-    if (testEmail(email)) {
-      setIsValidEmail(true);
-    }
+    setIsValidEmail(testEmail(email));
   }, [email]);
 
   useEffect(() => {
@@ -198,8 +218,8 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
     const initAudio = async () => {
       try {
         await player.initialize();
-      } catch (error) {
-        console.error("Error initializing AudioPlayer:", error);
+      } catch {
+        // audio init failure is non-fatal
       }
     };
 
@@ -296,8 +316,8 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
           arrayBuffer = converted as ArrayBuffer;
         }
         await player.addAudioChunk(arrayBuffer);
-      } catch (error) {
-        console.error("Error adding audio chunk:", error);
+      } catch {
+        // non-fatal audio chunk error
       }
     });
 
@@ -305,12 +325,10 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       setActiveTurn("user");
     });
 
-    agentService.on(AgentEvents.Error, (error: any) => {
-      console.error("Deepgram Agent Error:", error);
+    agentService.on(AgentEvents.Error, () => {
       agentService.close();
       setIsEnded(true);
       setIsCalling(false);
-      toast.error("An error occurred during the call");
     });
 
     return () => {
@@ -324,17 +342,11 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
   }, [agentService]);
 
   const onEndCallClick = async () => {
-    if (isStarted && agentService) {
-      setLoading(true);
-      agentService.close();
-      if (audioPlayerRef.current) {
-        await audioPlayerRef.current.stop();
-      }
-      setIsEnded(true);
-      setLoading(false);
-    } else {
-      setIsEnded(true);
-    }
+    setLoading(true);
+    if (agentService) agentService.close();
+    if (audioPlayerRef.current) await audioPlayerRef.current.stop();
+    setIsEnded(true);
+    setLoading(false);
   };
 
   // Block duplicate submissions on page load when an applicationId is present.
@@ -346,45 +358,115 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       body: JSON.stringify({ applicationId }),
     })
       .then((r) => r.json())
-      .then(({ exists }) => { if (exists) setIsOldUser(true); })
-      .catch(() => {});
+      .then(({ exists, call_id }) => {
+        if (exists && call_id) {
+          window.location.href = `/result/${call_id}`;
+        } else if (exists) {
+          setIsOldUser(true);
+          setIsCheckingApplication(false);
+        } else {
+          setIsCheckingApplication(false);
+        }
+      })
+      .catch(() => { setIsCheckingApplication(false); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationId]);
 
-  // Detect covered camera during interview by sampling video frame brightness.
+  // Detect covered camera during interview using multi-signal pixel analysis.
+  // Uses a dedicated off-screen video so detection is independent of the DOM ref
+  // and the stream-attach render-order race condition.
   useEffect(() => {
     if (!isStarted || isEnded || !cameraStream) return;
-    let blackFrameCount = 0;
+
+    const analysisVideo = document.createElement("video");
+    analysisVideo.srcObject = cameraStream;
+    analysisVideo.muted = true;
+    analysisVideo.playsInline = true;
+    analysisVideo.play().catch(() => {});
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 48;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+    let blockedFrameCount = 0;
+
     const checkFrame = () => {
-      const video = cameraVideoRef.current;
-      if (!video || video.readyState < 2) return;
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = 64;
-        canvas.height = 48;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-        ctx.drawImage(video, 0, 0, 64, 48);
-        const { data } = ctx.getImageData(0, 0, 64, 48);
-        let sum = 0;
-        for (let i = 0; i < data.length; i += 4) {
-          sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
+      if (!ctx || analysisVideo.readyState < 2) return;
+
+      ctx.drawImage(analysisVideo, 0, 0, 64, 48);
+      const { data } = ctx.getImageData(0, 0, 64, 48);
+      const pixelCount = data.length / 4;
+
+      // Pass 1: per-channel averages
+      let sumR = 0, sumG = 0, sumB = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        sumR += data[i];
+        sumG += data[i + 1];
+        sumB += data[i + 2];
+      }
+      const avgR = sumR / pixelCount;
+      const avgG = sumG / pixelCount;
+      const avgB = sumB / pixelCount;
+      const avgBrightness = (avgR + avgG + avgB) / 3;
+
+      // Pass 2: per-channel variance + edge density + brightness histogram
+      let varR = 0, varG = 0, varB = 0, edgeCount = 0;
+      const histogram = new Array(32).fill(0);
+      for (let i = 0; i < data.length; i += 4) {
+        varR += (data[i] - avgR) ** 2;
+        varG += (data[i + 1] - avgG) ** 2;
+        varB += (data[i + 2] - avgB) ** 2;
+        const pixBright = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        if (Math.abs(pixBright - avgBrightness) > 25) edgeCount++;
+        histogram[Math.min(31, Math.floor(pixBright / 8))]++;
+      }
+      const chromaVariance = (varR + varG + varB) / pixelCount;
+      const edgeDensity = edgeCount / pixelCount;
+      let activeBuckets = 0;
+      for (let k = 0; k < 32; k++) {
+        if (histogram[k] > pixelCount * 0.01) activeBuckets++;
+      }
+
+      if (process.env.NODE_ENV === "development") {
+        console.log("[camera-cover]", {
+          avgBrightness: avgBrightness.toFixed(1),
+          chromaVariance: chromaVariance.toFixed(0),
+          edgeDensity: edgeDensity.toFixed(3),
+          activeBuckets,
+          blockedFrameCount,
+        });
+      }
+
+      // Real feed: chromaVariance >~3000, edgeDensity >~0.20, activeBuckets >~12
+      // Covered signals (any one is enough):
+      //   1. Very dark frame (black tape / dark cloth)
+      //   2. Very uniform chroma (grey/blank feed, paper, sticker)
+      //   3. Narrow brightness histogram (hand or solid object)
+      //   4. Mid-brightness + low variance + sparse edges (skin/cloth)
+      const isBlocked =
+        avgBrightness < 40 ||
+        chromaVariance < 400 ||
+        activeBuckets < 10 ||
+        (avgBrightness < 200 && chromaVariance < 1500 && edgeDensity < 0.15);
+
+      if (isBlocked) {
+        blockedFrameCount++;
+        if (blockedFrameCount >= 2) {
+          setIsCameraCovered(true);
+          cameraCoveredRef.current = true;
         }
-        const avgBrightness = sum / (data.length / 4);
-        if (avgBrightness < 15) {
-          blackFrameCount++;
-          if (blackFrameCount >= 3) {
-            setIsCameraCovered(true);
-            cameraCoveredRef.current = true;
-          }
-        } else {
-          blackFrameCount = 0;
-          setIsCameraCovered(false);
-        }
-      } catch { /* ignore canvas security errors */ }
+      } else {
+        blockedFrameCount = 0;
+        setIsCameraCovered(false);
+      }
     };
+
     const id = setInterval(checkFrame, 2000);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      analysisVideo.srcObject = null;
+    };
   }, [isStarted, isEnded, cameraStream]);
 
   const startConversation = async () => {
@@ -408,9 +490,13 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ applicationId }),
         });
-        const { exists } = await checkRes.json();
+        const { exists, call_id } = await checkRes.json();
         if (exists) {
-          setIsOldUser(true);
+          if (call_id) {
+            window.location.href = `/result/${call_id}`;
+          } else {
+            setIsOldUser(true);
+          }
           return;
         }
       }
@@ -419,8 +505,14 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
     setLoading(true);
 
     try {
-      // Request camera access for recording (non-blocking — denied = no recording).
+      // Camera + mic access is required to proceed.
       const stream = await requestCameraAccess();
+      if (!stream) {
+        toast.error("Camera and microphone access are required to start the interview. Please allow access and try again.");
+        setLoading(false);
+        return;
+      }
+      setPermissionStatus("granted");
 
       const interviewer = await InterviewerService.getInterviewer(
         interview.interviewer_id,
@@ -449,6 +541,9 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
         questions: interview?.questions.map((q) => q.question) || [],
         duration: interview?.time_duration || "15",
         interviewerName: interviewer?.name || "Interviewer",
+        voiceModel: interviewer?.audio?.toLowerCase().includes("bob")
+          ? "aura-2-orion-en"
+          : "aura-2-thalia-en",
         interviewerPersonality: {
           empathy: interviewer?.empathy || 7,
           rapport: interviewer?.rapport || 7,
@@ -469,14 +564,13 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       }
       try {
         await player.initialize();
-      } catch (error) {
-        console.error("Error initializing AudioPlayer:", error);
+      } catch {
+        // non-fatal
       }
 
       try {
         await agent.startAudioCapture();
       } catch (error) {
-        console.error("Failed to start audio capture:", error);
         toast.error(
           "Failed to access microphone. Please check permissions and try again.",
         );
@@ -501,7 +595,6 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       setIsStarted(true);
       setIsCalling(true);
     } catch (error) {
-      console.error("Error starting conversation:", error);
       toast.error("Failed to start interview. Please try again.");
       stopCamera();
     } finally {
@@ -524,10 +617,14 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       // Only accept paths that next/image can serve (leading slash or absolute URL).
       // Anything else (e.g. legacy "employee-photos/233.jpg") falls back to the
       // local public/interviewers default.
+      const fallbackImg = interviewer?.audio?.toLowerCase().includes("bob")
+        ? "/interviewers/Bob.png"
+        : "/interviewers/Lisa.png";
+      setInterviewerFallbackImg(fallbackImg);
       setInterviewerImg(
         img && (img.startsWith("/") || img.startsWith("http"))
           ? img
-          : "/interviewers/Bob.png",
+          : fallbackImg,
       );
     };
     fetchInterviewer();
@@ -555,6 +652,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
         const proctoring = proctoringDataRef.current;
         const faceDetection = faceDetectionDataRef.current;
 
+        setIsCompiling(true);
         try {
           await ResponseService.saveResponse(
             {
@@ -585,23 +683,18 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
             callId,
           );
 
-          // Trigger analysis immediately after save — keepalive ensures the request
-          // completes even if the user closes the tab before the redirect fires.
-          fetch("/api/get-call", {
+          // keepalive ensures analysis completes even if the user closes the tab.
+          await fetch("/api/get-call", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: callId }),
             keepalive: true,
           }).catch(() => {});
 
-          setTimeout(() => {
-            window.location.href = isTestResponse
-              ? `/interviews/${interview.id}`
-              : `/result/${callId}`;
-          }, 1000);
-        } catch (error) {
-          console.error("Error saving response:", error);
+          window.location.href = `/result/${callId}`;
+        } catch {
           toast.error("Error saving interview. Please try again.");
+          setIsCompiling(false);
         }
       };
 
@@ -678,7 +771,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
             </CardHeader>
 
             {/* ── Pre-start screen ── */}
-            {!isStarted && !isEnded && !isOldUser && (
+            {!isStarted && !isEnded && !isOldUser && !isCheckingApplication && (
               <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
                 <div>
                   {interview?.logo_url && (interview.logo_url.startsWith("/") || interview.logo_url.startsWith("http")) && (
@@ -714,12 +807,29 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
                         assessors. By starting the interview you consent to this
                         monitoring.
                       </p>
-                      {cameraError && (
-                        <p className="mt-1 text-red-600 flex items-center gap-1">
-                          <VideoOffIcon className="h-3 w-3" />
-                          {cameraError} The interview will continue without video recording.
-                        </p>
-                      )}
+                      <div className="mt-2 flex flex-col gap-1">
+                        <div className="flex items-center gap-1 text-xs">
+                          {permissionStatus === "granted" ? (
+                            <span className="text-green-600 flex items-center gap-1">
+                              <VideoIcon className="h-3 w-3" /> Camera &amp; microphone access granted
+                            </span>
+                          ) : permissionStatus === "denied" ? (
+                            <span className="text-red-600 flex items-center gap-1">
+                              <VideoOffIcon className="h-3 w-3" /> Camera or microphone access denied — please allow in browser settings
+                            </span>
+                          ) : (
+                            <span className="text-yellow-700 flex items-center gap-1">
+                              <VideoIcon className="h-3 w-3" /> Camera &amp; microphone access will be requested when you start
+                            </span>
+                          )}
+                        </div>
+                        {cameraError && permissionStatus !== "granted" && (
+                          <p className="text-red-600 flex items-center gap-1 text-xs">
+                            <VideoOffIcon className="h-3 w-3" />
+                            {cameraError}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {!interview?.is_anonymous && (
@@ -729,13 +839,18 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2 justify-center">
-                        <div className="flex justify-center">
+                        <div className="flex flex-col items-center gap-0.5">
                           <input
                             value={email}
-                            className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
+                            className={`h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 text-sm font-normal ${
+                              email && !isValidEmail ? "border-red-400" : "border-gray-400"
+                            }`}
                             placeholder="Enter your email address"
                             onChange={(e) => setEmail(e.target.value)}
                           />
+                          {email && !isValidEmail && (
+                            <p className="text-red-500 text-xs w-[75%]">Please enter a valid email address</p>
+                          )}
                         </div>
                         <div className="flex justify-center">
                           <input
@@ -760,6 +875,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
                     }}
                     disabled={
                       Loading ||
+                      permissionStatus === "denied" ||
                       (!isTestResponse && !interview?.is_anonymous && (!isValidEmail || !name))
                     }
                     onClick={startConversation}
@@ -845,9 +961,9 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
                             interviewerImg &&
                             (interviewerImg.startsWith("/") || interviewerImg.startsWith("http"))
                               ? interviewerImg
-                              : "/interviewers/Bob.png"
+                              : interviewerFallbackImg
                           }
-                          onError={() => setInterviewerImg("/interviewers/Bob.png")}
+                          onError={() => setInterviewerImg(interviewerFallbackImg)}
                           alt="Image of the interviewer"
                           width={120}
                           height={120}
@@ -923,50 +1039,77 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
             {isEnded && !isOldUser && (
               <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
                 <div>
-                  <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
-                    <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
-                    <p className="text-lg font-semibold text-center">
-                      {isTestResponse
-                        ? "Test completed. Redirecting to responses..."
-                        : isStarted
-                        ? `Thank you for taking the time to participate in this interview`
-                        : "Thank you very much for considering."}
-                    </p>
-                    {!isTestResponse && (
-                      <p className="text-center">
-                        {"\n"}
-                        You can close this tab now.
+                  {isCompiling ? (
+                    <div className="p-6 flex flex-col items-center gap-4">
+                      <MiniLoader />
+                      <p className="text-lg font-semibold text-center text-gray-700">
+                        Compiling your results…
                       </p>
-                    )}
-                  </div>
+                      <p className="text-sm text-center text-gray-500">
+                        Please wait while we prepare your feedback. You will be redirected automatically.
+                      </p>
+                      {!isTestResponse && !isFeedbackSubmitted && (
+                        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              className="w-full bg-indigo-600 text-white h-10 mt-2"
+                              onClick={() => setIsDialogOpen(true)}
+                            >
+                              Provide Feedback
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Provide Feedback</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Your feedback helps us improve the interview experience.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <FeedbackForm email={email} onSubmit={handleFeedbackSubmit} />
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
+                        <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
+                        <p className="text-lg font-semibold text-center">
+                          {isTestResponse
+                            ? "Test completed. Redirecting to responses..."
+                            : "Thank you for completing the interview."}
+                        </p>
+                      </div>
 
-                  {!isTestResponse && !isFeedbackSubmitted && (
-                    <AlertDialog
-                      open={isDialogOpen}
-                      onOpenChange={setIsDialogOpen}
-                    >
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          className="w-full bg-indigo-600 text-white h-10 mt-4 mb-4"
-                          onClick={() => setIsDialogOpen(true)}
+                      {!isTestResponse && !isFeedbackSubmitted && (
+                        <AlertDialog
+                          open={isDialogOpen}
+                          onOpenChange={setIsDialogOpen}
                         >
-                          Provide Feedback
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Provide Feedback</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Your feedback helps us improve the interview
-                            experience.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <FeedbackForm
-                          email={email}
-                          onSubmit={handleFeedbackSubmit}
-                        />
-                      </AlertDialogContent>
-                    </AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              className="w-full bg-indigo-600 text-white h-10 mt-4 mb-4"
+                              onClick={() => setIsDialogOpen(true)}
+                            >
+                              Provide Feedback
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Provide Feedback</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Your feedback helps us improve the interview
+                                experience.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <FeedbackForm
+                              email={email}
+                              onSubmit={handleFeedbackSubmit}
+                            />
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

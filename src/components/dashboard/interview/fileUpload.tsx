@@ -51,8 +51,7 @@ function FileUpload({
         const fullText = result.text || "";
         setUploadedDocumentContext(fullText);
         setIsUploaded(true);
-      } catch (error) {
-        console.log(error);
+      } catch {
         toast.error("Error reading PDF", {
           description: "Please try again.",
           duration: 3000,

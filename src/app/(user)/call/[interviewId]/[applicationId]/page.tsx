@@ -10,6 +10,7 @@ import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText
 type Props = {
   params: {
     interviewId: string;
+    applicationId: string;
   };
 };
 
@@ -52,20 +53,46 @@ function PopUpMessage({ title, description, image }: PopupProps) {
 }
 
 function InterviewInterface({ params }: Props) {
+  const { interviewId, applicationId } = params;
   const [interview, setInterview] = useState<Interview>();
   const [isActive, setIsActive] = useState(true);
   const { getInterviewById } = useInterviews();
   const [interviewNotFound, setInterviewNotFound] = useState(false);
+  const [isCheckingApp, setIsCheckingApp] = useState(!!applicationId);
+
+  // Check applicationId first — redirect to result immediately if already responded,
+  // without fetching the interview or rendering the form at all.
+  useEffect(() => {
+    if (!applicationId) return;
+    fetch("/api/check-response", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ applicationId }),
+    })
+      .then((r) => r.json())
+      .then(({ exists, call_id }) => {
+        if (exists && call_id) {
+          window.location.href = `/result/${call_id}`;
+          // Keep isCheckingApp true so loader stays until redirect completes
+        } else {
+          setIsCheckingApp(false);
+        }
+      })
+      .catch(() => setIsCheckingApp(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (interview) {
       setIsActive(interview?.is_active === true);
     }
-  }, [interview, params.interviewId]);
+  }, [interview, interviewId]);
 
   useEffect(() => {
+    if (isCheckingApp) return;
     const fetchinterview = async () => {
       try {
-        const response = await getInterviewById(params.interviewId);
+        const response = await getInterviewById(interviewId);
         if (response) {
           setInterview(response);
           document.title = response.name;
@@ -79,12 +106,12 @@ function InterviewInterface({ params }: Props) {
 
     fetchinterview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isCheckingApp]);
 
   return (
     <div className="h-screen overflow-hidden">
       <div className="hidden md:block p-4 h-full form-container">
-        {!interview ? (
+        {isCheckingApp || !interview ? (
           interviewNotFound ? (
             <PopUpMessage
               title="Invalid URL"
@@ -101,7 +128,7 @@ function InterviewInterface({ params }: Props) {
             image="/closed.png"
           />
         ) : (
-          <Call interview={interview} />
+          <Call interview={interview} applicationId={applicationId} />
         )}
       </div>
       <div className=" md:hidden flex flex-col items-center md:h-[0px] justify-center  my-auto">

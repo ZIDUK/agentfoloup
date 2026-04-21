@@ -20,11 +20,7 @@ function SignUpPage() {
         },
       });
 
-      if (error) {
-        console.error("Error signing up:", error);
-      }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
     } finally {
       setLoading(false);
     }

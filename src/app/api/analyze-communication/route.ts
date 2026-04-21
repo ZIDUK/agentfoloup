@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import {
-  SYSTEM_PROMPT,
-  getCommunicationAnalysisPrompt,
-} from "@/lib/prompts/communication-analysis";
-import { getMistralClient } from "@/services/mistral.service";
+import { callLlmEdgeFunction } from "@/lib/llm-client";
 
 export async function POST(req: Request) {
   logger.info("analyze-communication request received");
@@ -20,39 +16,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const mistral = getMistralClient();
-
-    const completion = await mistral.createChatCompletion({
-      model: process.env.MISTRAL_MODEL || "mistral-large-latest",
-      messages: [
-        {
-          role: "system",
-          content: SYSTEM_PROMPT,
-        },
-        {
-          role: "user",
-          content: getCommunicationAnalysisPrompt(transcript),
-        },
-      ],
-      response_format: { type: "json_object" },
-    });
-
-    const analysisContent = completion.choices[0]?.message?.content;
-    const analysis =
-      typeof analysisContent === "string" ? analysisContent : "{}";
+    const result = await callLlmEdgeFunction<{ analysis: Record<string, unknown> }>(
+      "analyze_communication",
+      { transcript },
+    );
 
     logger.info("Communication analysis completed successfully");
 
-    return NextResponse.json(
-      { analysis: JSON.parse(analysis) },
-      { status: 200 },
-    );
+    return NextResponse.json({ analysis: result.analysis }, { status: 200 });
   } catch (error) {
     logger.error("Error analyzing communication skills");
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

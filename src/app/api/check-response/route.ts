@@ -15,9 +15,13 @@ export async function POST(req: Request) {
 
   const { data } = await supabase
     .from("response")
-    .select("id")
+    .select("id, call_id")
     .eq("application_id", applicationId)
     .limit(1);
 
-  return NextResponse.json({ exists: !!(data && data.length > 0) });
+  const record = data && data.length > 0 ? data[0] : null;
+  return NextResponse.json({
+    exists: !!record,
+    call_id: record?.call_id ?? null,
+  });
 }

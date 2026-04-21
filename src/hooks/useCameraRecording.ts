@@ -42,7 +42,6 @@ export const useCameraRecording = () => {
           ? err.message
           : "Unable to access camera.";
       setCameraError(message);
-      console.warn("Camera access error:", message);
       return null;
     }
   }, []);
@@ -150,8 +149,6 @@ export const useCameraRecording = () => {
             });
 
             if (!response.ok) {
-              const err = await response.json().catch(() => ({}));
-              console.error("[useCameraRecording] upload failed:", err);
               resolve(null);
               return;
             }
@@ -159,8 +156,7 @@ export const useCameraRecording = () => {
             const { url } = await response.json();
             setRecordingUrl(url ?? null);
             resolve(url ?? null);
-          } catch (err) {
-            console.error("[useCameraRecording] upload error:", err);
+          } catch {
             resolve(null);
           }
         };
