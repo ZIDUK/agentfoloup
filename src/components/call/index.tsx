@@ -71,6 +71,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
   const [isValidEmail, setIsValidEmail] = useState<boolean>(false);
   const [isOldUser, setIsOldUser] = useState<boolean>(false);
   const [isCompiling, setIsCompiling] = useState<boolean>(false);
+  const [isCheckingApplication, setIsCheckingApplication] = useState<boolean>(!!applicationId);
   const [callId, setCallId] = useState<string>("");
   const [callStartTime, setCallStartTime] = useState<number | null>(null);
   const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(false);
@@ -362,9 +363,12 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
           window.location.href = `/result/${call_id}`;
         } else if (exists) {
           setIsOldUser(true);
+          setIsCheckingApplication(false);
+        } else {
+          setIsCheckingApplication(false);
         }
       })
-      .catch(() => {});
+      .catch(() => { setIsCheckingApplication(false); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationId]);
 
@@ -687,9 +691,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
             keepalive: true,
           }).catch(() => {});
 
-          window.location.href = isTestResponse
-            ? `/interviews/${interview.id}`
-            : `/result/${callId}`;
+          window.location.href = `/result/${callId}`;
         } catch {
           toast.error("Error saving interview. Please try again.");
           setIsCompiling(false);
@@ -769,7 +771,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
             </CardHeader>
 
             {/* ── Pre-start screen ── */}
-            {!isStarted && !isEnded && !isOldUser && (
+            {!isStarted && !isEnded && !isOldUser && !isCheckingApplication && (
               <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
                 <div>
                   {interview?.logo_url && (interview.logo_url.startsWith("/") || interview.logo_url.startsWith("http")) && (

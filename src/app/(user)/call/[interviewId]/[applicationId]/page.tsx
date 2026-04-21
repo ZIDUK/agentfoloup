@@ -58,6 +58,29 @@ function InterviewInterface({ params }: Props) {
   const [isActive, setIsActive] = useState(true);
   const { getInterviewById } = useInterviews();
   const [interviewNotFound, setInterviewNotFound] = useState(false);
+  const [isCheckingApp, setIsCheckingApp] = useState(!!applicationId);
+
+  // Check applicationId first — redirect to result immediately if already responded,
+  // without fetching the interview or rendering the form at all.
+  useEffect(() => {
+    if (!applicationId) return;
+    fetch("/api/check-response", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ applicationId }),
+    })
+      .then((r) => r.json())
+      .then(({ exists, call_id }) => {
+        if (exists && call_id) {
+          window.location.href = `/result/${call_id}`;
+          // Keep isCheckingApp true so loader stays until redirect completes
+        } else {
+          setIsCheckingApp(false);
+        }
+      })
+      .catch(() => setIsCheckingApp(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (interview) {
@@ -66,6 +89,7 @@ function InterviewInterface({ params }: Props) {
   }, [interview, interviewId]);
 
   useEffect(() => {
+    if (isCheckingApp) return;
     const fetchinterview = async () => {
       try {
         const response = await getInterviewById(interviewId);
@@ -82,12 +106,12 @@ function InterviewInterface({ params }: Props) {
 
     fetchinterview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isCheckingApp]);
 
   return (
     <div className="h-screen overflow-hidden">
       <div className="hidden md:block p-4 h-full form-container">
-        {!interview ? (
+        {isCheckingApp || !interview ? (
           interviewNotFound ? (
             <PopUpMessage
               title="Invalid URL"
