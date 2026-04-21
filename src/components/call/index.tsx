@@ -364,7 +364,13 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       body: JSON.stringify({ applicationId }),
     })
       .then((r) => r.json())
-      .then(({ exists }) => { if (exists) setIsOldUser(true); })
+      .then(({ exists, call_id }) => {
+        if (exists && call_id) {
+          window.location.href = `/result/${call_id}`;
+        } else if (exists) {
+          setIsOldUser(true);
+        }
+      })
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationId]);
@@ -487,9 +493,13 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ applicationId }),
         });
-        const { exists } = await checkRes.json();
+        const { exists, call_id } = await checkRes.json();
         if (exists) {
-          setIsOldUser(true);
+          if (call_id) {
+            window.location.href = `/result/${call_id}`;
+          } else {
+            setIsOldUser(true);
+          }
           return;
         }
       }
@@ -677,20 +687,17 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
             callId,
           );
 
-          // Trigger analysis immediately after save — keepalive ensures the request
-          // completes even if the user closes the tab before the redirect fires.
-          fetch("/api/get-call", {
+          // Wait for analysis to complete before redirecting so the result page
+          // can display results immediately without polling.
+          await fetch("/api/get-call", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: callId }),
-            keepalive: true,
           }).catch(() => {});
 
-          setTimeout(() => {
-            window.location.href = isTestResponse
-              ? `/interviews/${interview.id}`
-              : `/result/${callId}`;
-          }, 1000);
+          window.location.href = isTestResponse
+            ? `/interviews/${interview.id}`
+            : `/result/${callId}`;
         } catch (error) {
           console.error("Error saving response:", error);
           toast.error("Error saving interview. Please try again.");
