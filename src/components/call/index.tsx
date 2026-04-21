@@ -341,17 +341,11 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
   }, [agentService]);
 
   const onEndCallClick = async () => {
-    if (isStarted && agentService) {
-      setLoading(true);
-      agentService.close();
-      if (audioPlayerRef.current) {
-        await audioPlayerRef.current.stop();
-      }
-      setIsEnded(true);
-      setLoading(false);
-    } else {
-      setIsEnded(true);
-    }
+    setLoading(true);
+    if (agentService) agentService.close();
+    if (audioPlayerRef.current) await audioPlayerRef.current.stop();
+    setIsEnded(true);
+    setLoading(false);
   };
 
   // Block duplicate submissions on page load when an applicationId is present.
@@ -1052,6 +1046,27 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
                       <p className="text-sm text-center text-gray-500">
                         Please wait while we prepare your feedback. You will be redirected automatically.
                       </p>
+                      {!isTestResponse && !isFeedbackSubmitted && (
+                        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              className="w-full bg-indigo-600 text-white h-10 mt-2"
+                              onClick={() => setIsDialogOpen(true)}
+                            >
+                              Provide Feedback
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Provide Feedback</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Your feedback helps us improve the interview experience.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <FeedbackForm email={email} onSubmit={handleFeedbackSubmit} />
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   ) : (
                     <>

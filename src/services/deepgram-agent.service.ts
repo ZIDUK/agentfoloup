@@ -152,7 +152,7 @@ Important:
         channelCount: 1,
         echoCancellation: true,
         noiseSuppression: false,
-        autoGainControl: false,
+        autoGainControl: true,
       };
 
       if (builtInMic && builtInMic.deviceId !== 'default') {
@@ -172,11 +172,12 @@ Important:
       this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
 
       this.processor.onaudioprocess = (e) => {
+        if (!this.audioContext) return;
         const inputData = e.inputBuffer.getChannelData(0);
 
         const downsampledData = this.downsample(
           inputData,
-          this.audioContext!.sampleRate,
+          this.audioContext.sampleRate,
           16000
         );
 

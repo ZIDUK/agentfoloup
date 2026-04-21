@@ -5,6 +5,7 @@ export class AudioPlayer {
   private isPlaying: boolean = false;
   private audioChunkCount: number = 0;
   private nextPlayTime: number = 0;
+  private isStopped: boolean = false;
 
   constructor() {}
 
@@ -23,6 +24,7 @@ export class AudioPlayer {
   }
 
   async addAudioChunk(audioData: ArrayBuffer | Uint8Array | any) {
+    if (this.isStopped) return;
     if (!this.audioContext) {
       await this.initialize();
     }
@@ -183,14 +185,15 @@ export class AudioPlayer {
   }
 
   async stop() {
+    this.isStopped = true;
     this.clearBuffer();
     this.nextPlayTime = 0;
     this.isPlaying = false;
     this.recordingDestination = null;
     if (this.audioContext) {
-      await this.audioContext.suspend().catch(() => {});
-      await this.audioContext.close().catch(() => {});
+      const ctx = this.audioContext;
       this.audioContext = null;
+      ctx.close().catch(() => {});
     }
   }
 }
