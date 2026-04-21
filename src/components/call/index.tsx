@@ -426,7 +426,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
         interview.interviewer_id,
       );
 
-      const apiKey = process.env.DEEPGRAM_API_KEY || "";
+      const apiKey = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || "";
       if (!apiKey) {
         toast.error("Deepgram API key not configured");
         setLoading(false);

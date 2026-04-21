@@ -183,12 +183,24 @@ export async function callBedrock(
       (c): c is { toolUse: { toolUseId: string; name: string; input: Record<string, unknown> } } =>
         'toolUse' in c,
     )
-    if (!toolUseBlock?.toolUse?.input) {
-      throw new Error(
-        `Bedrock returned no tool-use output for schema-enforced call (stopReason: ${data.stopReason ?? 'unknown'})`,
+    if (toolUseBlock?.toolUse?.input) {
+      text = JSON.stringify(toolUseBlock.toolUse.input)
+    } else {
+      // Fallback: model returned end_turn with plain text instead of tool-use.
+      // Try to parse the text block as JSON (strip markdown fences if present).
+      const textBlock = data.output?.message?.content?.find(
+        (c): c is { text: string } => 'text' in c,
       )
+      const raw = textBlock?.text?.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim() ?? ''
+      try {
+        JSON.parse(raw)
+        text = raw
+      } catch {
+        throw new Error(
+          `Bedrock returned no tool-use output for schema-enforced call (stopReason: ${data.stopReason ?? 'unknown'})`,
+        )
+      }
     }
-    text = JSON.stringify(toolUseBlock.toolUse.input)
   } else {
     // Free-text: extract from text block.
     const textBlock = data.output?.message?.content?.find(

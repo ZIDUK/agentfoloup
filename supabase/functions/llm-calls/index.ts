@@ -397,7 +397,7 @@ async function callWithTrace(opts: {
       const traceBody = buildPhoenixLlmTraceBody({
         serviceName: 'llm-calls',
         projectName: opts.phoenixProject ?? 'foloup',
-        rootSpanName: 'llm-calls.request',
+        rootSpanName: `llm-calls-${opts.action}.request`,
         llmSpanName: 'bedrock.converse',
         scopeName: 'llm-calls',
         fieldType: opts.action,
