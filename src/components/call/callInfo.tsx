@@ -67,6 +67,8 @@ function CallInfo({
   const [fullscreenExitCount, setFullscreenExitCount] = useState<number>();
   const [windowSwitchCount, setWindowSwitchCount] = useState<number>();
   const [cameraCovered, setCameraCovered] = useState<boolean>(false);
+  const [noFaceCount, setNoFaceCount] = useState<number>(0);
+  const [multipleFacesCount, setMultipleFacesCount] = useState<number>(0);
   const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
   const [proctoringEvents, setProctoringEvents] = useState<any[]>([]);
 
@@ -110,6 +112,8 @@ function CallInfo({
         const windowSummary = events.find((e: any) => e.type === "window_switch_summary");
         setWindowSwitchCount(windowSummary?.count ?? 0);
         setCameraCovered(events.some((e: any) => e.type === "camera_covered"));
+        setNoFaceCount(response.no_face_count ?? 0);
+        setMultipleFacesCount(response.multiple_faces_count ?? 0);
       } catch (error) {
         console.error(error);
       } finally {
@@ -211,6 +215,16 @@ function CallInfo({
                     {fullscreenExitCount != null && fullscreenExitCount > 0 && (
                       <span className="text-xs font-semibold text-yellow-700 bg-yellow-100 border border-yellow-300 rounded px-2 py-1">
                         Fullscreen exits: {fullscreenExitCount}
+                      </span>
+                    )}
+                    {noFaceCount > 0 && (
+                      <span className="text-xs font-semibold text-purple-700 bg-purple-100 border border-purple-300 rounded px-2 py-1">
+                        No face: {noFaceCount}×
+                      </span>
+                    )}
+                    {multipleFacesCount > 0 && (
+                      <span className="text-xs font-semibold text-pink-700 bg-pink-100 border border-pink-300 rounded px-2 py-1">
+                        Multiple faces: {multipleFacesCount}×
                       </span>
                     )}
                   </div>
@@ -595,6 +609,18 @@ function CallInfo({
                       {cameraCovered ? "Yes" : "No"}
                     </p>
                   </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-mono">no_face_count</p>
+                    <p className={`font-semibold ${noFaceCount > 0 ? "text-purple-600" : "text-green-600"}`}>
+                      {noFaceCount}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-mono">multiple_faces_count</p>
+                    <p className={`font-semibold ${multipleFacesCount > 0 ? "text-pink-600" : "text-green-600"}`}>
+                      {multipleFacesCount}
+                    </p>
+                  </div>
                 </div>
                 {proctoringEvents.filter((e) => e.type !== "window_switch_summary").length > 0 && (
                   <div className="mt-1">
@@ -613,6 +639,10 @@ function CallInfo({
                                 ? "Fullscreen exit"
                                 : event.type === "camera_covered"
                                 ? "Camera covered"
+                                : event.type === "no_face"
+                                ? "No face detected (10s+)"
+                                : event.type === "multiple_faces"
+                                ? "Multiple faces detected"
                                 : event.type}
                             </span>
                             <span>

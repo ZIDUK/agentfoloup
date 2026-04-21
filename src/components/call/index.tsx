@@ -40,6 +40,7 @@ import { DeepgramAgentService } from "@/services/deepgram-agent.service";
 import { AudioPlayer } from "@/lib/audio-player";
 import { AgentEvents } from "@deepgram/sdk";
 import { useCameraRecording } from "@/hooks/useCameraRecording";
+import { useFaceDetection } from "@/hooks/useFaceDetection";
 
 type InterviewProps = {
   interview: Interview;
@@ -119,6 +120,14 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       cameraVideoRef.current.srcObject = cameraStream;
     }
   }, [cameraStream]);
+
+  // Face detection — runs only while interview is active.
+  const { noFaceCount, multipleFacesCount, getFaceDetectionData } =
+    useFaceDetection(cameraVideoRef, isStarted && !isEnded);
+  const faceDetectionDataRef = useRef(getFaceDetectionData());
+  useEffect(() => {
+    faceDetectionDataRef.current = getFaceDetectionData();
+  }, [getFaceDetectionData]);
 
   const lastUserResponseRef = useRef<HTMLDivElement | null>(null);
 
@@ -536,6 +545,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
 
         // Capture final proctoring snapshot.
         const proctoring = proctoringDataRef.current;
+        const faceDetection = faceDetectionDataRef.current;
 
         try {
           await ResponseService.saveResponse(
@@ -543,8 +553,11 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
               is_ended: true,
               tab_switch_count: proctoring.tabSwitchCount,
               fullscreen_exit_count: proctoring.fullscreenExitCount,
+              no_face_count: faceDetection.noFaceCount,
+              multiple_faces_count: faceDetection.multipleFacesCount,
               proctoring_events: [
                 ...proctoring.events,
+                ...faceDetection.events,
                 ...(proctoring.windowSwitchCount > 0
                   ? [{ type: "window_switch_summary", count: proctoring.windowSwitchCount, timestamp: endTime }]
                   : []),

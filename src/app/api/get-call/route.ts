@@ -131,6 +131,8 @@ export async function POST(req: Request, res: Response) {
       full_screen_events: callDetails.fullscreen_exit_count ?? 0,
       proctoring_events: proctoringEvents,
       camera_covered: proctoringEvents.some((e: any) => e.type === "camera_covered"),
+      no_face_count: callDetails.no_face_count ?? 0,
+      multiple_faces_count: callDetails.multiple_faces_count ?? 0,
     };
   }
 
