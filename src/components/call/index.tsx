@@ -85,6 +85,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
   const audioPlayerRef = useRef<AudioPlayer | null>(null);
   const [isCameraCovered, setIsCameraCovered] = useState(false);
   const cameraCoveredRef = useRef(false);
+  const [permissionStatus, setPermissionStatus] = useState<"unknown" | "granted" | "denied">("unknown");
 
   // Proctoring — isStarted drives activation so events aren't captured pre-interview.
   const {
@@ -121,6 +122,24 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       cameraVideoRef.current.srcObject = cameraStream;
     }
   }, [cameraStream]);
+
+  // Proactively check camera + mic permission state on mount.
+  useEffect(() => {
+    if (!("permissions" in navigator)) return;
+    Promise.all([
+      navigator.permissions.query({ name: "camera" as PermissionName }),
+      navigator.permissions.query({ name: "microphone" as PermissionName }),
+    ]).then(([cam, mic]) => {
+      const update = (c: PermissionState, m: PermissionState) => {
+        if (c === "denied" || m === "denied") setPermissionStatus("denied");
+        else if (c === "granted" && m === "granted") setPermissionStatus("granted");
+        else setPermissionStatus("unknown");
+      };
+      update(cam.state, mic.state);
+      cam.addEventListener("change", () => update(cam.state, mic.state));
+      mic.addEventListener("change", () => update(cam.state, mic.state));
+    }).catch(() => {});
+  }, []);
 
   // Face detection — runs only while interview is active.
   const { noFaceCount, multipleFacesCount, getFaceDetectionData } =
@@ -182,9 +201,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
   }, [isCalling, time, currentTimeDuration]);
 
   useEffect(() => {
-    if (testEmail(email)) {
-      setIsValidEmail(true);
-    }
+    setIsValidEmail(testEmail(email));
   }, [email]);
 
   useEffect(() => {
@@ -352,49 +369,101 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationId]);
 
-  // Detect covered camera during interview by sampling video frame brightness.
+  // Detect covered camera during interview using multi-signal pixel analysis.
+  // Uses a dedicated off-screen video so detection is independent of the DOM ref
+  // and the stream-attach render-order race condition.
   useEffect(() => {
     if (!isStarted || isEnded || !cameraStream) return;
-    let blackFrameCount = 0;
+
+    const analysisVideo = document.createElement("video");
+    analysisVideo.srcObject = cameraStream;
+    analysisVideo.muted = true;
+    analysisVideo.playsInline = true;
+    analysisVideo.play().catch(() => {});
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 48;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+    let blockedFrameCount = 0;
+
     const checkFrame = () => {
-      const video = cameraVideoRef.current;
-      if (!video || video.readyState < 2) return;
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = 64;
-        canvas.height = 48;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-        ctx.drawImage(video, 0, 0, 64, 48);
-        const { data } = ctx.getImageData(0, 0, 64, 48);
-        const pixelCount = data.length / 4;
-        let sum = 0;
-        for (let i = 0; i < data.length; i += 4) {
-          sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
+      if (!ctx || analysisVideo.readyState < 2) return;
+
+      ctx.drawImage(analysisVideo, 0, 0, 64, 48);
+      const { data } = ctx.getImageData(0, 0, 64, 48);
+      const pixelCount = data.length / 4;
+
+      // Pass 1: per-channel averages
+      let sumR = 0, sumG = 0, sumB = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        sumR += data[i];
+        sumG += data[i + 1];
+        sumB += data[i + 2];
+      }
+      const avgR = sumR / pixelCount;
+      const avgG = sumG / pixelCount;
+      const avgB = sumB / pixelCount;
+      const avgBrightness = (avgR + avgG + avgB) / 3;
+
+      // Pass 2: per-channel variance + edge density + brightness histogram
+      let varR = 0, varG = 0, varB = 0, edgeCount = 0;
+      const histogram = new Array(32).fill(0);
+      for (let i = 0; i < data.length; i += 4) {
+        varR += (data[i] - avgR) ** 2;
+        varG += (data[i + 1] - avgG) ** 2;
+        varB += (data[i + 2] - avgB) ** 2;
+        const pixBright = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        if (Math.abs(pixBright - avgBrightness) > 25) edgeCount++;
+        histogram[Math.min(31, Math.floor(pixBright / 8))]++;
+      }
+      const chromaVariance = (varR + varG + varB) / pixelCount;
+      const edgeDensity = edgeCount / pixelCount;
+      let activeBuckets = 0;
+      for (let k = 0; k < 32; k++) {
+        if (histogram[k] > pixelCount * 0.01) activeBuckets++;
+      }
+
+      if (process.env.NODE_ENV === "development") {
+        console.log("[camera-cover]", {
+          avgBrightness: avgBrightness.toFixed(1),
+          chromaVariance: chromaVariance.toFixed(0),
+          edgeDensity: edgeDensity.toFixed(3),
+          activeBuckets,
+          blockedFrameCount,
+        });
+      }
+
+      // Real feed: chromaVariance >~3000, edgeDensity >~0.20, activeBuckets >~12
+      // Covered signals (any one is enough):
+      //   1. Very dark frame (black tape / dark cloth)
+      //   2. Very uniform chroma (grey/blank feed, paper, sticker)
+      //   3. Narrow brightness histogram (hand or solid object)
+      //   4. Mid-brightness + low variance + sparse edges (skin/cloth)
+      const isBlocked =
+        avgBrightness < 40 ||
+        chromaVariance < 400 ||
+        activeBuckets < 10 ||
+        (avgBrightness < 200 && chromaVariance < 1500 && edgeDensity < 0.15);
+
+      if (isBlocked) {
+        blockedFrameCount++;
+        if (blockedFrameCount >= 2) {
+          setIsCameraCovered(true);
+          cameraCoveredRef.current = true;
         }
-        const avgBrightness = sum / pixelCount;
-        let varianceSum = 0;
-        for (let i = 0; i < data.length; i += 4) {
-          const b = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          varianceSum += (b - avgBrightness) ** 2;
-        }
-        const variance = varianceSum / pixelCount;
-        // All-black / very dark frame OR uniformly-colored frame (e.g. grey blocked feed)
-        const isBlocked = avgBrightness < 30 || variance < 100;
-        if (isBlocked) {
-          blackFrameCount++;
-          if (blackFrameCount >= 3) {
-            setIsCameraCovered(true);
-            cameraCoveredRef.current = true;
-          }
-        } else {
-          blackFrameCount = 0;
-          setIsCameraCovered(false);
-        }
-      } catch { /* ignore canvas security errors */ }
+      } else {
+        blockedFrameCount = 0;
+        setIsCameraCovered(false);
+      }
     };
+
     const id = setInterval(checkFrame, 2000);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      analysisVideo.srcObject = null;
+    };
   }, [isStarted, isEnded, cameraStream]);
 
   const startConversation = async () => {
@@ -429,8 +498,14 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
     setLoading(true);
 
     try {
-      // Request camera access for recording (non-blocking — denied = no recording).
+      // Camera + mic access is required to proceed.
       const stream = await requestCameraAccess();
+      if (!stream) {
+        toast.error("Camera and microphone access are required to start the interview. Please allow access and try again.");
+        setLoading(false);
+        return;
+      }
+      setPermissionStatus("granted");
 
       const interviewer = await InterviewerService.getInterviewer(
         interview.interviewer_id,
@@ -731,12 +806,29 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
                         assessors. By starting the interview you consent to this
                         monitoring.
                       </p>
-                      {cameraError && (
-                        <p className="mt-1 text-red-600 flex items-center gap-1">
-                          <VideoOffIcon className="h-3 w-3" />
-                          {cameraError} The interview will continue without video recording.
-                        </p>
-                      )}
+                      <div className="mt-2 flex flex-col gap-1">
+                        <div className="flex items-center gap-1 text-xs">
+                          {permissionStatus === "granted" ? (
+                            <span className="text-green-600 flex items-center gap-1">
+                              <VideoIcon className="h-3 w-3" /> Camera &amp; microphone access granted
+                            </span>
+                          ) : permissionStatus === "denied" ? (
+                            <span className="text-red-600 flex items-center gap-1">
+                              <VideoOffIcon className="h-3 w-3" /> Camera or microphone access denied — please allow in browser settings
+                            </span>
+                          ) : (
+                            <span className="text-yellow-700 flex items-center gap-1">
+                              <VideoIcon className="h-3 w-3" /> Camera &amp; microphone access will be requested when you start
+                            </span>
+                          )}
+                        </div>
+                        {cameraError && permissionStatus !== "granted" && (
+                          <p className="text-red-600 flex items-center gap-1 text-xs">
+                            <VideoOffIcon className="h-3 w-3" />
+                            {cameraError}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {!interview?.is_anonymous && (
@@ -746,13 +838,18 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2 justify-center">
-                        <div className="flex justify-center">
+                        <div className="flex flex-col items-center gap-0.5">
                           <input
                             value={email}
-                            className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
+                            className={`h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 text-sm font-normal ${
+                              email && !isValidEmail ? "border-red-400" : "border-gray-400"
+                            }`}
                             placeholder="Enter your email address"
                             onChange={(e) => setEmail(e.target.value)}
                           />
+                          {email && !isValidEmail && (
+                            <p className="text-red-500 text-xs w-[75%]">Please enter a valid email address</p>
+                          )}
                         </div>
                         <div className="flex justify-center">
                           <input
@@ -777,6 +874,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
                     }}
                     disabled={
                       Loading ||
+                      permissionStatus === "denied" ||
                       (!isTestResponse && !interview?.is_anonymous && (!isValidEmail || !name))
                     }
                     onClick={startConversation}

@@ -73,7 +73,9 @@ export class DeepgramAgentService {
           listen: {
             provider: {
               type: "deepgram",
-              model: "nova-3",
+              model: "flux-general-en",
+              version: "v2",
+              eager_eot_threshold: 0.6,
             },
           },
           think: {

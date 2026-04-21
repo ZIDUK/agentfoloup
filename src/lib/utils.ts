@@ -32,9 +32,8 @@ export function formatTimestampToDateHHMM(timestamp: string): string {
 }
 
 export function testEmail(email: string) {
-  const re = /\S+@\S+\.\S+/;
-
-  return re.test(email);
+  const re = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+  return re.test(email.trim());
 }
 
 export function convertSecondstoMMSS(seconds: number) {
