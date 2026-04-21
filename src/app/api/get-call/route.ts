@@ -3,15 +3,11 @@ import { generateInterviewAnalytics } from "@/services/analytics.service";
 import { ResponseService } from "@/services/responses.service";
 import { Response } from "@/types/response";
 import { NextResponse } from "next/server";
-import { getMistralClient } from "@/services/mistral.service";
-import {
-  SYSTEM_PROMPT,
-  getCallAnalysisPrompt,
-} from "@/lib/prompts/call-analysis";
+import { callLlmEdgeFunction } from "@/lib/llm-client";
 import { getSupabaseAdminClient } from "@/lib/supabase-client";
 import { InterviewService } from "@/services/interviews.service";
 
-export async function POST(req: Request, res: Response) {
+export async function POST(req: Request) {
   logger.info("get-call request received");
   let body: any;
   try {
@@ -115,7 +111,7 @@ export async function POST(req: Request, res: Response) {
 
     if (result.error || !result.analytics) {
       analyticsFailed = true;
-      logger.error("Analytics generation failed for call", body.id);
+      logger.error(`Analytics generation failed for call ${body.id}`);
     } else {
       analytics = result.analytics;
     }
@@ -142,28 +138,19 @@ export async function POST(req: Request, res: Response) {
   if (!callAnalysis && transcript) {
     needsSave = true;
     try {
-      const mistral = getMistralClient();
-      const prompt = getCallAnalysisPrompt(
-        transcript,
-        analytics?.overallScore,
-        analytics?.overallFeedback,
+      const result = await callLlmEdgeFunction<{ callAnalysis: Record<string, unknown> }>(
+        "generate_call_analysis",
+        {
+          transcript,
+          ...(analytics?.overallScore !== undefined ? { overallScore: analytics.overallScore } : {}),
+          ...(analytics?.overallFeedback ? { overallFeedback: analytics.overallFeedback } : {}),
+        },
       );
-
-      const completion = await mistral.createChatCompletion({
-        model: process.env.MISTRAL_MODEL || "mistral-large-latest",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-      });
-
-      const analysisContent = completion.choices[0]?.message?.content || "{}";
-      callAnalysis = JSON.parse(analysisContent);
+      callAnalysis = result.callAnalysis;
       logger.info("Call analysis generated successfully");
     } catch (error) {
       callAnalysisFailed = true;
-      logger.error("Call analysis generation failed for call", body.id, error);
+      logger.error("Call analysis generation failed for call");
     }
   }
 
@@ -185,7 +172,7 @@ export async function POST(req: Request, res: Response) {
     });
 
     if (succeeded) {
-      logger.info("Call fully analysed and saved for call", body.id);
+      logger.info(`Call fully analysed and saved for call ${body.id}`);
     } else {
       logger.warn(
         `Analysis incomplete for call ${body.id} — analytics_failed=${analyticsFailed} call_analysis_failed=${callAnalysisFailed}`,
@@ -225,18 +212,12 @@ export async function POST(req: Request, res: Response) {
 
         if (dreamitRes.ok) {
           await adminSave({ dreamit_notified: true });
-          logger.info(
-            "DreamIT notified for application",
-            callDetails.application_id,
-          );
+          logger.info(`DreamIT notified for application ${callDetails.application_id}`);
         } else {
-          logger.error(
-            "DreamIT notification failed with status",
-            dreamitRes.status,
-          );
+          logger.error(`DreamIT notification failed with status ${dreamitRes.status}`);
         }
       } catch (err) {
-        logger.error("DreamIT notification error", err);
+        logger.error("DreamIT notification error");
       }
     }
   }
