@@ -19,7 +19,7 @@ function SignInPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?redirect=${redirect}`,
+          redirectTo: `${process.env.NEXT_PUBLIC_LIVE_URL}/auth/callback?redirect=${redirect}`,
         },
       });
 
