@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Redirect to the requested page or dashboard
-  return NextResponse.redirect(new URL(redirect, requestUrl.origin));
+  const origin = process.env.NEXT_PUBLIC_LIVE_URL || requestUrl.origin;
+  return NextResponse.redirect(new URL(redirect, origin));
 }
 
