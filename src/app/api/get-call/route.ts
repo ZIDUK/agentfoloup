@@ -177,10 +177,9 @@ export async function POST(req: Request) {
     }
   }
 
-  // ── Step 3: Trigger process-test-result edge function (fire-and-forget) ─────
-  // All DreamIT secrets live in Supabase env vars — none are needed here.
-  // Once the request reaches the Supabase edge runtime it runs independently,
-  // so the notification is not tied to the client staying on the page.
+  // ── Step 3: Notify DreamIT via process-test-result edge function ─────────────
+  // Awaited so the client only gets a response (and redirects to the result
+  // page) once DreamIT has been notified. All secrets stay in Supabase env.
   if (
     analytics &&
     !analyticsFailed &&
@@ -191,21 +190,29 @@ export async function POST(req: Request) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (supabaseUrl && serviceRoleKey) {
-      fetch(`${supabaseUrl}/functions/v1/process-test-result`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${serviceRoleKey}`,
-        },
-        body: JSON.stringify({
-          applicationId: callDetails.application_id,
-          analytics,
-          callId: body.id,
-        }),
-      }).catch(() => {});
-      logger.info(`process-test-result triggered for call ${body.id}`);
+      try {
+        const res = await fetch(`${supabaseUrl}/functions/v1/process-test-result`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${serviceRoleKey}`,
+          },
+          body: JSON.stringify({
+            applicationId: callDetails.application_id,
+            analytics,
+            callId: body.id,
+          }),
+        });
+        if (res.ok) {
+          logger.info(`DreamIT notified for call ${body.id}`);
+        } else {
+          logger.error(`process-test-result failed with status ${res.status} for call ${body.id}`);
+        }
+      } catch (err) {
+        logger.error(`process-test-result request error for call ${body.id}`);
+      }
     } else {
-      logger.error("process-test-result trigger skipped — missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+      logger.error("process-test-result skipped — missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
     }
   }
 
