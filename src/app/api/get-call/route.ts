@@ -163,12 +163,13 @@ export async function POST(req: Request) {
     ...(callAnalysis ? { call_analysis: callAnalysis } : {}),
   };
 
-  // Only mark processed_by_foloup true when both steps succeeded.
-  // Leaving it false means the retry cron will pick this record up.
+  // Mark is_analysed as soon as analytics data exists.
+  // processed_by_foloup requires both steps to succeed; the retry cron uses
+  // that flag to pick up records where call_analysis is still missing.
   if (!callDetails.is_analysed || needsSave) {
     await adminSave({
       details: updatedCallResponse,
-      is_analysed: succeeded,
+      is_analysed: !!analytics,
       processed_by_foloup: succeeded,
       ...(analytics ? { analytics, duration } : {}),
     });
