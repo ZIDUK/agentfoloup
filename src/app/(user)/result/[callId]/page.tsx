@@ -259,12 +259,14 @@ export default function ResultPage({ params }: Props) {
     );
   }
 
+  // Support both old nested format (analytics.englishProficiency.*) and new flat format
+  const ep = analytics.englishProficiency ?? analytics;
   const skills = [
-    { label: "Pronunciation", feedback: analytics.pronunciationFeedback },
-    { label: "Fluency", feedback: analytics.fluencyFeedback },
-    { label: "Vocabulary", feedback: analytics.vocabularyFeedback },
-    { label: "Grammar", feedback: analytics.grammarFeedback },
-    { label: "Coherence", feedback: analytics.coherenceFeedback },
+    { label: "Pronunciation", feedback: ep.pronunciationFeedback },
+    { label: "Fluency", feedback: ep.fluencyFeedback },
+    { label: "Vocabulary", feedback: ep.vocabularyFeedback },
+    { label: "Grammar", feedback: ep.grammarFeedback },
+    { label: "Coherence", feedback: ep.coherenceFeedback },
   ];
   const hasSkillFeedback = skills.some((s) => s.feedback);
   const questionSummaries: any[] = analytics.questionSummaries ?? [];
@@ -293,28 +295,28 @@ export default function ResultPage({ params }: Props) {
       <div className="max-w-3xl mx-auto px-4 -mt-6 pb-12 space-y-4">
 
         {/* CEFR Proficiency card */}
-        {analytics.cefrLevel && (
+        {ep.cefrLevel && (
           <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
             <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest text-center mb-4">
               English Proficiency Level
             </p>
             <div className="flex items-center justify-center gap-3">
-              <span className="text-4xl font-black text-indigo-700 leading-none">{analytics.cefrLevel}</span>
-              {CEFR_LABELS[analytics.cefrLevel] && (
-                <span className="text-lg font-semibold text-gray-500">{CEFR_LABELS[analytics.cefrLevel]}</span>
+              <span className="text-4xl font-black text-indigo-700 leading-none">{ep.cefrLevel}</span>
+              {CEFR_LABELS[ep.cefrLevel] && (
+                <span className="text-lg font-semibold text-gray-500">{CEFR_LABELS[ep.cefrLevel]}</span>
               )}
             </div>
-            <CefrScale level={analytics.cefrLevel} />
-            {analytics.cefrDescription && (
+            <CefrScale level={ep.cefrLevel} />
+            {ep.cefrDescription && (
               <p className="text-gray-500 text-sm mt-5 leading-relaxed text-center max-w-md mx-auto">
-                {analytics.cefrDescription}
+                {ep.cefrDescription}
               </p>
             )}
-            {analytics.ieltsEstimate && (
+            {ep.ieltsEstimate && (
               <div className="mt-3 flex items-center justify-center gap-2">
                 <span className="text-gray-400 text-xs">IELTS equivalent</span>
                 <span className="bg-indigo-100 text-indigo-700 font-bold text-sm px-2.5 py-0.5 rounded-full">
-                  {analytics.ieltsEstimate}
+                  {ep.ieltsEstimate}
                 </span>
               </div>
             )}
