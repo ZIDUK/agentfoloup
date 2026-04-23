@@ -156,26 +156,20 @@ export async function POST(req: Request) {
     }
   }
 
-  const succeeded = !analyticsFailed && !callAnalysisFailed;
-
   const updatedCallResponse = {
     ...callResponse,
     ...(callAnalysis ? { call_analysis: callAnalysis } : {}),
   };
 
-  // Mark is_analysed as soon as analytics data exists.
-  // processed_by_foloup requires both steps to succeed; the retry cron uses
-  // that flag to pick up records where call_analysis is still missing.
   if (!callDetails.is_analysed || needsSave) {
     await adminSave({
       details: updatedCallResponse,
       is_analysed: !!analytics,
-      processed_by_foloup: succeeded,
       ...(analytics ? { analytics, duration } : {}),
     });
 
-    if (succeeded) {
-      logger.info(`Call fully analysed and saved for call ${body.id}`);
+    if (!analyticsFailed) {
+      logger.info(`Analytics saved for call ${body.id}`);
     } else {
       logger.warn(
         `Analysis incomplete for call ${body.id} — analytics_failed=${analyticsFailed} call_analysis_failed=${callAnalysisFailed}`,

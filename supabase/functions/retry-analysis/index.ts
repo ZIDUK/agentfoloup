@@ -149,7 +149,7 @@ Deno.serve(async (_req) => {
     const { data: responses, error } = await supabase
       .from("response")
       .select("call_id, interview_id, details, analytics, application_id, tab_switch_count, fullscreen_exit_count, proctoring_events, no_face_count, multiple_faces_count")
-      .eq("processed_by_foloup", false)
+      .eq("is_analysed", false)
       .eq("is_ended", true);
 
     log("INFO", "DB fetch complete", {
@@ -383,7 +383,6 @@ Deno.serve(async (_req) => {
             analytics,
             details: { ...response.details, call_analysis: callAnalysis },
             is_analysed: true,
-            processed_by_foloup: true,
           })
           .eq("call_id", callId);
 
