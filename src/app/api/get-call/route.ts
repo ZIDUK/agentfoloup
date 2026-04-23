@@ -177,49 +177,35 @@ export async function POST(req: Request) {
     }
   }
 
-  // ── Step 3: Notify DreamIT (only for real candidate responses) ──────────────
-  // Gate on analytics succeeding — call_analysis is not included in the DreamIT
-  // payload and a failure there should not block notification.
+  // ── Step 3: Trigger process-test-result edge function (fire-and-forget) ─────
+  // All DreamIT secrets live in Supabase env vars — none are needed here.
+  // Once the request reaches the Supabase edge runtime it runs independently,
+  // so the notification is not tied to the client staying on the page.
   if (
+    analytics &&
     !analyticsFailed &&
     callDetails.application_id &&
     !callDetails.dreamit_notified &&
-    analytics &&
     !callDetails.is_test_response
   ) {
-    const dreamitUrl = process.env.DREAMIT_URL;
-    const secret = process.env.DREAMIT_FOLOUP_SECRET;
-    const serviceRoleKey = process.env.DREAMIT_SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!dreamitUrl || !secret || !serviceRoleKey) {
-      logger.error("DreamIT notification skipped — missing env vars (DREAMIT_URL / DREAMIT_FOLOUP_SECRET / DREAMIT_SUPABASE_SERVICE_ROLE_KEY)");
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (supabaseUrl && serviceRoleKey) {
+      fetch(`${supabaseUrl}/functions/v1/process-test-result`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+        body: JSON.stringify({
+          applicationId: callDetails.application_id,
+          analytics,
+          callId: body.id,
+        }),
+      }).catch(() => {});
+      logger.info(`process-test-result triggered for call ${body.id}`);
     } else {
-      try {
-        const dreamitRes = await fetch(
-          `${dreamitUrl}/functions/v1/process-speaking-test-results`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-foloup-secret": secret,
-              Authorization: `Bearer ${serviceRoleKey}`,
-            },
-            body: JSON.stringify({
-              applicationId: callDetails.application_id,
-              analytics,
-            }),
-          },
-        );
-
-        if (dreamitRes.ok) {
-          await adminSave({ dreamit_notified: true });
-          logger.info(`DreamIT notified for application ${callDetails.application_id}`);
-        } else {
-          logger.error(`DreamIT notification failed with status ${dreamitRes.status}`);
-        }
-      } catch (err) {
-        logger.error("DreamIT notification error");
-      }
+      logger.error("process-test-result trigger skipped — missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
     }
   }
 

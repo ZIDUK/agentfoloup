@@ -109,9 +109,6 @@ Deno.serve(async (_req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const dreamitUrl = Deno.env.get("DREAMIT_URL");
-    const foloupSecret = Deno.env.get("DREAMIT_FOLOUP_SECRET");
-    const dreamitServiceRoleKey = Deno.env.get("DREAMIT_SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !serviceRoleKey) {
       const msg = "SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not configured";
@@ -133,9 +130,6 @@ Deno.serve(async (_req) => {
     log("INFO", "Env vars loaded", {
       hasSupabaseUrl: !!supabaseUrl,
       hasServiceRoleKey: !!serviceRoleKey,
-      hasDreamitUrl: !!dreamitUrl,
-      hasFoloupSecret: !!foloupSecret,
-      hasDreamitServiceRoleKey: !!dreamitServiceRoleKey,
       heavyModel: MODEL_HEAVY,
       lightModel: MODEL_LIGHT,
     });
@@ -395,73 +389,32 @@ Deno.serve(async (_req) => {
         }
         log("INFO", `${iterLabel} DB save succeeded`, { durationMs: Date.now() - saveStart });
 
-        // Notify DreamIT if applicable
-        if (response.application_id && dreamitUrl && foloupSecret && dreamitServiceRoleKey) {
-          log("INFO", `${iterLabel} Notifying DreamIT`, {
-            application_id: appId,
-            dreamitUrl,
-          });
-          const dreamitStart = Date.now();
-          const dreamitRes = await fetch(
-            `${dreamitUrl}/functions/v1/process-speaking-test-results`,
+        // Delegate DreamIT notification to process-test-result edge function
+        if (response.application_id) {
+          log("INFO", `${iterLabel} Triggering process-test-result`, { application_id: appId });
+          const ptStart = Date.now();
+          const ptRes = await fetch(
+            `${supabaseUrl}/functions/v1/process-test-result`,
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "x-foloup-secret": foloupSecret,
-                Authorization: `Bearer ${dreamitServiceRoleKey}`,
+                Authorization: `Bearer ${serviceRoleKey}`,
               },
               body: JSON.stringify({
                 applicationId: response.application_id,
-                analytics: {
-                  ...analytics,
-                  tab_switch_count: analytics?.tab_switch_count ?? response.tab_switch_count ?? 0,
-                  full_screen_events: analytics?.full_screen_events ?? response.fullscreen_exit_count ?? 0,
-                  proctoring_events: analytics?.proctoring_events ?? response.proctoring_events ?? [],
-                  camera_covered: analytics?.camera_covered ??
-                    (response.proctoring_events ?? []).some((e: any) => e.type === "camera_covered"),
-                  no_face_count: analytics?.no_face_count ?? response.no_face_count ?? 0,
-                  multiple_faces_count: analytics?.multiple_faces_count ?? response.multiple_faces_count ?? 0,
-                },
+                analytics,
+                callId,
               }),
             },
           );
-
-          const dreamitStatus = dreamitRes.status;
-          log("INFO", `${iterLabel} DreamIT responded`, {
-            status: dreamitStatus,
-            ok: dreamitRes.ok,
-            durationMs: Date.now() - dreamitStart,
-          });
-
-          if (dreamitRes.ok) {
-            const { error: notifyError } = await supabase
-              .from("response")
-              .update({ dreamit_notified: true })
-              .eq("call_id", callId);
-
-            if (notifyError) {
-              log("WARN", `${iterLabel} Failed to set dreamit_notified flag`, {
-                error: notifyError.message,
-              });
-            } else {
-              log("INFO", `${iterLabel} dreamit_notified flag set`);
-            }
-          } else {
-            const body = await dreamitRes.text().catch(() => "(unreadable)");
-            log("ERROR", `${iterLabel} DreamIT rejected request`, {
-              application_id: appId,
-              status: dreamitStatus,
-              responseBody: body.slice(0, 500),
-            });
-          }
+          log(
+            ptRes.ok ? "INFO" : "ERROR",
+            `${iterLabel} process-test-result responded`,
+            { status: ptRes.status, ok: ptRes.ok, durationMs: Date.now() - ptStart },
+          );
         } else {
-          log("INFO", `${iterLabel} Skipping DreamIT notification`, {
-            hasApplicationId: !!response.application_id,
-            hasDreamitUrl: !!dreamitUrl,
-            hasFoloupSecret: !!foloupSecret,
-            hasDreamitServiceRoleKey: !!dreamitServiceRoleKey,
-          });
+          log("INFO", `${iterLabel} Skipping DreamIT notification — no application_id`);
         }
 
         succeeded++;
