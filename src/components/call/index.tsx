@@ -518,18 +518,9 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
         interview.interviewer_id,
       );
 
-      const durationSeconds = (parseInt(interview?.time_duration || "60", 10) * 60) + 300;
-      const tokenRes = await fetch("/api/deepgram-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expires_in: durationSeconds }),
-      });
-      if (!tokenRes.ok) {
-        toast.error("Failed to initialize interview session. Please try again.");
-        setLoading(false);
-        return;
-      }
-      const { token: apiKey } = await tokenRes.json();
+      const tokenRes = await fetch("/api/deepgram-token", { method: "POST" });
+      const tokenData = await tokenRes.json();
+      const apiKey: string = tokenData.token || "";
       if (!apiKey) {
         toast.error("Deepgram API key not configured");
         setLoading(false);
