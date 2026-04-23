@@ -42,7 +42,7 @@ await webClient.startCall({
 ```typescript
 import { createClient, AgentEvents } from "@deepgram/sdk";
 
-const deepgram = createClient(process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY);
+const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
 const connection = deepgram.agent();
 
 connection.on(AgentEvents.Welcome, () => {
@@ -73,8 +73,7 @@ connection.on(AgentEvents.Welcome, () => {
 
 Ya no necesitas crear un `agent_id` previamente. En su lugar:
 
-1. **Opción A**: Generar un token temporal de Deepgram (ya implementado)
-2. **Opción B**: Usar la API key directamente del cliente (más simple)
+1. Generar un token temporal de Deepgram vía `/api/deepgram-token` (ya implementado). El cliente nunca recibe la API key real — solo el token de corta duración.
 
 ### 3. Configurar el Agente con datos de la entrevista
 
@@ -232,9 +231,9 @@ Reemplazar `RetellWebClient` con `DeepgramAgentService`.
 ### Paso 3: Actualizar variables de entorno
 
 ```env
-# Deepgram Voice Agent
-NEXT_PUBLIC_DEEPGRAM_API_KEY=your_api_key_here
+# Deepgram Voice Agent (server-side only — never use NEXT_PUBLIC_ for API keys)
 DEEPGRAM_API_KEY=your_api_key_here
+DEEPGRAM_PROJECT_ID=your_project_id_here
 
 # Opcional: Si usas Mistral para el agente
 MISTRAL_API_KEY=your_mistral_key

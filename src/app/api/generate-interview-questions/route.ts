@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     logger.error("Error generating interview questions", error);
     return NextResponse.json(
-      { error: "internal server error", details: error?.message || "Unknown error" },
+      { error: "Internal server error" },
       { status: 500 },
     );
   }
