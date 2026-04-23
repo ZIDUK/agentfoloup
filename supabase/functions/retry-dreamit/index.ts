@@ -55,7 +55,7 @@ Deno.serve(async (_req) => {
     const { data: responses, error } = await supabase
       .from("response")
       .select("call_id, application_id, analytics, tab_switch_count, fullscreen_exit_count, proctoring_events, no_face_count, multiple_faces_count")
-      .eq("processed_by_foloup", true)
+      .eq("is_analysed", true)
       .eq("dreamit_notified", false)
       .not("application_id", "is", null)
       .not("analytics", "is", null);

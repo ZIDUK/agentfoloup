@@ -184,8 +184,10 @@ export async function POST(req: Request) {
   }
 
   // ── Step 3: Notify DreamIT (only for real candidate responses) ──────────────
+  // Gate on analytics succeeding — call_analysis is not included in the DreamIT
+  // payload and a failure there should not block notification.
   if (
-    succeeded &&
+    !analyticsFailed &&
     callDetails.application_id &&
     !callDetails.dreamit_notified &&
     analytics &&
@@ -195,7 +197,9 @@ export async function POST(req: Request) {
     const secret = process.env.DREAMIT_FOLOUP_SECRET;
     const serviceRoleKey = process.env.DREAMIT_SUPABASE_SERVICE_ROLE_KEY;
 
-    if (dreamitUrl && secret && serviceRoleKey) {
+    if (!dreamitUrl || !secret || !serviceRoleKey) {
+      logger.error("DreamIT notification skipped — missing env vars (DREAMIT_URL / DREAMIT_FOLOUP_SECRET / DREAMIT_SUPABASE_SERVICE_ROLE_KEY)");
+    } else {
       try {
         const dreamitRes = await fetch(
           `${dreamitUrl}/functions/v1/process-speaking-test-results`,
