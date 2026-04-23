@@ -5,7 +5,9 @@ export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const file = formData.get("file") as Blob | null;
   const callId = formData.get("callId") as string | null;
-  const mimeType = (formData.get("mimeType") as string | null) || "video/webm";
+  const rawMime = (formData.get("mimeType") as string | null) || "";
+  const allowedMimeTypes = ["video/webm", "video/mp4", "video/ogg", "audio/webm", "audio/mp4"];
+  const mimeType = allowedMimeTypes.includes(rawMime) ? rawMime : "video/webm";
 
   if (!file || !callId) {
     return NextResponse.json({ error: "Missing file or callId" }, { status: 400 });
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest) {
     .upload(fileName, file, { contentType: mimeType, upsert: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to upload recording" }, { status: 500 });
   }
 
   const { data } = supabase.storage

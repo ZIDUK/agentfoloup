@@ -26,7 +26,7 @@ Se ha completado la migración de Retell AI a Deepgram Voice Agent API. La imple
    - Configuración del agente con datos de la entrevista
 
 2. **`README.md`**
-   - Actualizado con instrucciones para `NEXT_PUBLIC_DEEPGRAM_API_KEY`
+   - Actualizado con instrucciones para `DEEPGRAM_API_KEY`
 
 ## 🔧 Configuración Requerida
 
@@ -36,9 +36,6 @@ Agrega estas variables a tu archivo `.env`:
 
 ```env
 # Deepgram API Key (cliente - requerido para Voice Agent)
-NEXT_PUBLIC_DEEPGRAM_API_KEY=tu_api_key_aqui
-
-# Deepgram API Key (servidor - opcional)
 DEEPGRAM_API_KEY=tu_api_key_aqui
 
 # Deepgram Project ID (opcional, solo para token generation)
@@ -114,7 +111,7 @@ OPENAI_API_KEY=tu_openai_key_aqui
 
 ### 1. API Key en el Cliente
 
-La API key de Deepgram debe estar disponible en el cliente (`NEXT_PUBLIC_DEEPGRAM_API_KEY`). Esto es seguro porque:
+La API key de Deepgram se usa únicamente en el servidor. El cliente obtiene un token temporal de corta duración vía `/api/deepgram-token`:
 - Deepgram usa la key solo para autenticación
 - No expone datos sensibles
 - Es la forma recomendada por Deepgram para Voice Agent API
@@ -143,7 +140,8 @@ Para probar la implementación:
 
 1. **Configura las variables de entorno**
    ```bash
-   NEXT_PUBLIC_DEEPGRAM_API_KEY=tu_key
+   DEEPGRAM_API_KEY=tu_key
+   DEEPGRAM_PROJECT_ID=tu_project_id
    OPENAI_API_KEY=tu_openai_key
    ```
 
@@ -167,7 +165,7 @@ Para probar la implementación:
 ## 🐛 Troubleshooting
 
 ### Error: "Deepgram API key not configured"
-- Verifica que `NEXT_PUBLIC_DEEPGRAM_API_KEY` esté en `.env`
+- Verifica que `DEEPGRAM_API_KEY` y `DEEPGRAM_PROJECT_ID` estén en `.env`
 - Reinicia el servidor después de agregar la variable
 
 ### Error: "Failed to start interview"

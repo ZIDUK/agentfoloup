@@ -36,7 +36,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key_aqui
 
 #### Deepgram (Requerido para Voice Agent)
 ```env
-NEXT_PUBLIC_DEEPGRAM_API_KEY=tu_deepgram_api_key_aqui
 DEEPGRAM_API_KEY=tu_deepgram_api_key_aqui
 DEEPGRAM_PROJECT_ID=tu_deepgram_project_id_aqui
 ```

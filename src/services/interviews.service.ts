@@ -17,6 +17,8 @@ const getAllInterviews = async () => {
 
 const getInterviewById = async (id: string) => {
   try {
+    // Validate format before embedding in filter string — nanoids are [A-Za-z0-9_-]
+    if (!id || !/^[A-Za-z0-9_-]+$/.test(id)) return null;
     const supabase = getSupabaseClient();
     const { data } = await supabase
       .from("interview")
