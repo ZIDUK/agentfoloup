@@ -31,7 +31,6 @@ export interface Response {
   multiple_faces_count: number | null;
   application_id: string | null;
   dreamit_notified: boolean;
-  processed_by_foloup: boolean;
   is_test_response: boolean;
 }
 
