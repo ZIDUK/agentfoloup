@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     .upload(fileName, file, { contentType: mimeType, upsert: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to upload recording" }, { status: 500 });
   }
 
   const { data } = supabase.storage

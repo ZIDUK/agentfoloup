@@ -14,12 +14,7 @@ export async function GET(res: NextRequest) {
     if (!supabaseUrl || !supabaseKey) {
       logger.error("Supabase is not configured. NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required.");
       return NextResponse.json(
-        {
-          error: "Supabase is not configured",
-          details: "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables are required",
-          newInterviewer: null,
-          newSecondInterviewer: null,
-        },
+        { error: "Supabase is not configured" },
         { status: 500 },
       );
     }
@@ -38,12 +33,7 @@ export async function GET(res: NextRequest) {
     if (!lisaInterviewer || !bobInterviewer) {
       logger.error("Failed to create interviewers. One or both returned null.");
       return NextResponse.json(
-        {
-          error: "Failed to create interviewers",
-          details: "InterviewerService.createInterviewer returned null. Check server logs for details.",
-          newInterviewer: lisaInterviewer,
-          newSecondInterviewer: bobInterviewer,
-        },
+        { error: "Failed to create interviewers" },
         { status: 500 },
       );
     }
@@ -58,17 +48,9 @@ export async function GET(res: NextRequest) {
       { status: 200 },
     );
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : String(error);
-    logger.error("Error creating interviewers:", errorMessage);
-
+    logger.error("Error creating interviewers:", error);
     return NextResponse.json(
-      {
-        error: "Failed to create interviewers",
-        details: errorMessage,
-        newInterviewer: null,
-        newSecondInterviewer: null,
-      },
+      { error: "Failed to create interviewers" },
       { status: 500 },
     );
   }
