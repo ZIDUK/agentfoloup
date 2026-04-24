@@ -35,9 +35,14 @@ export async function POST(req: Request) {
     // no body — use default
   }
 
+  const projectId = process.env.DEEPGRAM_PROJECT_ID;
+  logger.info(
+    `Deepgram token request — project=${projectId} ttl=${expiresIn}s`,
+  );
+
   try {
     const { result, error } = await deepgram.manage.createProjectKey(
-      process.env.DEEPGRAM_PROJECT_ID,
+      projectId,
       {
         comment: "Interview session token",
         scopes: ["usage:write"],
@@ -46,8 +51,29 @@ export async function POST(req: Request) {
       },
     );
 
-    if (error || !result?.key) {
-      logger.error("Deepgram token error:", error);
+    if (error) {
+      // DeepgramApiError surfaces as an object with status + message fields
+      const status = (error as { status?: number }).status;
+      const message = (error as { message?: string }).message ?? String(error);
+      logger.error(
+        `Deepgram createProjectKey failed — status=${status} message="${message}" project=${projectId}`,
+      );
+      if (status === 403 || /scope/i.test(message)) {
+        logger.error(
+          "Fix: DEEPGRAM_API_KEY must be an Admin-scoped key with keys:write permission. " +
+            "Go to console.deepgram.com → API Keys → ensure the key role is 'Admin'.",
+        );
+      }
+      return NextResponse.json(
+        { error: "Failed to create Deepgram token" },
+        { status: 500 },
+      );
+    }
+
+    if (!result?.key) {
+      logger.error(
+        `Deepgram createProjectKey returned no key — result=${JSON.stringify(result)} project=${projectId}`,
+      );
       return NextResponse.json(
         { error: "Failed to create Deepgram token" },
         { status: 500 },
@@ -57,7 +83,17 @@ export async function POST(req: Request) {
     logger.info(`Deepgram token minted (ttl=${expiresIn}s)`);
     return NextResponse.json({ token: result.key }, { status: 200 });
   } catch (err) {
-    logger.error("Deepgram token error:", err);
+    const status = (err as { status?: number }).status;
+    const message = (err as { message?: string }).message ?? String(err);
+    logger.error(
+      `Deepgram token error — status=${status} message="${message}" project=${projectId}`,
+    );
+    if (status === 403 || /scope/i.test(message)) {
+      logger.error(
+        "Fix: DEEPGRAM_API_KEY must be an Admin-scoped key with keys:write permission. " +
+          "Go to console.deepgram.com → API Keys → ensure the key role is 'Admin'.",
+      );
+    }
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

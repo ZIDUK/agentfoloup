@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ResponseService } from "@/services/responses.service";
-import { InterviewService } from "@/services/interviews.service";
 import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText";
 
 type Props = {
@@ -212,9 +210,11 @@ export default function ResultPage({ params }: Props) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await ResponseService.getResponseByCallId(params.callId);
+        const rRes = await fetch(`/api/responses/${params.callId}`);
+        const response = await rRes.json();
         if (response?.interview_id) {
-          const interview = await InterviewService.getInterviewById(response.interview_id);
+          const iRes = await fetch(`/api/interviews/${response.interview_id}`);
+          const interview = await iRes.json();
           setInterviewName(interview?.name ?? null);
         }
         if (response?.analytics) {

@@ -2,7 +2,6 @@
 
 import React, { useState, useContext, ReactNode, useEffect } from "react";
 import { Interview } from "@/types/interview";
-import { InterviewService } from "@/services/interviews.service";
 import { getSupabaseClient } from "@/lib/supabase-client";
 
 interface InterviewContextProps {
@@ -55,7 +54,8 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
   const fetchInterviews = async () => {
     try {
       setInterviewsLoading(true);
-      const response = await InterviewService.getAllInterviews();
+      const res = await fetch("/api/interviews");
+      const response = await res.json();
       setInterviews(response);
     } catch (error) {
       console.error(error);
@@ -65,7 +65,8 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
   };
 
   const getInterviewById = async (interviewId: string) => {
-    return InterviewService.getInterviewById(interviewId);
+    const res = await fetch(`/api/interviews/${interviewId}`);
+    return res.json();
   };
 
   useEffect(() => {

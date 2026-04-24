@@ -7,13 +7,11 @@ import { useInterviews } from "@/contexts/interviews.context";
 import { Share2, Filter, Pencil, UserIcon, Eye, Palette } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
-import { ResponseService } from "@/services/responses.service";
 import { Interview } from "@/types/interview";
 import { Response } from "@/types/response";
 import { formatTimestampToDateHHMM } from "@/lib/utils";
 import CallInfo from "@/components/call/callInfo";
 import SummaryInfo from "@/components/dashboard/interview/summaryInfo";
-import { InterviewService } from "@/services/interviews.service";
 import EditInterview from "@/components/dashboard/interview/editInterview";
 import Modal from "@/components/dashboard/Modal";
 import { toast } from "sonner";
@@ -121,9 +119,8 @@ function InterviewHome({ params, searchParams }: Props) {
   useEffect(() => {
     const fetchResponses = async () => {
       try {
-        const response = await ResponseService.getAllResponses(
-          params.interviewId,
-        );
+        const res = await fetch(`/api/responses?interviewId=${params.interviewId}`);
+        const response = await res.json();
         setResponses(response);
         setLoading(true);
       } catch (error) {
@@ -160,7 +157,11 @@ function InterviewHome({ params, searchParams }: Props) {
 
   const handleResponseClick = async (response: Response) => {
     try {
-      await ResponseService.saveResponse({ is_viewed: true }, response.call_id);
+      await fetch(`/api/responses/${response.call_id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_viewed: true }),
+      });
       if (responses) {
         const updatedResponses = responses.map((r) =>
           r.call_id === response.call_id ? { ...r, is_viewed: true } : r,
@@ -206,10 +207,11 @@ function InterviewHome({ params, searchParams }: Props) {
 
   const handleThemeColorChange = async (newColor: string) => {
     try {
-      await InterviewService.updateInterview(
-        { theme_color: newColor },
-        params.interviewId,
-      );
+      await fetch(`/api/interviews/${params.interviewId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme_color: newColor }),
+      });
 
       toast.success("Theme color updated", {
         position: "bottom-right",

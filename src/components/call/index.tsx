@@ -15,10 +15,8 @@ import Image from "next/image";
 import MiniLoader from "../loaders/mini-loader/miniLoader";
 import { toast } from "sonner";
 import { isLightColor, testEmail } from "@/lib/utils";
-import { ResponseService } from "@/services/responses.service";
 import { Interview } from "@/types/interview";
 import { FeedbackData } from "@/types/response";
-import { FeedbackService } from "@/services/feedback.service";
 import { FeedbackForm } from "@/components/call/feedbackForm";
 import {
   TabSwitchWarning,
@@ -35,7 +33,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { InterviewerService } from "@/services/interviewers.service";
 import { DeepgramAgentService } from "@/services/deepgram-agent.service";
 import { AudioPlayer } from "@/lib/audio-player";
 import { AgentEvents } from "@deepgram/sdk";
@@ -157,10 +154,12 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
     formData: Omit<FeedbackData, "interview_id">,
   ) => {
     try {
-      const result = await FeedbackService.submitFeedback({
-        ...formData,
-        interview_id: interview.id,
+      const feedbackRes = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, interview_id: interview.id }),
       });
+      const result = feedbackRes.ok ? await feedbackRes.json() : null;
 
       if (result) {
         toast.success("Thank you for your feedback!");
@@ -471,9 +470,9 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
 
   const startConversation = async () => {
     if (!isTestResponse) {
-      const oldUserEmails: string[] = (
-        await ResponseService.getAllEmails(interview.id)
-      ).map((item: { email: string }) => item.email);
+      const emailsRes = await fetch(`/api/responses/emails?interviewId=${interview.id}`);
+      const emailsData = await emailsRes.json();
+      const oldUserEmails: string[] = (emailsData as { email: string }[]).map((item) => item.email);
       const OldUser =
         oldUserEmails.includes(email) ||
         (interview?.respondents && !interview?.respondents.includes(email));
@@ -514,15 +513,24 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       }
       setPermissionStatus("granted");
 
-      const interviewer = await InterviewerService.getInterviewer(
-        interview.interviewer_id,
-      );
+      const iRes = await fetch(`/api/interviewers/${interview.interviewer_id}`);
+      const interviewer = await iRes.json();
 
       const tokenRes = await fetch("/api/deepgram-token", { method: "POST" });
       const tokenData = await tokenRes.json();
       const apiKey: string = tokenData.token || "";
       if (!apiKey) {
-        toast.error("Deepgram API key not configured");
+        console.error(
+          "[deepgram-token] Failed to mint token:",
+          tokenData.error ?? "(no error detail)",
+          "status:",
+          tokenRes.status,
+        );
+        toast.error(
+          tokenData.error
+            ? `Failed to start interview: ${tokenData.error}`
+            : "Deepgram API key not configured",
+        );
         setLoading(false);
         return;
       }
@@ -612,9 +620,8 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
 
   useEffect(() => {
     const fetchInterviewer = async () => {
-      const interviewer = await InterviewerService.getInterviewer(
-        interview.interviewer_id,
-      );
+      const iRes = await fetch(`/api/interviewers/${interview.interviewer_id}`);
+      const interviewer = await iRes.json();
       const img: string = interviewer?.image ?? "";
       // Only accept paths that next/image can serve (leading slash or absolute URL).
       // Anything else (e.g. legacy "employee-photos/233.jpg") falls back to the
@@ -656,8 +663,10 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
 
         setIsCompiling(true);
         try {
-          await ResponseService.saveResponse(
-            {
+          await fetch(`/api/responses/${callId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
               is_ended: true,
               tab_switch_count: proctoring.tabSwitchCount,
               fullscreen_exit_count: proctoring.fullscreenExitCount,
@@ -681,9 +690,8 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
                 end_timestamp: endTime,
               },
               duration: duration,
-            },
-            callId,
-          );
+            }),
+          });
 
           // keepalive ensures analysis completes even if the user closes the tab.
           await fetch("/api/get-call", {
