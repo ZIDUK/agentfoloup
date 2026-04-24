@@ -27,6 +27,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+type DreamitJob = { job_id: number; title: string };
+
 type EditInterviewProps = {
   interview: Interview | undefined;
 };
@@ -55,10 +57,27 @@ function EditInterview({ interview }: EditInterviewProps) {
     interview?.interviewer_id,
   );
   const [isClicked, setIsClicked] = useState(false);
+  const [availableJobs, setAvailableJobs] = useState<DreamitJob[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [selectedJobIds, setSelectedJobIds] = useState<number[]>([]);
 
   const endOfListRef = useRef<HTMLDivElement>(null);
   const prevQuestionLengthRef = useRef(questions.length);
   const router = useRouter();
+
+  useEffect(() => {
+    setJobsLoading(true);
+    Promise.all([
+      fetch("/api/get-dreamit-jobs").then((r) => r.json()),
+      fetch(`/api/interview-jobs?interviewId=${interview?.id}`).then((r) => r.json()),
+    ])
+      .then(([allJobsData, linkedJobsData]) => {
+        setAvailableJobs(allJobsData.jobs ?? []);
+        setSelectedJobIds((linkedJobsData.jobs ?? []).map((j: { job_id: number }) => j.job_id));
+      })
+      .catch(() => {})
+      .finally(() => setJobsLoading(false));
+  }, [interview?.id]);
 
   const handleInputChange = (id: string, newQuestion: Question) => {
     setQuestions(
@@ -94,6 +113,8 @@ function EditInterview({ interview }: EditInterviewProps) {
   };
 
   const onSave = async () => {
+    if (!interview) return;
+
     const questionCount =
       questions.length < numQuestions ? questions.length : numQuestions;
 
@@ -107,46 +128,54 @@ function EditInterview({ interview }: EditInterviewProps) {
       updated_by: client?.id || null,
     };
 
+    const selectedJobs = availableJobs
+      .filter((j) => selectedJobIds.includes(j.job_id))
+      .map((j) => ({ job_id: j.job_id, job_title: j.title }));
+
     try {
-      if (!interview) {
-        return;
-      }
-      const response = await fetch(`/api/interviews/${interview?.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(interviewData),
-      });
+      await Promise.all([
+        fetch(`/api/interviews/${interview.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(interviewData),
+        }),
+        fetch("/api/interview-jobs", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ interviewId: interview.id, jobs: selectedJobs }),
+        }),
+      ]);
       setIsClicked(false);
       fetchInterviews();
       toast.success("Interview updated successfully.", {
         position: "bottom-right",
         duration: 3000,
       });
-      router.push(`/interviews/${interview?.id}`);
+      router.push(`/interviews/${interview.id}`);
     } catch {
-      // silent
+      setIsClicked(false);
     }
   };
 
   const onDeleteInterviewClick = async () => {
-    if (!interview) {
+    if (!interview) return;
+
+    const res = await fetch("/api/delete-interview", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: interview.id }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error ?? "Failed to delete the interview.", {
+        position: "bottom-right",
+        duration: 5000,
+      });
       return;
     }
 
-    try {
-      const res = await fetch("/api/delete-interview", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: interview.id }),
-      });
-      if (!res.ok) throw new Error("Delete failed");
-      router.push("/dashboard");
-    } catch {
-      toast.error("Failed to delete the interview.", {
-        position: "bottom-right",
-        duration: 3000,
-      });
-    }
+    router.push("/dashboard");
   };
 
   useEffect(() => {
@@ -241,6 +270,33 @@ function EditInterview({ interview }: EditInterviewProps) {
           onChange={(e) => setObjective(e.target.value)}
           onBlur={(e) => setObjective(e.target.value.trim())}
         />
+        <div className="flex flex-col mt-3 ml-2 w-[75%]">
+          <p className="font-medium mb-1">Jobs</p>
+          {jobsLoading ? (
+            <p className="text-xs text-gray-400">Loading jobs…</p>
+          ) : availableJobs.length === 0 ? (
+            <p className="text-xs text-gray-400">No jobs available</p>
+          ) : (
+            <div className="max-h-28 overflow-y-auto border border-gray-400 rounded px-2 py-1 bg-white">
+              {availableJobs.map((job) => (
+                <label key={job.job_id} className="flex items-center gap-2 py-0.5 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={selectedJobIds.includes(job.job_id)}
+                    onChange={(e) =>
+                      setSelectedJobIds((prev) =>
+                        e.target.checked
+                          ? [...prev, job.job_id]
+                          : prev.filter((id) => id !== job.job_id),
+                      )
+                    }
+                  />
+                  {job.title}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex flex-row gap-3">
           <div>
             <p className="mt-3 mb-1 ml-2 font-medium">Interviewer</p>

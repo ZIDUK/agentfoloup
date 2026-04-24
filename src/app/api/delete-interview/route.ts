@@ -28,36 +28,12 @@ export async function DELETE(req: Request) {
     }
 
     const linkedJobs = await InterviewService.getLinkedJobs(id);
-
     if (linkedJobs.length > 0) {
-      const dreamitUrl = process.env.DREAMIT_URL;
-      const secret = process.env.DREAMIT_FOLOUP_SECRET;
-      const serviceRoleKey = process.env.DREAMIT_SUPABASE_SERVICE_ROLE_KEY;
-
-      if (dreamitUrl && secret && serviceRoleKey) {
-        for (const job of linkedJobs) {
-          const dreamitRes = await fetch(`${dreamitUrl}/functions/v1/update-foloup-speech-link`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-foloup-secret": secret,
-              "Authorization": `Bearer ${serviceRoleKey}`,
-            },
-            body: JSON.stringify({ job_id: Number(job.job_id), foloup_speech_link: null }),
-          });
-
-          const data = await dreamitRes.json().catch(() => null);
-          logger.info("delete-interview DreamIT speech link nullify response", { job_id: Number(job.job_id), status: dreamitRes.status });
-
-          if (!dreamitRes.ok) {
-            logger.error("delete-interview DreamIT speech link nullify failed", { status: dreamitRes.status, job_id: Number(job.job_id), response: data });
-            return NextResponse.json(
-              { error: "Failed to update foloup link — interview not deleted" },
-              { status: 502 },
-            );
-          }
-        }
-      }
+      const jobNames = linkedJobs.map((j: { job_title: string }) => j.job_title).join(", ");
+      return NextResponse.json(
+        { error: `This interview is linked to ${linkedJobs.length} job(s): ${jobNames}. Please remove all job references before deleting.` },
+        { status: 409 },
+      );
     }
 
     await InterviewService.deleteInterview(id);

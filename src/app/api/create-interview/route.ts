@@ -18,7 +18,7 @@ export async function POST(req: Request, res: Response) {
     logger.info("create-interview request received");
 
     const payload = body.interviewData;
-    const jobs: { job_id: number; job_title: string }[] = Array.isArray(payload.jobs) ? payload.jobs : [];
+    let jobs: { job_id: number; job_title: string }[] = Array.isArray(payload.jobs) ? payload.jobs : [];
 
     const interviewNameSlug = payload.name?.toLowerCase().replace(/\s/g, "-");
     const readableSlug = interviewNameSlug ? `${interviewNameSlug}-${url_id}` : null;
@@ -29,28 +29,31 @@ export async function POST(req: Request, res: Response) {
       const serviceRoleKey = process.env.DREAMIT_SUPABASE_SERVICE_ROLE_KEY;
 
       if (dreamitUrl && secret && serviceRoleKey) {
-        for (const job of jobs) {
-          const dreamitRes = await fetch(`${dreamitUrl}/functions/v1/update-foloup-speech-link`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-foloup-secret": secret,
-              "Authorization": `Bearer ${serviceRoleKey}`,
-            },
-            body: JSON.stringify({ job_id: Number(job.job_id), foloup_speech_link: url }),
-          });
+        const results = await Promise.allSettled(
+          jobs.map(async (job) => {
+            const r = await fetch(`${dreamitUrl}/functions/v1/update-foloup-speech-link`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-foloup-secret": secret,
+                "Authorization": `Bearer ${serviceRoleKey}`,
+              },
+              body: JSON.stringify({ job_id: Number(job.job_id), foloup_speech_link: url }),
+            });
+            logger.info("create-interview DreamIT speech link update response", { job_id: Number(job.job_id), status: r.status });
+            if (!r.ok) {
+              logger.error("create-interview DreamIT speech link update failed", { status: r.status, job_id: Number(job.job_id) });
+              throw new Error(`DreamIT failed for job ${job.job_id}`);
+            }
+            return job;
+          }),
+        );
 
-          const data = await dreamitRes.json().catch(() => null);
-          logger.info("create-interview DreamIT speech link update response", { job_id: Number(job.job_id), status: dreamitRes.status });
+        jobs = results
+          .filter((r): r is PromiseFulfilledResult<{ job_id: number; job_title: string }> => r.status === "fulfilled")
+          .map((r) => r.value);
 
-          if (!dreamitRes.ok) {
-            logger.error("create-interview DreamIT speech link update failed", { status: dreamitRes.status, job_id: Number(job.job_id), response: data });
-            return NextResponse.json(
-              { error: "Failed to update foloup link — interview not created" },
-              { status: 502 },
-            );
-          }
-        }
+        logger.info("create-interview DreamIT results", { total: payload.jobs.length, linked: jobs.length });
       }
     }
 
