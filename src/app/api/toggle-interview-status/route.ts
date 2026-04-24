@@ -22,18 +22,15 @@ export async function POST(req: Request) {
     }
 
     const adminSupabase = getSupabaseAdminClient();
-
-    let interview: any = null;
-    if (adminSupabase) {
-      const { data } = await adminSupabase
-        .from("interview")
-        .select("url")
-        .eq("id", id)
-        .single();
-      interview = data;
-    } else {
-      interview = await InterviewService.getInterviewById(id);
+    if (!adminSupabase) {
+      return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
     }
+
+    const { data: interview } = await adminSupabase
+      .from("interview")
+      .select("url")
+      .eq("id", id)
+      .single();
 
     if (!interview) {
       return NextResponse.json({ error: "Interview not found" }, { status: 404 });
@@ -41,6 +38,18 @@ export async function POST(req: Request) {
 
     const linkedJobs = await InterviewService.getLinkedJobs(id);
 
+    // DB first: update is_active
+    const { error: updateError } = await adminSupabase
+      .from("interview")
+      .update({ is_active })
+      .eq("id", id);
+
+    if (updateError) {
+      logger.error("toggle-interview-status: DB update failed", { updateError });
+      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
+
+    // Then sync DreamIT
     if (linkedJobs.length > 0) {
       const dreamitUrl = process.env.DREAMIT_URL;
       const secret = process.env.DREAMIT_FOLOUP_SECRET;
@@ -49,34 +58,47 @@ export async function POST(req: Request) {
       if (dreamitUrl && secret && serviceRoleKey) {
         const foloupLink = is_active ? interview.url : null;
 
-        for (const job of linkedJobs) {
-          const dreamitRes = await fetch(`${dreamitUrl}/functions/v1/update-foloup-speech-link`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-foloup-secret": secret,
-              "Authorization": `Bearer ${serviceRoleKey}`,
-            },
-            body: JSON.stringify({ job_id: Number(job.job_id), foloup_speech_link: foloupLink }),
-          });
+        const syncResults = await Promise.all(
+          linkedJobs.map(async (job) => {
+            const dreamitRes = await fetch(`${dreamitUrl}/functions/v1/update-foloup-speech-link`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-foloup-secret": secret,
+                "Authorization": `Bearer ${serviceRoleKey}`,
+              },
+              body: JSON.stringify({ job_id: Number(job.job_id), foloup_speech_link: foloupLink }),
+            });
+            logger.info("toggle-interview-status DreamIT response", { job_id: Number(job.job_id), is_active, status: dreamitRes.status });
+            return { job, ok: dreamitRes.ok };
+          }),
+        );
 
-          const data = await dreamitRes.json().catch(() => null);
-          logger.info("toggle-interview-status DreamIT response", { job_id: Number(job.job_id), is_active, status: dreamitRes.status });
+        const anyFailed = syncResults.some((r) => !r.ok);
 
-          if (!dreamitRes.ok) {
-            logger.error("toggle-interview-status DreamIT update failed", { status: dreamitRes.status, job_id: Number(job.job_id), response: data });
-            return NextResponse.json(
-              { error: "Failed to update foloup link — status not changed" },
-              { status: 502 },
-            );
+        if (anyFailed) {
+          logger.error("toggle-interview-status: DreamIT failed, compensating DB");
+
+          // Compensate: revert is_active in DB
+          const { error: revertError } = await adminSupabase
+            .from("interview")
+            .update({ is_active: !is_active })
+            .eq("id", id);
+
+          if (revertError) {
+            // Compensation failed — DB and DreamIT are inconsistent, needs manual fix
+            logger.error("toggle-interview-status: DB revert also failed", { revertError, id, attempted_is_active: is_active });
           }
+
+          return NextResponse.json(
+            { error: "Failed to update foloup link — status not changed" },
+            { status: 502 },
+          );
         }
       }
     }
 
-    await InterviewService.updateInterview({ is_active }, id);
     logger.info("toggle-interview-status updated", { id, is_active });
-
     return NextResponse.json({ response: "Interview status updated" }, { status: 200 });
   } catch (err) {
     logger.error("Error toggling interview status");

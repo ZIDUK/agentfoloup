@@ -19,7 +19,8 @@ export async function GET(req: NextRequest) {
   const { data, error } = await supabase
     .from("interview_job")
     .select("job_id, job_title")
-    .eq("interview_id", interviewId);
+    .eq("interview_id", interviewId)
+    .eq("pending_removal", false);
 
   if (error) {
     logger.error("interview-jobs GET: query failed", { error });
@@ -66,6 +67,8 @@ export async function PUT(req: NextRequest) {
   }
   const { interviewId, jobs } = body;
 
+  const failedJobIds: number[] = [];
+
   if (!interviewId || !/^[A-Za-z0-9_-]+$/.test(interviewId)) {
     return NextResponse.json({ error: "Invalid interviewId" }, { status: 400 });
   }
@@ -82,7 +85,8 @@ export async function PUT(req: NextRequest) {
   const { data: currentRows, error: fetchError } = await supabase
     .from("interview_job")
     .select("job_id, job_title")
-    .eq("interview_id", interviewId);
+    .eq("interview_id", interviewId)
+    .eq("pending_removal", false);
 
   if (fetchError) {
     logger.error("interview-jobs PUT: fetch current jobs failed", { fetchError });
@@ -101,9 +105,21 @@ export async function PUT(req: NextRequest) {
   const serviceRoleKey = process.env.DREAMIT_SUPABASE_SERVICE_ROLE_KEY;
   const dreamitConfigured = !!(dreamitUrl && secret && serviceRoleKey);
 
-  // Additions: fire DreamIT in parallel, only insert jobs that succeeded
+  // ADDITIONS: DB first, then sync DreamIT
   if (toAdd.length > 0) {
-    let jobsToInsert = toAdd;
+    const { error: insertError } = await supabase
+      .from("interview_job")
+      .insert(toAdd.map((j) => ({
+        interview_id: interviewId,
+        job_id: j.job_id,
+        job_title: j.job_title,
+        dreamit_synced: !dreamitConfigured,
+      })));
+
+    if (insertError) {
+      logger.error("interview-jobs PUT: insert failed", { insertError });
+      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
 
     if (dreamitConfigured) {
       const { data: interviewRow } = await supabase
@@ -113,62 +129,111 @@ export async function PUT(req: NextRequest) {
         .single();
 
       const interviewUrl: string | null = interviewRow?.url ?? null;
-      if (interviewUrl) {
-        const results = await Promise.allSettled(
-          toAdd.map(async (job): Promise<LinkedJob> => {
-            const ok = await callDreamitSpeechLink(dreamitUrl!, secret!, serviceRoleKey!, Number(job.job_id), interviewUrl);
-            if (!ok) throw new Error(`DreamIT failed for job ${job.job_id}`);
-            return job;
-          }),
-        );
-        jobsToInsert = results
-          .filter((r): r is PromiseFulfilledResult<LinkedJob> => r.status === "fulfilled")
-          .map((r) => r.value);
-        logger.info("interview-jobs PUT: DreamIT add results", { total: toAdd.length, succeeded: jobsToInsert.length });
-      }
-    }
 
-    if (jobsToInsert.length > 0) {
-      const { error: insertError } = await supabase
-        .from("interview_job")
-        .insert(jobsToInsert.map((j) => ({ interview_id: interviewId, job_id: j.job_id, job_title: j.job_title })));
-      if (insertError) {
-        logger.error("interview-jobs PUT: insert failed", { insertError });
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+      if (interviewUrl) {
+        const syncResults = await Promise.all(
+          toAdd.map(async (job) => ({
+            job,
+            ok: await callDreamitSpeechLink(dreamitUrl!, secret!, serviceRoleKey!, Number(job.job_id), interviewUrl),
+          })),
+        );
+
+        const succeeded = syncResults.filter((r) => r.ok).map((r) => r.job);
+        const failed = syncResults.filter((r) => !r.ok).map((r) => r.job);
+
+        logger.info("interview-jobs PUT: DreamIT add results", { total: toAdd.length, succeeded: succeeded.length, failed: failed.length });
+
+        if (succeeded.length > 0) {
+          await supabase
+            .from("interview_job")
+            .update({ dreamit_synced: true })
+            .eq("interview_id", interviewId)
+            .in("job_id", succeeded.map((j) => j.job_id));
+        }
+
+        if (failed.length > 0) {
+            failed.forEach((j) => failedJobIds.push(j.job_id));
+
+            // Compensate: delete rows that failed DreamIT sync
+            const { error: compensateError } = await supabase
+              .from("interview_job")
+              .delete()
+              .eq("interview_id", interviewId)
+              .in("job_id", failed.map((j) => j.job_id));
+
+            if (compensateError) {
+              // Compensation failed — rows stay with dreamit_synced = false, edge fn will retry
+              logger.error("interview-jobs PUT: compensation delete failed, edge fn will retry", {
+                compensateError,
+                jobIds: failed.map((j) => j.job_id),
+              });
+            }
+          }
       }
     }
   }
 
-  // Removals: nullify DreamIT links in parallel, only delete jobs that succeeded
+  // REMOVALS: mark pending_removal first, then sync DreamIT
   if (toRemove.length > 0) {
-    let jobIdsToRemove = toRemove.map((r) => r.job_id);
-
-    if (dreamitConfigured) {
-      const results = await Promise.allSettled(
-        toRemove.map(async (job): Promise<number> => {
-          const ok = await callDreamitSpeechLink(dreamitUrl!, secret!, serviceRoleKey!, Number(job.job_id), null);
-          if (!ok) throw new Error(`DreamIT nullify failed for job ${job.job_id}`);
-          return job.job_id;
-        }),
-      );
-      jobIdsToRemove = results
-        .filter((r): r is PromiseFulfilledResult<number> => r.status === "fulfilled")
-        .map((r) => r.value);
-      logger.info("interview-jobs PUT: DreamIT remove results", { total: toRemove.length, succeeded: jobIdsToRemove.length });
-    }
-
-    if (jobIdsToRemove.length > 0) {
+    if (!dreamitConfigured) {
       const { error: deleteError } = await supabase
         .from("interview_job")
         .delete()
         .eq("interview_id", interviewId)
-        .in("job_id", jobIdsToRemove);
+        .in("job_id", toRemove.map((r) => r.job_id));
+
       if (deleteError) {
         logger.error("interview-jobs PUT: delete failed", { deleteError });
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
       }
+    } else {
+      const { error: markError } = await supabase
+        .from("interview_job")
+        .update({ pending_removal: true })
+        .eq("interview_id", interviewId)
+        .in("job_id", toRemove.map((r) => r.job_id));
+
+      if (markError) {
+        logger.error("interview-jobs PUT: mark pending_removal failed", { markError });
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+      }
+
+      const syncResults = await Promise.all(
+        toRemove.map(async (job) => ({
+          job,
+          ok: await callDreamitSpeechLink(dreamitUrl!, secret!, serviceRoleKey!, Number(job.job_id), null),
+        })),
+      );
+
+      const succeeded = syncResults.filter((r) => r.ok).map((r) => r.job);
+      const failed = syncResults.filter((r) => !r.ok).map((r) => r.job);
+
+      logger.info("interview-jobs PUT: DreamIT remove results", { total: toRemove.length, succeeded: succeeded.length, failed: failed.length });
+
+      if (succeeded.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("interview_job")
+          .delete()
+          .eq("interview_id", interviewId)
+          .in("job_id", succeeded.map((j) => j.job_id));
+
+        if (deleteError) {
+          // pending_removal stays true — edge fn will retry
+          logger.error("interview-jobs PUT: delete after DreamIT success failed, edge fn will retry", { deleteError });
+        }
+      }
+
+      if (failed.length > 0) {
+        // pending_removal stays true — edge fn will retry
+        logger.warn("interview-jobs PUT: DreamIT nullify failed for some jobs, edge fn will retry", {
+          jobIds: failed.map((j) => j.job_id),
+        });
+      }
     }
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    ...(failedJobIds.length > 0 && { failedJobIds }),
+  });
 }

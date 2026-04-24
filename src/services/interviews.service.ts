@@ -96,7 +96,8 @@ const getLinkedJobs = async (interviewId: string) => {
   const { data } = await supabase
     .from("interview_job")
     .select("job_id, job_title")
-    .eq("interview_id", interviewId);
+    .eq("interview_id", interviewId)
+    .eq("pending_removal", false);
   return data ?? [];
 };
 
