@@ -21,8 +21,8 @@ function InterviewerDetailsModal({ interviewer }: Props) {
               <Image
                 src={interviewer.image}
                 alt="Picture of the interviewer"
-                width={180}
-                height={30}
+                width={176}
+                height={192}
                 className="w-full h-full object-cover object-center"
               />
             ) : (
