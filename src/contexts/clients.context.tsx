@@ -3,7 +3,6 @@
 import React, { useState, useContext, ReactNode, useEffect } from "react";
 import { User } from "@/types/user";
 import { getSupabaseClient } from "@/lib/supabase-client";
-import { ClientService } from "@/services/clients.service";
 import { useRouter } from "next/navigation";
 
 interface ClientContextProps {
@@ -35,7 +34,8 @@ export function ClientProvider({ children }: ClientProviderProps) {
         return;
       }
 
-      const userData = await ClientService.getClientByEmail(email);
+      const res = await fetch(`/api/user?email=${encodeURIComponent(email)}`);
+      const userData = await res.json();
       if (!userData) {
         await supabase.auth.signOut();
         router.push("/sign-in?error=unauthorized");

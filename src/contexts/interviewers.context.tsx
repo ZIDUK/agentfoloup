@@ -2,7 +2,6 @@
 
 import React, { useState, useContext, ReactNode, useEffect } from "react";
 import { Interviewer } from "@/types/interviewer";
-import { InterviewerService } from "@/services/interviewers.service";
 import { getSupabaseClient } from "@/lib/supabase-client";
 
 interface InterviewerContextProps {
@@ -34,16 +33,21 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
   const fetchInterviewers = async () => {
     try {
       setInterviewersLoading(true);
-      const response = await InterviewerService.getAllInterviewers("");
+      const res = await fetch("/api/interviewers");
+      const response = await res.json();
       setInterviewers(response);
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // silent
     }
     setInterviewersLoading(false);
   };
 
   const createInterviewer = async (payload: any) => {
-    await InterviewerService.createInterviewer({ ...payload });
+    await fetch("/api/interviewers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
     fetchInterviewers();
   };
 

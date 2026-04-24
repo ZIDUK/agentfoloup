@@ -7,13 +7,11 @@ import { useInterviews } from "@/contexts/interviews.context";
 import { Share2, Filter, Pencil, UserIcon, Eye, Palette } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
-import { ResponseService } from "@/services/responses.service";
 import { Interview } from "@/types/interview";
 import { Response } from "@/types/response";
 import { formatTimestampToDateHHMM } from "@/lib/utils";
 import CallInfo from "@/components/call/callInfo";
 import SummaryInfo from "@/components/dashboard/interview/summaryInfo";
-import { InterviewService } from "@/services/interviews.service";
 import EditInterview from "@/components/dashboard/interview/editInterview";
 import Modal from "@/components/dashboard/Modal";
 import { toast } from "sonner";
@@ -66,7 +64,6 @@ function InterviewHome({ params, searchParams }: Props) {
 
   const seeInterviewPreviewPage = () => {
     if (!interview) {
-      console.error("Interview is not loaded yet.");
       toast.error("Interview not loaded. Please try again.");
       return;
     }
@@ -90,7 +87,6 @@ function InterviewHome({ params, searchParams }: Props) {
       const url = `/call/${interviewId}`;
       window.open(url, "_blank");
     } else {
-      console.error("Interview ID or URL is not available.");
       toast.error("Unable to open interview preview. Interview URL is missing.");
     }
   };
@@ -105,8 +101,8 @@ function InterviewHome({ params, searchParams }: Props) {
         setThemeColor(response.theme_color ?? "#4F46E5");
         seticonColor(response.theme_color ?? "#4F46E5");
         setLoading(true);
-      } catch (error) {
-        console.error(error);
+      } catch {
+        // silent
       } finally {
         setLoading(false);
       }
@@ -121,13 +117,12 @@ function InterviewHome({ params, searchParams }: Props) {
   useEffect(() => {
     const fetchResponses = async () => {
       try {
-        const response = await ResponseService.getAllResponses(
-          params.interviewId,
-        );
+        const res = await fetch(`/api/responses?interviewId=${params.interviewId}`);
+        const response = await res.json();
         setResponses(response);
         setLoading(true);
-      } catch (error) {
-        console.error(error);
+      } catch {
+        // silent
       } finally {
         setLoading(false);
       }
@@ -160,7 +155,11 @@ function InterviewHome({ params, searchParams }: Props) {
 
   const handleResponseClick = async (response: Response) => {
     try {
-      await ResponseService.saveResponse({ is_viewed: true }, response.call_id);
+      await fetch(`/api/responses/${response.call_id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_viewed: true }),
+      });
       if (responses) {
         const updatedResponses = responses.map((r) =>
           r.call_id === response.call_id ? { ...r, is_viewed: true } : r,
@@ -168,8 +167,8 @@ function InterviewHome({ params, searchParams }: Props) {
         setResponses(updatedResponses);
       }
       setIsViewed(true);
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // silent
     }
   };
 
@@ -196,7 +195,6 @@ function InterviewHome({ params, searchParams }: Props) {
       });
     } catch (error: any) {
       setIsActive(!updatedIsActive);
-      console.error(error);
       toast.error("Error", {
         description: error?.message || "Failed to update the interview status.",
         duration: 3000,
@@ -206,17 +204,17 @@ function InterviewHome({ params, searchParams }: Props) {
 
   const handleThemeColorChange = async (newColor: string) => {
     try {
-      await InterviewService.updateInterview(
-        { theme_color: newColor },
-        params.interviewId,
-      );
+      await fetch(`/api/interviews/${params.interviewId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme_color: newColor }),
+      });
 
       toast.success("Theme color updated", {
         position: "bottom-right",
         duration: 3000,
       });
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error("Error", {
         description: "Failed to update the theme color.",
         duration: 3000,

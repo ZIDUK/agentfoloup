@@ -8,7 +8,6 @@ import ReactAudioPlayer from "react-audio-player";
 import { DownloadIcon, TrashIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ResponseService } from "@/services/responses.service";
 import { useRouter } from "next/navigation";
 import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -83,8 +82,8 @@ function CallInfo({
         const response = await axios.post("/api/get-call", { id: call_id });
         setCall(response.data.callResponse);
         setAnalytics(response.data.analytics);
-      } catch (error) {
-        console.error(error);
+      } catch {
+        // silent
       } finally {
         setIsLoading(false);
       }
@@ -98,7 +97,8 @@ function CallInfo({
     const fetchEmail = async () => {
       setIsLoading(true);
       try {
-        const response = await ResponseService.getResponseByCallId(call_id);
+        const res = await fetch(`/api/responses/${call_id}`);
+        const response = await res.json();
         setEmail(response.email);
         setName(response.name);
         setCandidateStatus(response.candidate_status);
@@ -114,8 +114,8 @@ function CallInfo({
         setCameraCovered(events.some((e: any) => e.type === "camera_covered"));
         setNoFaceCount(response.no_face_count ?? 0);
         setMultipleFacesCount(response.multiple_faces_count ?? 0);
-      } catch (error) {
-        console.error(error);
+      } catch {
+        // silent
       } finally {
         setIsLoading(false);
       }
@@ -148,12 +148,13 @@ function CallInfo({
 
   const onDeleteResponseClick = async () => {
     try {
-      const response = await ResponseService.getResponseByCallId(call_id);
+      const res = await fetch(`/api/responses/${call_id}`);
+      const response = await res.json();
 
       if (response) {
         const interview_id = response.interview_id;
 
-        await ResponseService.deleteResponse(call_id);
+        await fetch(`/api/responses/${call_id}`, { method: "DELETE" });
 
         router.push(`/interviews/${interview_id}`);
 
@@ -165,9 +166,7 @@ function CallInfo({
 
         duration: 3000,
       });
-    } catch (error) {
-      console.error("Error deleting response:", error);
-
+    } catch {
       toast.error("Failed to delete the response.", {
         position: "bottom-right",
 
@@ -248,10 +247,11 @@ function CallInfo({
                       value={candidateStatus}
                       onValueChange={async (newValue: string) => {
                         setCandidateStatus(newValue);
-                        await ResponseService.updateResponse(
-                          { candidate_status: newValue },
-                          call_id,
-                        );
+                        await fetch(`/api/responses/${call_id}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ candidate_status: newValue }),
+                        });
                         onCandidateStatusChange(call_id, newValue);
                       }}
                     >

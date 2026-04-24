@@ -21,15 +21,15 @@ function Navbar() {
   const router = useRouter();
 
   const resolvePhoto = async (email: string) => {
-    if (!supabase) return;
-    const { data } = await supabase
-      .from("users")
-      .select("employee_photo")
-      .eq("email", email.toLowerCase())
-      .single();
-    if (data?.employee_photo) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      setPhotoUrl(`${supabaseUrl}/storage/v1/object/public/${data.employee_photo}`);
+    try {
+      const res = await fetch(`/api/user?email=${encodeURIComponent(email.toLowerCase())}`);
+      const data = await res.json();
+      if (data?.employee_photo) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        setPhotoUrl(`${supabaseUrl}/storage/v1/object/public/${data.employee_photo}`);
+      }
+    } catch {
+      // photo resolution failure is non-fatal
     }
   };
 

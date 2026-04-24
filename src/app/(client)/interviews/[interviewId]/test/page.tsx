@@ -2,10 +2,10 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useInterviews } from "@/contexts/interviews.context";
+import { getSupabaseClient } from "@/lib/supabase-client";
 import { Interview } from "@/types/interview";
 import Call from "@/components/call";
 import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText";
-import { getSupabaseClient } from "@/lib/supabase-client";
 
 type Props = {
   params: { interviewId: string };
@@ -26,11 +26,8 @@ function TestInterviewContent({ params }: Props) {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user?.email) {
             const email = session.user.email.toLowerCase();
-            const { data: dbUser } = await supabase
-              .from("users")
-              .select("name, email")
-              .eq("email", email)
-              .single();
+            const res = await fetch(`/api/user?email=${encodeURIComponent(email)}`);
+            const dbUser = res.ok ? await res.json() : null;
             setUserEmail(dbUser?.email ?? email);
             setUserName(dbUser?.name ?? email.split("@")[0]);
           }

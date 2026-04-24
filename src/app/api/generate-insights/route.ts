@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { ResponseService } from "@/services/responses.service";
 import { InterviewService } from "@/services/interviews.service";
+import { getAuthSession } from "@/lib/route-auth";
 import { logger } from "@/lib/logger";
 import { callLlmEdgeFunction } from "@/lib/llm-client";
 
 export async function POST(req: Request) {
+  const session = await getAuthSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   logger.info("generate-insights request received");
   const body = await req.json();
 

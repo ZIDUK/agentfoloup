@@ -3,10 +3,8 @@ import Image from "next/image";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FlaskConical } from "lucide-react";
-import { ResponseService } from "@/services/responses.service";
 import axios from "axios";
 import MiniLoader from "@/components/loaders/mini-loader/miniLoader";
-import { InterviewerService } from "@/services/interviewers.service";
 
 interface Props {
   name: string | null;
@@ -24,8 +22,8 @@ function InterviewCard({ name, interviewerId, id, url: _url, readableSlug: _read
 
   useEffect(() => {
     const fetchInterviewer = async () => {
-      const interviewer =
-        await InterviewerService.getInterviewer(interviewerId);
+      const res = await fetch(`/api/interviewers/${interviewerId}`);
+      const interviewer = await res.json();
       setImg(interviewer.image);
     };
     fetchInterviewer();
@@ -35,7 +33,8 @@ function InterviewCard({ name, interviewerId, id, url: _url, readableSlug: _read
   useEffect(() => {
     const fetchResponses = async () => {
       try {
-        const responses = await ResponseService.getAllResponses(id);
+        const res = await fetch(`/api/responses?interviewId=${id}`);
+        const responses = await res.json();
         setResponseCount(responses.length);
         if (responses.length > 0) {
           setIsFetching(true);

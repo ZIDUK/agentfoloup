@@ -84,8 +84,8 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
       setIsClicked(false);
       fetchInterviews();
       setOpen(false);
-    } catch (error) {
-      console.error("Error creating interview:", error);
+    } catch {
+      // silent
     }
   };
 

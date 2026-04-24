@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { InterviewService } from "@/services/interviews.service";
+import { getAuthSession } from "@/lib/route-auth";
 import { logger } from "@/lib/logger";
 
 export async function DELETE(req: Request) {
+  const session = await getAuthSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     let body: any;
     try {
