@@ -359,9 +359,6 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       .then(({ exists, call_id }) => {
         if (exists && call_id) {
           window.location.href = `/result/${call_id}`;
-        } else if (exists) {
-          setIsOldUser(true);
-          setIsCheckingApplication(false);
         } else {
           setIsCheckingApplication(false);
         }
@@ -468,21 +465,9 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
   }, [isStarted, isEnded, cameraStream]);
 
   const startConversation = async () => {
+    let reuseCallId: string | null = null;
+
     if (!isTestResponse) {
-      const emailsRes = await fetch(
-        `/api/responses/emails?interviewId=${interview.id}&email=${encodeURIComponent(email)}`,
-      );
-      const { exists } = await emailsRes.json();
-      const OldUser =
-        exists ||
-        (interview?.respondents && !interview?.respondents.includes(email));
-
-      if (OldUser) {
-        setIsOldUser(true);
-        return;
-      }
-
-      // If this interview was opened via a DreamIT application link, block if already submitted
       if (applicationId) {
         const checkRes = await fetch("/api/check-response", {
           method: "POST",
@@ -490,14 +475,12 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
           body: JSON.stringify({ applicationId }),
         });
         const { exists, call_id } = await checkRes.json();
-        if (exists) {
-          if (call_id) {
-            window.location.href = `/result/${call_id}`;
-          } else {
-            setIsOldUser(true);
-          }
+        if (exists && call_id) {
+          window.location.href = `/result/${call_id}`;
           return;
         }
+        // Incomplete response from a previous crashed attempt — reuse the same call_id
+        if (call_id) reuseCallId = call_id;
       }
     }
 
@@ -528,7 +511,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       const agent = new DeepgramAgentService(apiKey);
       setAgentService(agent);
 
-      const newCallId = `call_${Date.now()}_${Math.random()
+      const newCallId = reuseCallId ?? `call_${Date.now()}_${Math.random()
         .toString(36)
         .substr(2, 9)}`;
       setCallId(newCallId);
@@ -583,14 +566,16 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
         startRecording(stream, player.getRecordingStream());
       }
 
-      await createResponse({
-        interview_id: interview.id,
-        call_id: newCallId,
-        email: email,
-        name: name,
-        ...(applicationId ? { application_id: applicationId } : {}),
-        ...(isTestResponse ? { is_test_response: true } : {}),
-      });
+      if (!reuseCallId) {
+        await createResponse({
+          interview_id: interview.id,
+          call_id: newCallId,
+          email: email,
+          name: name,
+          ...(applicationId ? { application_id: applicationId } : {}),
+          ...(isTestResponse ? { is_test_response: true } : {}),
+        });
+      }
 
       setIsStarted(true);
       setIsCalling(true);
