@@ -75,6 +75,7 @@ function InterviewInterface({ params }: Props) {
           window.location.href = `/result/${call_id}`;
           // Keep isCheckingApp true so loader stays until redirect completes
         } else {
+          // No response or no call_id — let the Call component render and run its own check
           setIsCheckingApp(false);
         }
       })
