@@ -18,15 +18,30 @@ export async function POST(req: Request, res: Response) {
     logger.info("create-interview request received");
 
     const payload = body.interviewData;
-    let jobs: { job_id: number; job_title: string }[] = Array.isArray(payload.jobs) ? payload.jobs : [];
+    const jobs: { job_id: number; job_title: string }[] = Array.isArray(payload.jobs) ? payload.jobs : [];
 
     const interviewNameSlug = payload.name?.toLowerCase().replace(/\s/g, "-");
     const readableSlug = interviewNameSlug ? `${interviewNameSlug}-${url_id}` : null;
 
+    const { jobs: _jobs, job_id: _job_id, job_title: _job_title, ...interviewPayload } = payload;
+
+    // Create interview first
+    await InterviewService.createInterview({
+      ...interviewPayload,
+      url: url,
+      id: url_id,
+      readable_slug: readableSlug,
+    });
+
+    logger.info("Interview created successfully");
+
+    // Then sync DreamIT in parallel and only link successful jobs
     if (jobs.length > 0) {
       const dreamitUrl = process.env.DREAMIT_URL;
       const secret = process.env.DREAMIT_FOLOUP_SECRET;
       const serviceRoleKey = process.env.DREAMIT_SUPABASE_SERVICE_ROLE_KEY;
+
+      let jobsToLink = jobs;
 
       if (dreamitUrl && secret && serviceRoleKey) {
         const results = await Promise.allSettled(
@@ -49,28 +64,17 @@ export async function POST(req: Request, res: Response) {
           }),
         );
 
-        jobs = results
+        jobsToLink = results
           .filter((r): r is PromiseFulfilledResult<{ job_id: number; job_title: string }> => r.status === "fulfilled")
           .map((r) => r.value);
 
-        logger.info("create-interview DreamIT results", { total: payload.jobs.length, linked: jobs.length });
+        logger.info("create-interview DreamIT results", { total: jobs.length, linked: jobsToLink.length });
+      }
+
+      if (jobsToLink.length > 0) {
+        await InterviewService.linkJobsToInterview(url_id, jobsToLink);
       }
     }
-
-    const { jobs: _jobs, job_id: _job_id, job_title: _job_title, ...interviewPayload } = payload;
-
-    await InterviewService.createInterview({
-      ...interviewPayload,
-      url: url,
-      id: url_id,
-      readable_slug: readableSlug,
-    });
-
-    if (jobs.length > 0) {
-      await InterviewService.linkJobsToInterview(url_id, jobs);
-    }
-
-    logger.info("Interview created successfully");
 
     return NextResponse.json(
       { response: "Interview created successfully" },
