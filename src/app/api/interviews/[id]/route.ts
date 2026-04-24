@@ -31,7 +31,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 // Admin-only — update interview fields.
 const ALLOWED_UPDATE_FIELDS = new Set([
   "name", "description", "objective", "questions", "interviewer_id",
-  "question_count", "time_duration", "is_anonymous", "is_active",
+  "question_count", "time_duration", "is_active",
   "theme_color", "updated_by",
 ]);
 

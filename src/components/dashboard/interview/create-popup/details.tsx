@@ -8,7 +8,6 @@ import Image from "next/image";
 import { CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import FileUpload from "../fileUpload";
 import Modal from "@/components/dashboard/Modal";
 import InterviewerDetailsModal from "@/components/dashboard/interviewer/interviewerDetailsModal";
@@ -51,9 +50,6 @@ function DetailsPopup({
     interviewData.interviewer_id,
   );
   const [objective, setObjective] = useState(interviewData.objective);
-  const [isAnonymous, setIsAnonymous] = useState<boolean>(
-    interviewData.is_anonymous,
-  );
   const [numQuestions, setNumQuestions] = useState(
     interviewData.question_count == 0
       ? ""
@@ -128,7 +124,6 @@ function DetailsPopup({
       question_count: Number(numQuestions),
       time_duration: duration,
       description: generatedQuestionsResponse.description,
-      is_anonymous: isAnonymous,
       jobs: selectedJobs,
     };
     setInterviewData(updatedInterviewData);
@@ -149,7 +144,6 @@ function DetailsPopup({
       question_count: Number(numQuestions),
       time_duration: String(duration),
       description: "",
-      is_anonymous: isAnonymous,
       jobs: selectedJobs,
     };
     setInterviewData(updatedInterviewData);
@@ -160,7 +154,6 @@ function DetailsPopup({
       setName("");
       setSelectedInterviewer(BigInt(0));
       setObjective("");
-      setIsAnonymous(false);
       setNumQuestions("");
       setDuration("");
       setIsClicked(false);
@@ -297,27 +290,6 @@ function DetailsPopup({
             setFileName={setFileName}
             setUploadedDocumentContext={setUploadedDocumentContext}
           />
-          <label className="flex-col mt-7 w-full">
-            <div className="flex items-center cursor-pointer">
-              <span className="text-sm font-medium">
-                Do you prefer the interviewees&apos; responses to be anonymous?
-              </span>
-              <Switch
-                checked={isAnonymous}
-                className={`ml-4 mt-1 ${
-                  isAnonymous ? "bg-indigo-600" : "bg-[#E6E7EB]"
-                }`}
-                onCheckedChange={(checked) => setIsAnonymous(checked)}
-              />
-            </div>
-            <span
-              style={{ fontSize: "0.7rem", lineHeight: "0.66rem" }}
-              className="font-light text-xs italic w-full text-left block"
-            >
-              Note: If not anonymous, the interviewee&apos;s email and name will
-              be collected.
-            </span>
-          </label>
           <div className="flex flex-row gap-3 justify-between w-full mt-3">
             <div className="flex flex-row justify-center items-center ">
               <h3 className="text-sm font-medium ">Number of Questions:</h3>

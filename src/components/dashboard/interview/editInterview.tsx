@@ -9,7 +9,6 @@ import { useClient } from "@/contexts/clients.context";
 import QuestionCard from "@/components/dashboard/interview/create-popup/questionCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { useInterviews } from "@/contexts/interviews.context";
 import { CardTitle } from "../../ui/card";
 import Image from "next/image";
@@ -55,10 +54,6 @@ function EditInterview({ interview }: EditInterviewProps) {
   const [selectedInterviewer, setSelectedInterviewer] = useState(
     interview?.interviewer_id,
   );
-  const [isAnonymous, setIsAnonymous] = useState<boolean>(
-    interview?.is_anonymous || false,
-  );
-
   const [isClicked, setIsClicked] = useState(false);
 
   const endOfListRef = useRef<HTMLDivElement>(null);
@@ -109,7 +104,6 @@ function EditInterview({ interview }: EditInterviewProps) {
       question_count: questionCount,
       time_duration: Number(duration),
       description: description,
-      is_anonymous: isAnonymous,
       updated_by: client?.id || null,
     };
 
@@ -287,27 +281,6 @@ function EditInterview({ interview }: EditInterviewProps) {
             </div>
           </div>
         </div>
-        <label className="flex-col mt-2 ml-2 w-full">
-          <div className="flex items-center cursor-pointer">
-            <span className="text-sm font-medium">
-              Do you prefer the interviewees&apos; responses to be anonymous?
-            </span>
-            <Switch
-              checked={isAnonymous}
-              className={`ml-4 mt-1 border-2 border-gray-300 ${
-                isAnonymous ? "bg-indigo-600" : "bg-white"
-              }`}
-              onCheckedChange={(checked) => setIsAnonymous(checked)}
-            />
-          </div>
-          <span
-            style={{ fontSize: "0.7rem", lineHeight: "0.66rem" }}
-            className="font-light text-xs italic w-full text-left block"
-          >
-            Note: If not anonymous, the interviewee&apos;s email and name will
-            be collected.
-          </span>
-        </label>
         <div className="flex flex-row justify-between w-[75%] gap-3 ml-2">
           <div className="flex flex-row justify-center items-center mt-5 ">
             <h3 className="font-medium ">No. of Questions:</h3>

@@ -819,36 +819,34 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
                       </div>
                     </div>
                   </div>
-                  {!interview?.is_anonymous && (
-                    isTestResponse ? (
-                      <div className="text-center text-sm text-gray-600 py-2">
-                        Testing as: <span className="font-semibold">{name}</span> ({email})
+                  {isTestResponse ? (
+                    <div className="text-center text-sm text-gray-600 py-2">
+                      Testing as: <span className="font-semibold">{name}</span> ({email})
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2 justify-center">
+                      <div className="flex flex-col items-center gap-0.5">
+                        <input
+                          value={email}
+                          className={`h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 text-sm font-normal ${
+                            email && !isValidEmail ? "border-red-400" : "border-gray-400"
+                          }`}
+                          placeholder="Enter your email address"
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                        {email && !isValidEmail && (
+                          <p className="text-red-500 text-xs w-[75%]">Please enter a valid email address</p>
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex flex-col gap-2 justify-center">
-                        <div className="flex flex-col items-center gap-0.5">
-                          <input
-                            value={email}
-                            className={`h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 text-sm font-normal ${
-                              email && !isValidEmail ? "border-red-400" : "border-gray-400"
-                            }`}
-                            placeholder="Enter your email address"
-                            onChange={(e) => setEmail(e.target.value)}
-                          />
-                          {email && !isValidEmail && (
-                            <p className="text-red-500 text-xs w-[75%]">Please enter a valid email address</p>
-                          )}
-                        </div>
-                        <div className="flex justify-center">
-                          <input
-                            value={name}
-                            className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
-                            placeholder="Enter your first name"
-                            onChange={(e) => setName(e.target.value)}
-                          />
-                        </div>
+                      <div className="flex justify-center">
+                        <input
+                          value={name}
+                          className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
+                          placeholder="Enter your first name"
+                          onChange={(e) => setName(e.target.value)}
+                        />
                       </div>
-                    )
+                    </div>
                   )}
                 </div>
                 <div className="w-[80%] flex flex-row mx-auto justify-center items-center align-middle py-3">
@@ -863,7 +861,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
                     disabled={
                       Loading ||
                       permissionStatus === "denied" ||
-                      (!isTestResponse && !interview?.is_anonymous && (!isValidEmail || !name))
+                      (!isTestResponse && (!isValidEmail || !name))
                     }
                     onClick={startConversation}
                   >
