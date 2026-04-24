@@ -42,6 +42,7 @@ import { useFaceDetection } from "@/hooks/useFaceDetection";
 type InterviewProps = {
   interview: Interview;
   applicationId?: string;
+  jobId?: number;
   isTestResponse?: boolean;
   prefillEmail?: string;
   prefillName?: string;
@@ -52,7 +53,7 @@ type transcriptType = {
   content: string;
 };
 
-function Call({ interview, applicationId, isTestResponse = false, prefillEmail = "", prefillName = "" }: InterviewProps) {
+function Call({ interview, applicationId, jobId, isTestResponse = false, prefillEmail = "", prefillName = "" }: InterviewProps) {
   const { createResponse } = useResponses();
   const [lastInterviewerResponse, setLastInterviewerResponse] =
     useState<string>("");
@@ -573,6 +574,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
           email: email,
           name: name,
           ...(applicationId ? { application_id: applicationId } : {}),
+          ...(jobId != null ? { job_id: jobId } : {}),
           ...(isTestResponse ? { is_test_response: true } : {}),
         });
       }

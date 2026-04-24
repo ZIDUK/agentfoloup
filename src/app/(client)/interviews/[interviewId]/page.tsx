@@ -2,9 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useInterviews } from "@/contexts/interviews.context";
-import { Share2, Filter, Pencil, UserIcon, Eye, Palette } from "lucide-react";
+import { Share2, Filter, Pencil, UserIcon, Eye, Palette, ChevronLeft, ChevronRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { Interview } from "@/types/interview";
@@ -43,17 +43,24 @@ interface Props {
   };
 }
 
+interface LinkedJob {
+  job_id: number;
+  job_title: string;
+}
+
 const base_url = process.env.NEXT_PUBLIC_LIVE_URL;
+const PAGE_SIZE = 50;
 
 function InterviewHome({ params, searchParams }: Props) {
   const [interview, setInterview] = useState<Interview>();
-  const [responses, setResponses] = useState<Response[]>();
+  const [responses, setResponses] = useState<Response[]>([]);
+  const [totalResponses, setTotalResponses] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const { getInterviewById } = useInterviews();
   const [isSharePopupOpen, setIsSharePopupOpen] = useState(false);
   const router = useRouter();
   const [isActive, setIsActive] = useState<boolean>(true);
-  const [isGeneratingInsights, setIsGeneratingInsights] =
-    useState<boolean>(false);
+  const [isGeneratingInsights, setIsGeneratingInsights] = useState<boolean>(false);
   const [isViewed, setIsViewed] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
@@ -62,30 +69,33 @@ function InterviewHome({ params, searchParams }: Props) {
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [responseType, setResponseType] = useState<string>("CANDIDATE");
 
+  // New filter state
+  const [linkedJobs, setLinkedJobs] = useState<LinkedJob[]>([]);
+  const [filterJobId, setFilterJobId] = useState<string>("");
+  const [filterEmail, setFilterEmail] = useState<string>("");
+  const [filterName, setFilterName] = useState<string>("");
+  const emailDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const nameDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const [emailInput, setEmailInput] = useState<string>("");
+  const [nameInput, setNameInput] = useState<string>("");
+
   const seeInterviewPreviewPage = () => {
     if (!interview) {
       toast.error("Interview not loaded. Please try again.");
       return;
     }
 
-    // Use readable_slug if available, otherwise extract the ID from the URL
     let interviewId = interview.readable_slug;
-    
     if (!interviewId && interview.url) {
-      // Extract the ID from the URL (e.g., "http://localhost:3000/call/abc123" -> "abc123")
       const urlParts = interview.url.split("/");
       interviewId = urlParts[urlParts.length - 1];
     }
-    
     if (!interviewId && interview.id) {
-      // Fallback to interview.id
       interviewId = interview.id;
     }
 
     if (interviewId) {
-      // Use relative path for better compatibility
-      const url = `/call/${interviewId}`;
-      window.open(url, "_blank");
+      window.open(`/call/${interviewId}`, "_blank");
     } else {
       toast.error("Unable to open interview preview. Interview URL is missing.");
     }
@@ -100,56 +110,86 @@ function InterviewHome({ params, searchParams }: Props) {
         setIsViewed(response.is_viewed);
         setThemeColor(response.theme_color ?? "#4F46E5");
         seticonColor(response.theme_color ?? "#4F46E5");
-        setLoading(true);
       } catch {
         // silent
-      } finally {
-        setLoading(false);
       }
     };
     if (!interview || !isGeneratingInsights) {
       fetchInterview();
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getInterviewById, params.interviewId, isGeneratingInsights]);
 
+  // Fetch linked jobs for the job filter dropdown
   useEffect(() => {
-    const fetchResponses = async () => {
+    fetch(`/api/interview-jobs?interviewId=${params.interviewId}`)
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data.jobs)) setLinkedJobs(data.jobs); })
+      .catch(() => {});
+  }, [params.interviewId]);
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Single effect — fires whenever filters, page, or a forced refresh changes
+  useEffect(() => {
+    const controller = new AbortController();
+    const doFetch = async () => {
+      setLoading(true);
       try {
-        const res = await fetch(`/api/responses?interviewId=${params.interviewId}`);
-        const response = await res.json();
-        setResponses(response);
-        setLoading(true);
-      } catch {
-        // silent
+        const qs = new URLSearchParams();
+        qs.set("interviewId", params.interviewId);
+        if (filterJobId) qs.set("job_id", filterJobId);
+        if (filterEmail) qs.set("email", filterEmail);
+        if (filterName) qs.set("name", filterName);
+        qs.set("page", String(currentPage));
+        qs.set("page_size", String(PAGE_SIZE));
+
+        const res = await fetch(`/api/responses?${qs.toString()}`, { signal: controller.signal });
+        const json = await res.json();
+        setResponses(json.data ?? []);
+        setTotalResponses(json.total ?? 0);
+      } catch (e: any) {
+        if (e?.name !== "AbortError") { /* silent */ }
       } finally {
         setLoading(false);
       }
     };
-
-    fetchResponses();
-
-    // Listen for responses-updated event to refresh responses
-    const handleResponsesUpdated = () => {
-      fetchResponses();
-    };
-    window.addEventListener("responses-updated", handleResponsesUpdated);
-
-    return () => {
-      window.removeEventListener("responses-updated", handleResponsesUpdated);
-    };
+    doFetch();
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.interviewId, filterJobId, filterEmail, filterName, currentPage, refreshKey]);
+
+  // Reset to page 1 when filters change (page effect above will re-fire via currentPage change)
+  useEffect(() => {
+    setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterJobId, filterEmail, filterName]);
+
+  // Stable event listener — increments refreshKey to force a re-fetch
+  useEffect(() => {
+    const handler = () => setRefreshKey((k) => k + 1);
+    window.addEventListener("responses-updated", handler);
+    return () => window.removeEventListener("responses-updated", handler);
   }, []);
 
+  const handleEmailInputChange = (value: string) => {
+    setEmailInput(value);
+    if (emailDebounceRef.current) clearTimeout(emailDebounceRef.current);
+    emailDebounceRef.current = setTimeout(() => setFilterEmail(value.trim()), 500);
+  };
+
+  const handleNameInputChange = (value: string) => {
+    setNameInput(value);
+    if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
+    nameDebounceRef.current = setTimeout(() => setFilterName(value.trim()), 500);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(totalResponses / PAGE_SIZE));
+
   const handleDeleteResponse = (deletedCallId: string) => {
-    if (responses) {
-      setResponses(
-        responses.filter((response) => response.call_id !== deletedCallId),
-      );
-      if (searchParams.call === deletedCallId) {
-        router.push(`/interviews/${params.interviewId}`);
-      }
+    setResponses((prev) => prev.filter((r) => r.call_id !== deletedCallId));
+    if (searchParams.call === deletedCallId) {
+      router.push(`/interviews/${params.interviewId}`);
     }
   };
 
@@ -160,12 +200,9 @@ function InterviewHome({ params, searchParams }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_viewed: true }),
       });
-      if (responses) {
-        const updatedResponses = responses.map((r) =>
-          r.call_id === response.call_id ? { ...r, is_viewed: true } : r,
-        );
-        setResponses(updatedResponses);
-      }
+      setResponses((prev) =>
+        prev.map((r) => r.call_id === response.call_id ? { ...r, is_viewed: true } : r),
+      );
       setIsViewed(true);
     } catch {
       // silent
@@ -209,40 +246,19 @@ function InterviewHome({ params, searchParams }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ theme_color: newColor }),
       });
-
-      toast.success("Theme color updated", {
-        position: "bottom-right",
-        duration: 3000,
-      });
+      toast.success("Theme color updated", { position: "bottom-right", duration: 3000 });
     } catch {
-      toast.error("Error", {
-        description: "Failed to update the theme color.",
-        duration: 3000,
-      });
+      toast.error("Error", { description: "Failed to update the theme color." });
     }
   };
 
   const handleCandidateStatusChange = (callId: string, newStatus: string) => {
-    setResponses((prevResponses) => {
-      return prevResponses?.map((response) =>
-        response.call_id === callId
-          ? { ...response, candidate_status: newStatus }
-          : response,
-      );
-    });
+    setResponses((prev) =>
+      prev.map((r) => r.call_id === callId ? { ...r, candidate_status: newStatus } : r),
+    );
   };
 
-  const openSharePopup = () => {
-    setIsSharePopupOpen(true);
-  };
-
-  const closeSharePopup = () => {
-    setIsSharePopupOpen(false);
-  };
-
-  const handleColorChange = (color: string) => {
-    setThemeColor(color);
-  };
+  const handleColorChange = (color: string) => setThemeColor(color);
 
   const applyColorChange = () => {
     if (themeColor !== iconColor) {
@@ -253,20 +269,10 @@ function InterviewHome({ params, searchParams }: Props) {
   };
 
   const filterResponses = () => {
-    if (!responses) return [];
-
     let filtered = responses;
-
-    if (responseType === "CANDIDATE") {
-      filtered = filtered.filter((r) => !r.is_test_response);
-    } else if (responseType === "TEST") {
-      filtered = filtered.filter((r) => r.is_test_response === true);
-    }
-
-    if (filterStatus !== "ALL") {
-      filtered = filtered.filter((r) => r.candidate_status === filterStatus);
-    }
-
+    if (responseType === "CANDIDATE") filtered = filtered.filter((r) => !r.is_test_response);
+    else if (responseType === "TEST") filtered = filtered.filter((r) => r.is_test_response === true);
+    if (filterStatus !== "ALL") filtered = filtered.filter((r) => r.candidate_status === filterStatus);
     return filtered;
   };
 
@@ -287,31 +293,21 @@ function InterviewHome({ params, searchParams }: Props) {
             />
 
             <div className="flex flex-row gap-3 my-auto">
-              <UserIcon className="my-auto" size={16} />:{" "}
-              {String(responses?.length)}
+              <UserIcon className="my-auto" size={16} />: {totalResponses}
             </div>
 
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className={
-                      "bg-transparent shadow-none relative text-xs text-indigo-600 px-1 h-7 hover:scale-110 hover:bg-transparent"
-                    }
-                    variant={"secondary"}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openSharePopup();
-                    }}
+                    className="bg-transparent shadow-none relative text-xs text-indigo-600 px-1 h-7 hover:scale-110 hover:bg-transparent"
+                    variant="secondary"
+                    onClick={(e) => { e.stopPropagation(); setIsSharePopupOpen(true); }}
                   >
                     <Share2 size={16} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent
-                  className="bg-zinc-300"
-                  side="bottom"
-                  sideOffset={4}
-                >
+                <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
                   <span className="text-black flex flex-row gap-4">Share</span>
                 </TooltipContent>
               </Tooltip>
@@ -321,22 +317,13 @@ function InterviewHome({ params, searchParams }: Props) {
                 <TooltipTrigger asChild>
                   <Button
                     className="bg-transparent shadow-none text-xs text-indigo-600 px-0 h-7 hover:scale-110 relative"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      seeInterviewPreviewPage();
-                    }}
+                    onClick={(e) => { e.stopPropagation(); seeInterviewPreviewPage(); }}
                   >
                     <Eye />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent
-                  className="bg-zinc-300"
-                  side="bottom"
-                  sideOffset={4}
-                >
-                  <span className="text-black flex flex-row gap-4">
-                    Preview
-                  </span>
+                <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
+                  <span className="text-black flex flex-row gap-4">Preview</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -345,22 +332,13 @@ function InterviewHome({ params, searchParams }: Props) {
                 <TooltipTrigger asChild>
                   <Button
                     className="bg-transparent shadow-none text-xs text-indigo-600 px-0 h-7 hover:scale-110 relative"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setShowColorPicker(!showColorPicker);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); setShowColorPicker(!showColorPicker); }}
                   >
                     <Palette size={19} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent
-                  className="bg-zinc-300"
-                  side="bottom"
-                  sideOffset={4}
-                >
-                  <span className="text-black flex flex-row gap-4">
-                    Theme Color
-                  </span>
+                <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
+                  <span className="text-black flex flex-row gap-4">Theme Color</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -369,20 +347,12 @@ function InterviewHome({ params, searchParams }: Props) {
                 <TooltipTrigger asChild>
                   <Button
                     className="bg-transparent shadow-none text-xs text-indigo-600 px-0 h-7 hover:scale-110 relative"
-                    onClick={(event) => {
-                      router.push(
-                        `/interviews/${params.interviewId}?edit=true`,
-                      );
-                    }}
+                    onClick={() => router.push(`/interviews/${params.interviewId}?edit=true`)}
                   >
                     <Pencil size={16} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent
-                  className="bg-zinc-300"
-                  side="bottom"
-                  sideOffset={4}
-                >
+                <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
                   <span className="text-black flex flex-row gap-4">Edit</span>
                 </TooltipContent>
               </Tooltip>
@@ -392,21 +362,18 @@ function InterviewHome({ params, searchParams }: Props) {
               <span className="ms-3 my-auto text-sm">Active</span>
               <Switch
                 checked={isActive}
-                className={`ms-3 my-auto ${
-                  isActive ? "bg-indigo-600" : "bg-[#E6E7EB]"
-                }`}
+                className={`ms-3 my-auto ${isActive ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
                 onCheckedChange={handleToggle}
               />
             </label>
           </div>
-          <div className="flex flex-row w-full p-2 h-[85%] gap-1 ">
+          <div className="flex flex-row w-full p-2 h-[85%] gap-1">
             <div className="w-[20%] flex flex-col p-2 divide-y-2 rounded-sm border-2 border-slate-100">
+              {/* Response type filter */}
               <div className="flex w-full justify-center py-2">
                 <Select
                   defaultValue="CANDIDATE"
-                  onValueChange={(newValue: string) => {
-                    setResponseType(newValue);
-                  }}
+                  onValueChange={(v) => setResponseType(v)}
                 >
                   <SelectTrigger className="w-[95%] bg-slate-100 rounded-lg">
                     <SelectValue placeholder="Response Type" />
@@ -418,65 +385,89 @@ function InterviewHome({ params, searchParams }: Props) {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Candidate status filter */}
               <div className="flex w-full justify-center py-2">
-                <Select
-                  onValueChange={async (newValue: string) => {
-                    setFilterStatus(newValue);
-                  }}
-                >
+                <Select onValueChange={(v) => setFilterStatus(v)}>
                   <SelectTrigger className="w-[95%] bg-slate-100 rounded-lg">
-                    <Filter size={18} className=" text-slate-400" />
-                    <SelectValue placeholder="Filter By" />
+                    <Filter size={18} className="text-slate-400" />
+                    <SelectValue placeholder="Filter By Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={CandidateStatus.NO_STATUS}>
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-gray-400 rounded-full mr-2" />
-                        No Status
-                      </div>
+                      <div className="flex items-center"><div className="w-3 h-3 bg-gray-400 rounded-full mr-2" />No Status</div>
                     </SelectItem>
                     <SelectItem value={CandidateStatus.NOT_SELECTED}>
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-red-500 rounded-full mr-2" />
-                        Not Selected
-                      </div>
+                      <div className="flex items-center"><div className="w-3 h-3 bg-red-500 rounded-full mr-2" />Not Selected</div>
                     </SelectItem>
                     <SelectItem value={CandidateStatus.POTENTIAL}>
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2" />
-                        Potential
-                      </div>
+                      <div className="flex items-center"><div className="w-3 h-3 bg-yellow-500 rounded-full mr-2" />Potential</div>
                     </SelectItem>
                     <SelectItem value={CandidateStatus.SELECTED}>
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-green-500 rounded-full mr-2" />
-                        Selected
-                      </div>
+                      <div className="flex items-center"><div className="w-3 h-3 bg-green-500 rounded-full mr-2" />Selected</div>
                     </SelectItem>
                     <SelectItem value="ALL">
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 border-2 border-gray-300 rounded-full mr-2" />
-                        All
-                      </div>
+                      <div className="flex items-center"><div className="w-3 h-3 border-2 border-gray-300 rounded-full mr-2" />All</div>
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
+              {/* Job filter */}
+              {linkedJobs.length > 0 && (
+                <div className="flex w-full justify-center py-2">
+                  <Select
+                    value={filterJobId}
+                    onValueChange={(v) => setFilterJobId(v === "ALL" ? "" : v)}
+                  >
+                    <SelectTrigger className="w-[95%] bg-slate-100 rounded-lg">
+                      <SelectValue placeholder="Filter By Job" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Jobs</SelectItem>
+                      {linkedJobs.map((job) => (
+                        <SelectItem key={job.job_id} value={String(job.job_id)}>
+                          {job.job_title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Name filter */}
+              <div className="flex w-full justify-center py-2">
+                <input
+                  type="text"
+                  className="w-[95%] bg-slate-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  placeholder="Filter by name…"
+                  value={nameInput}
+                  onChange={(e) => handleNameInputChange(e.target.value)}
+                />
+              </div>
+
+              {/* Email filter */}
+              <div className="flex w-full justify-center py-2">
+                <input
+                  type="text"
+                  className="w-[95%] bg-slate-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  placeholder="Filter by email…"
+                  value={emailInput}
+                  onChange={(e) => handleEmailInputChange(e.target.value)}
+                />
+              </div>
+
+              {/* Response list */}
               <ScrollArea className="h-full p-1 rounded-md border-none">
                 {filterResponses().length > 0 ? (
                   filterResponses().map((response) => (
                     <div
                       className={`p-2 rounded-md hover:bg-indigo-100 border-2 my-1 text-left text-xs ${
-                        searchParams.call == response.call_id
-                          ? "bg-indigo-200"
-                          : "border-indigo-100"
+                        searchParams.call == response.call_id ? "bg-indigo-200" : "border-indigo-100"
                       } flex flex-row justify-between cursor-pointer w-full`}
                       key={response?.id}
                       onClick={() => {
-                        router.push(
-                          `/interviews/${params.interviewId}?call=${response.call_id}`,
-                        );
+                        router.push(`/interviews/${params.interviewId}?call=${response.call_id}`);
                         handleResponseClick(response);
                       }}
                     >
@@ -493,53 +484,33 @@ function InterviewHome({ params, searchParams }: Props) {
                         <div className="flex items-center justify-between w-full">
                           <div className="flex flex-col my-auto">
                             <p className="font-medium mb-[2px]">
-                              {response?.name
-                                ? `${response?.name}'s Response`
-                                : "Anonymous"}
+                              {response?.name ? `${response?.name}'s Response` : "Anonymous"}
                             </p>
-                            <p className="">
-                              {formatTimestampToDateHHMM(
-                                String(response?.created_at),
-                              )}
-                            </p>
+                            <p>{formatTimestampToDateHHMM(String(response?.created_at))}</p>
                           </div>
                           <div className="flex flex-col items-center justify-center ml-auto flex-shrink-0">
                             {!response.is_viewed && (
                               <div className="w-4 h-4 flex items-center justify-center mb-1">
-                                <div className="text-indigo-500 text-xl leading-none">
-                                  ●
-                                </div>
+                                <div className="text-indigo-500 text-xl leading-none">●</div>
                               </div>
                             )}
-                            <div
-                              className={`w-6 h-6 flex items-center justify-center ${
-                                response.is_viewed ? "h-full" : ""
-                              }`}
-                            >
-                              {response.analytics &&
-                                response.analytics.overallScore !==
-                                  undefined && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <div className="w-6 h-6 rounded-full bg-white border-2 border-indigo-500 flex items-center justify-center">
-                                          <span className="text-indigo-500 text-xs font-semibold">
-                                            {response?.analytics?.overallScore}
-                                          </span>
-                                        </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent
-                                        className="bg-gray-500"
-                                        side="bottom"
-                                        sideOffset={4}
-                                      >
-                                        <span className="text-white font-normal flex flex-row gap-4">
-                                          Overall Score
+                            <div className={`w-6 h-6 flex items-center justify-center ${response.is_viewed ? "h-full" : ""}`}>
+                              {response.analytics?.overallScore !== undefined && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="w-6 h-6 rounded-full bg-white border-2 border-indigo-500 flex items-center justify-center">
+                                        <span className="text-indigo-500 text-xs font-semibold">
+                                          {response?.analytics?.overallScore}
                                         </span>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="bg-gray-500" side="bottom" sideOffset={4}>
+                                      <span className="text-white font-normal flex flex-row gap-4">Overall Score</span>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -547,14 +518,33 @@ function InterviewHome({ params, searchParams }: Props) {
                     </div>
                   ))
                 ) : (
-                  <p className="text-center text-gray-500">
-                    No responses to display
-                  </p>
+                  <p className="text-center text-gray-500">No responses to display</p>
                 )}
               </ScrollArea>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-2 px-1">
+                  <button
+                    className="p-1 rounded hover:bg-slate-100 disabled:opacity-30"
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage((p) => p - 1)}
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span className="text-xs text-gray-500">{currentPage} / {totalPages}</span>
+                  <button
+                    className="p-1 rounded hover:bg-slate-100 disabled:opacity-30"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage((p) => p + 1)}
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
             </div>
             {responses && (
-              <div className="w-[85%] rounded-md ">
+              <div className="w-[85%] rounded-md">
                 {searchParams.call ? (
                   <CallInfo
                     call_id={searchParams.call}
@@ -571,20 +561,10 @@ function InterviewHome({ params, searchParams }: Props) {
           </div>
         </>
       )}
-      <Modal
-        open={showColorPicker}
-        closeOnOutsideClick={false}
-        onClose={applyColorChange}
-      >
+      <Modal open={showColorPicker} closeOnOutsideClick={false} onClose={applyColorChange}>
         <div className="w-[250px] p-3">
-          <h3 className="text-lg font-semibold mb-4 text-center">
-            Choose a Theme Color
-          </h3>
-          <HexColorPicker
-            color={themeColor}
-            onChange={handleColorChange}
-            style={{ width: "100%" }}
-          />
+          <h3 className="text-lg font-semibold mb-4 text-center">Choose a Theme Color</h3>
+          <HexColorPicker color={themeColor} onChange={handleColorChange} style={{ width: "100%" }} />
         </div>
       </Modal>
       {isSharePopupOpen && (
@@ -595,7 +575,7 @@ function InterviewHome({ params, searchParams }: Props) {
               ? `${base_url}/call/${interview?.readable_slug}`
               : (interview?.url as string)
           }
-          onClose={closeSharePopup}
+          onClose={() => setIsSharePopupOpen(false)}
         />
       )}
     </div>

@@ -3,13 +3,27 @@ import { getSupabaseAdminClient } from "@/lib/supabase-client";
 import { getAuthSession } from "@/lib/route-auth";
 import { logger } from "@/lib/logger";
 
-// Admin-only — list all responses for an interview.
+const DEFAULT_PAGE_SIZE = 50;
+
+// Admin-only — list responses with optional filters and pagination.
 export async function GET(req: NextRequest) {
   const session = await getAuthSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const interviewId = req.nextUrl.searchParams.get("interviewId");
-  if (!interviewId) return NextResponse.json({ error: "interviewId required" }, { status: 400 });
+  const { searchParams } = req.nextUrl;
+  const interviewId = searchParams.get("interviewId");
+  const jobId = searchParams.get("job_id");
+  const email = searchParams.get("email")?.trim() || null;
+  const name = searchParams.get("name")?.trim() || null;
+  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+  const pageSize = Math.min(
+    1000,
+    Math.max(1, parseInt(searchParams.get("page_size") ?? String(DEFAULT_PAGE_SIZE), 10)),
+  );
+
+  if (!interviewId) {
+    return NextResponse.json({ error: "interviewId required" }, { status: 400 });
+  }
 
   const supabase = getSupabaseAdminClient();
   if (!supabase) {
@@ -17,18 +31,34 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
   }
 
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
     .from("response")
-    .select("*")
-    .eq("interview_id", interviewId)
+    .select("*", { count: "exact" })
+    .eq("interview_id", interviewId!)
     .eq("is_ended", true)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (jobId) query = query.eq("job_id", Number(jobId));
+  if (email) query = query.ilike("email", `%${email}%`);
+  if (name) query = query.ilike("name", `%${name}%`);
+
+  const { data, error, count } = await query;
 
   if (error) {
     logger.error("responses GET: query failed", { error });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-  return NextResponse.json(data ?? []);
+
+  return NextResponse.json({
+    data: data ?? [],
+    total: count ?? 0,
+    page,
+    page_size: pageSize,
+  });
 }
 
 // Public — candidates create a response record when starting an interview.

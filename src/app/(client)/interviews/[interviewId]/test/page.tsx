@@ -11,11 +11,19 @@ type Props = {
   params: { interviewId: string };
 };
 
+interface LinkedJob {
+  job_id: number;
+  job_title: string;
+}
+
 function TestInterviewContent({ params }: Props) {
   const [interview, setInterview] = useState<Interview | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [linkedJobs, setLinkedJobs] = useState<LinkedJob[]>([]);
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const [jobSelected, setJobSelected] = useState(false);
   const { getInterviewById } = useInterviews();
 
   useEffect(() => {
@@ -32,8 +40,14 @@ function TestInterviewContent({ params }: Props) {
             setUserName(dbUser?.name ?? email.split("@")[0]);
           }
         }
-        const result = await getInterviewById(params.interviewId);
+
+        const [result, jobsRes] = await Promise.all([
+          getInterviewById(params.interviewId),
+          fetch(`/api/interview-jobs?interviewId=${params.interviewId}`).then((r) => r.json()).catch(() => ({ jobs: [] })),
+        ]);
+
         if (result) setInterview(result);
+        if (Array.isArray(jobsRes.jobs)) setLinkedJobs(jobsRes.jobs);
       } finally {
         setLoading(false);
       }
@@ -58,6 +72,50 @@ function TestInterviewContent({ params }: Props) {
     );
   }
 
+  // If interview has linked jobs and user hasn't picked one yet, show picker
+  if (linkedJobs.length > 0 && !jobSelected) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="bg-white rounded-xl border-2 border-slate-200 shadow-md p-8 w-[420px] flex flex-col gap-5">
+          <h2 className="text-lg font-semibold text-center">Select a Job to Test</h2>
+          <p className="text-sm text-gray-500 text-center">
+            This interview is linked to multiple jobs. Select one so the test response is tagged correctly, or skip to run a general test.
+          </p>
+          <div className="flex flex-col gap-2">
+            {linkedJobs.map((job) => (
+              <button
+                key={job.job_id}
+                className={`px-4 py-2 rounded-lg border-2 text-sm text-left transition-colors ${
+                  selectedJobId === job.job_id
+                    ? "border-indigo-600 bg-indigo-50 text-indigo-700 font-medium"
+                    : "border-slate-200 hover:border-indigo-300"
+                }`}
+                onClick={() => setSelectedJobId(job.job_id)}
+              >
+                {job.job_title}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-3 mt-2">
+            <button
+              className="flex-1 py-2 rounded-lg border-2 border-slate-200 text-sm text-gray-500 hover:border-slate-400 transition-colors"
+              onClick={() => { setSelectedJobId(null); setJobSelected(true); }}
+            >
+              Skip (no job)
+            </button>
+            <button
+              disabled={selectedJobId === null}
+              className="flex-1 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              onClick={() => setJobSelected(true)}
+            >
+              Start Test
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full overflow-hidden">
       <div className="hidden md:block p-4 h-full form-container">
@@ -66,6 +124,7 @@ function TestInterviewContent({ params }: Props) {
           isTestResponse={true}
           prefillEmail={userEmail}
           prefillName={userName}
+          jobId={selectedJobId ?? undefined}
         />
       </div>
       <div className="md:hidden flex flex-col items-center justify-center my-auto">

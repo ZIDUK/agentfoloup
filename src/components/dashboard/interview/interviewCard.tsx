@@ -34,7 +34,8 @@ function InterviewCard({ name, interviewerId, id, url: _url, readableSlug: _read
     const fetchResponses = async () => {
       try {
         const res = await fetch(`/api/responses?interviewId=${id}`);
-        const responses = await res.json();
+        const json = await res.json();
+        const responses = json.data ?? [];
         setResponseCount(responses.length);
         if (responses.length > 0) {
           setIsFetching(true);

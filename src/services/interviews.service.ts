@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "@/lib/supabase-client";
+import { getSupabaseClient, getSupabaseAdminClient } from "@/lib/supabase-client";
 
 const getAllInterviews = async () => {
   try {
@@ -78,6 +78,28 @@ const createInterview = async (payload: any) => {
   return data;
 };
 
+const linkJobsToInterview = async (
+  interviewId: string,
+  jobs: { job_id: number; job_title: string }[],
+) => {
+  if (jobs.length === 0) return;
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) return;
+  await supabase.from("interview_job").insert(
+    jobs.map((j) => ({ interview_id: interviewId, job_id: j.job_id, job_title: j.job_title })),
+  );
+};
+
+const getLinkedJobs = async (interviewId: string) => {
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("interview_job")
+    .select("job_id, job_title")
+    .eq("interview_id", interviewId);
+  return data ?? [];
+};
+
 export const InterviewService = {
   getAllInterviews,
   getInterviewById,
@@ -85,4 +107,6 @@ export const InterviewService = {
   deleteInterview,
   getAllRespondents,
   createInterview,
+  linkJobsToInterview,
+  getLinkedJobs,
 };

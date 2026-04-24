@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     if (adminSupabase) {
       const { data } = await adminSupabase
         .from("interview")
-        .select("job_id, url")
+        .select("url")
         .eq("id", id)
         .single();
       interview = data;
@@ -39,9 +39,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Interview not found" }, { status: 404 });
     }
 
-    const jobId = interview.job_id;
+    const linkedJobs = await InterviewService.getLinkedJobs(id);
 
-    if (jobId) {
+    if (linkedJobs.length > 0) {
       const dreamitUrl = process.env.DREAMIT_URL;
       const secret = process.env.DREAMIT_FOLOUP_SECRET;
       const serviceRoleKey = process.env.DREAMIT_SUPABASE_SERVICE_ROLE_KEY;
@@ -49,25 +49,27 @@ export async function POST(req: Request) {
       if (dreamitUrl && secret && serviceRoleKey) {
         const foloupLink = is_active ? interview.url : null;
 
-        const dreamitRes = await fetch(`${dreamitUrl}/functions/v1/update-foloup-speech-link`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-foloup-secret": secret,
-            "Authorization": `Bearer ${serviceRoleKey}`,
-          },
-          body: JSON.stringify({ job_id: Number(jobId), foloup_speech_link: foloupLink }),
-        });
+        for (const job of linkedJobs) {
+          const dreamitRes = await fetch(`${dreamitUrl}/functions/v1/update-foloup-speech-link`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-foloup-secret": secret,
+              "Authorization": `Bearer ${serviceRoleKey}`,
+            },
+            body: JSON.stringify({ job_id: Number(job.job_id), foloup_speech_link: foloupLink }),
+          });
 
-        const data = await dreamitRes.json().catch(() => null);
-        logger.info("toggle-interview-status DreamIT response", { job_id: Number(jobId), is_active, status: dreamitRes.status });
+          const data = await dreamitRes.json().catch(() => null);
+          logger.info("toggle-interview-status DreamIT response", { job_id: Number(job.job_id), is_active, status: dreamitRes.status });
 
-        if (!dreamitRes.ok) {
-          logger.error("toggle-interview-status DreamIT update failed", { status: dreamitRes.status, job_id: Number(jobId), response: data });
-          return NextResponse.json(
-            { error: "Failed to update foloup link — status not changed" },
-            { status: 502 },
-          );
+          if (!dreamitRes.ok) {
+            logger.error("toggle-interview-status DreamIT update failed", { status: dreamitRes.status, job_id: Number(job.job_id), response: data });
+            return NextResponse.json(
+              { error: "Failed to update foloup link — status not changed" },
+              { status: 502 },
+            );
+          }
         }
       }
     }

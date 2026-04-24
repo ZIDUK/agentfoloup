@@ -20,8 +20,7 @@ export interface InterviewBase {
   questions: Question[];
   description: string;
   response_count: bigint;
-  job_id?: number | null;
-  job_title?: string | null;
+  jobs?: { job_id: number; job_title: string }[];
   created_by?: string | null;
   updated_by?: string | null;
 }

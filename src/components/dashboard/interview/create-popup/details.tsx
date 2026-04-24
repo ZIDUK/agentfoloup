@@ -63,7 +63,9 @@ function DetailsPopup({
   const [uploadedDocumentContext, setUploadedDocumentContext] = useState("");
   const [jobs, setJobs] = useState<BambooJob[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
-  const [selectedJobId, setSelectedJobId] = useState<number | null>(interviewData.job_id ?? null);
+  const [selectedJobIds, setSelectedJobIds] = useState<number[]>(
+    interviewData.jobs?.map((j) => j.job_id) ?? [],
+  );
 
   useEffect(() => {
     fetch("/api/get-dreamit-jobs")
@@ -114,7 +116,9 @@ function DetailsPopup({
       }),
     );
 
-    const selectedJob = jobs.find((j) => j.job_id === selectedJobId) ?? null;
+    const selectedJobs = jobs
+      .filter((j) => selectedJobIds.includes(j.job_id))
+      .map((j) => ({ job_id: j.job_id, job_title: j.title }));
     const updatedInterviewData = {
       ...interviewData,
       name: name.trim(),
@@ -125,8 +129,7 @@ function DetailsPopup({
       time_duration: duration,
       description: generatedQuestionsResponse.description,
       is_anonymous: isAnonymous,
-      job_id: selectedJob?.job_id ?? null,
-      job_title: selectedJob?.title ?? null,
+      jobs: selectedJobs,
     };
     setInterviewData(updatedInterviewData);
   };
@@ -134,7 +137,9 @@ function DetailsPopup({
   const onManual = () => {
     setLoading(true);
 
-    const selectedJob = jobs.find((j) => j.job_id === selectedJobId) ?? null;
+    const selectedJobs = jobs
+      .filter((j) => selectedJobIds.includes(j.job_id))
+      .map((j) => ({ job_id: j.job_id, job_title: j.title }));
     const updatedInterviewData = {
       ...interviewData,
       name: name.trim(),
@@ -145,8 +150,7 @@ function DetailsPopup({
       time_duration: String(duration),
       description: "",
       is_anonymous: isAnonymous,
-      job_id: selectedJob?.job_id ?? null,
-      job_title: selectedJob?.title ?? null,
+      jobs: selectedJobs,
     };
     setInterviewData(updatedInterviewData);
   };
@@ -160,7 +164,7 @@ function DetailsPopup({
       setNumQuestions("");
       setDuration("");
       setIsClicked(false);
-      setSelectedJobId(null);
+      setSelectedJobIds([]);
     }
   }, [open]);
 
@@ -180,29 +184,32 @@ function DetailsPopup({
               onBlur={(e) => setName(e.target.value.trim())}
             />
           </div>
-          <div className="flex flex-row justify-center items-center mt-3">
-            <h3 className="text-sm font-medium">Job:</h3>
-            <select
-              className="border-b-2 focus:outline-none border-gray-500 px-2 w-80 py-0.5 ml-3 bg-transparent text-sm disabled:opacity-50"
-              value={selectedJobId ?? ""}
-              disabled={jobsLoading}
-              onChange={(e) => setSelectedJobId(e.target.value ? Number(e.target.value) : null)}
-            >
-              {jobsLoading ? (
-                <option value="">Loading jobs…</option>
-              ) : jobs.length === 0 ? (
-                <option value="">No jobs available</option>
-              ) : (
-                <>
-                  <option value="">— No job linked —</option>
-                  {jobs.map((job) => (
-                    <option key={job.job_id} value={job.job_id}>
-                      {job.title}
-                    </option>
-                  ))}
-                </>
-              )}
-            </select>
+          <div className="flex flex-col mt-3 w-full">
+            <h3 className="text-sm font-medium">Jobs:</h3>
+            {jobsLoading ? (
+              <p className="text-xs text-gray-400 mt-1">Loading jobs…</p>
+            ) : jobs.length === 0 ? (
+              <p className="text-xs text-gray-400 mt-1">No jobs available</p>
+            ) : (
+              <div className="mt-1 max-h-28 overflow-y-auto border border-gray-300 rounded px-2 py-1 w-full">
+                {jobs.map((job) => (
+                  <label key={job.job_id} className="flex items-center gap-2 py-0.5 cursor-pointer text-sm">
+                    <input
+                      type="checkbox"
+                      checked={selectedJobIds.includes(job.job_id)}
+                      onChange={(e) =>
+                        setSelectedJobIds((prev) =>
+                          e.target.checked
+                            ? [...prev, job.job_id]
+                            : prev.filter((id) => id !== job.job_id),
+                        )
+                      }
+                    />
+                    {job.title}
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
           <h3 className="text-sm mt-3 font-medium">Select an Interviewer:</h3>
           <div className="relative flex items-center mt-1">
