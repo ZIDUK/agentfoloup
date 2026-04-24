@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { getAuthSession } from "@/lib/route-auth";
 
 export async function GET() {
+  const session = await getAuthSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const dreamitUrl = process.env.DREAMIT_URL;
   const secret = process.env.DREAMIT_FOLOUP_SECRET;
   const serviceRoleKey = process.env.DREAMIT_SUPABASE_SERVICE_ROLE_KEY;

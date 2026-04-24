@@ -129,8 +129,8 @@ function EditInterview({ interview }: EditInterviewProps) {
         duration: 3000,
       });
       router.push(`/interviews/${interview?.id}`);
-    } catch (error) {
-      console.error("Error creating interview:", error);
+    } catch {
+      // silent
     }
   };
 
@@ -147,8 +147,7 @@ function EditInterview({ interview }: EditInterviewProps) {
       });
       if (!res.ok) throw new Error("Delete failed");
       router.push("/dashboard");
-    } catch (error) {
-      console.error("Error deleting interview:", error);
+    } catch {
       toast.error("Failed to delete the interview.", {
         position: "bottom-right",
         duration: 3000,

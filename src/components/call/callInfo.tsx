@@ -82,8 +82,8 @@ function CallInfo({
         const response = await axios.post("/api/get-call", { id: call_id });
         setCall(response.data.callResponse);
         setAnalytics(response.data.analytics);
-      } catch (error) {
-        console.error(error);
+      } catch {
+        // silent
       } finally {
         setIsLoading(false);
       }
@@ -114,8 +114,8 @@ function CallInfo({
         setCameraCovered(events.some((e: any) => e.type === "camera_covered"));
         setNoFaceCount(response.no_face_count ?? 0);
         setMultipleFacesCount(response.multiple_faces_count ?? 0);
-      } catch (error) {
-        console.error(error);
+      } catch {
+        // silent
       } finally {
         setIsLoading(false);
       }
@@ -166,9 +166,7 @@ function CallInfo({
 
         duration: 3000,
       });
-    } catch (error) {
-      console.error("Error deleting response:", error);
-
+    } catch {
       toast.error("Failed to delete the response.", {
         position: "bottom-right",
 

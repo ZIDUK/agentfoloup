@@ -64,7 +64,6 @@ function InterviewHome({ params, searchParams }: Props) {
 
   const seeInterviewPreviewPage = () => {
     if (!interview) {
-      console.error("Interview is not loaded yet.");
       toast.error("Interview not loaded. Please try again.");
       return;
     }
@@ -88,7 +87,6 @@ function InterviewHome({ params, searchParams }: Props) {
       const url = `/call/${interviewId}`;
       window.open(url, "_blank");
     } else {
-      console.error("Interview ID or URL is not available.");
       toast.error("Unable to open interview preview. Interview URL is missing.");
     }
   };
@@ -103,8 +101,8 @@ function InterviewHome({ params, searchParams }: Props) {
         setThemeColor(response.theme_color ?? "#4F46E5");
         seticonColor(response.theme_color ?? "#4F46E5");
         setLoading(true);
-      } catch (error) {
-        console.error(error);
+      } catch {
+        // silent
       } finally {
         setLoading(false);
       }
@@ -123,8 +121,8 @@ function InterviewHome({ params, searchParams }: Props) {
         const response = await res.json();
         setResponses(response);
         setLoading(true);
-      } catch (error) {
-        console.error(error);
+      } catch {
+        // silent
       } finally {
         setLoading(false);
       }
@@ -169,8 +167,8 @@ function InterviewHome({ params, searchParams }: Props) {
         setResponses(updatedResponses);
       }
       setIsViewed(true);
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // silent
     }
   };
 
@@ -197,7 +195,6 @@ function InterviewHome({ params, searchParams }: Props) {
       });
     } catch (error: any) {
       setIsActive(!updatedIsActive);
-      console.error(error);
       toast.error("Error", {
         description: error?.message || "Failed to update the interview status.",
         duration: 3000,
@@ -217,8 +214,7 @@ function InterviewHome({ params, searchParams }: Props) {
         position: "bottom-right",
         duration: 3000,
       });
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error("Error", {
         description: "Failed to update the theme color.",
         duration: 3000,

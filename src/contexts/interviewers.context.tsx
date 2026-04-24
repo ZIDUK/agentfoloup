@@ -36,8 +36,8 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
       const res = await fetch("/api/interviewers");
       const response = await res.json();
       setInterviewers(response);
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // silent
     }
     setInterviewersLoading(false);
   };

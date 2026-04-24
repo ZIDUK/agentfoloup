@@ -1,11 +1,15 @@
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 import { InterviewService } from "@/services/interviews.service";
+import { getAuthSession } from "@/lib/route-auth";
 import { logger } from "@/lib/logger";
 
 const base_url = process.env.NEXT_PUBLIC_LIVE_URL;
 
 export async function POST(req: Request, res: Response) {
+  const session = await getAuthSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const url_id = nanoid();
     const url = `${base_url}/call/${url_id}`;

@@ -2,8 +2,12 @@ import { logger } from "@/lib/logger";
 import { InterviewerService } from "@/services/interviewers.service";
 import { NextResponse, NextRequest } from "next/server";
 import { INTERVIEWERS } from "@/lib/constants";
+import { getAuthSession } from "@/lib/route-auth";
 
 export async function GET(res: NextRequest) {
+  const session = await getAuthSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   logger.info("create-interviewer request received");
 
   try {

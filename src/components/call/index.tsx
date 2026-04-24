@@ -168,8 +168,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       } else {
         toast.error("Failed to submit feedback. Please try again.");
       }
-    } catch (error) {
-      console.error("Error submitting feedback:", error);
+    } catch {
       toast.error("An error occurred. Please try again later.");
     }
   };
@@ -470,11 +469,12 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
 
   const startConversation = async () => {
     if (!isTestResponse) {
-      const emailsRes = await fetch(`/api/responses/emails?interviewId=${interview.id}`);
-      const emailsData = await emailsRes.json();
-      const oldUserEmails: string[] = (emailsData as { email: string }[]).map((item) => item.email);
+      const emailsRes = await fetch(
+        `/api/responses/emails?interviewId=${interview.id}&email=${encodeURIComponent(email)}`,
+      );
+      const { exists } = await emailsRes.json();
       const OldUser =
-        oldUserEmails.includes(email) ||
+        exists ||
         (interview?.respondents && !interview?.respondents.includes(email));
 
       if (OldUser) {
@@ -520,17 +520,7 @@ function Call({ interview, applicationId, isTestResponse = false, prefillEmail =
       const tokenData = await tokenRes.json();
       const apiKey: string = tokenData.token || "";
       if (!apiKey) {
-        console.error(
-          "[deepgram-token] Failed to mint token:",
-          tokenData.error ?? "(no error detail)",
-          "status:",
-          tokenRes.status,
-        );
-        toast.error(
-          tokenData.error
-            ? `Failed to start interview: ${tokenData.error}`
-            : "Deepgram API key not configured",
-        );
+        toast.error("Failed to start interview. Please try again.");
         setLoading(false);
         return;
       }

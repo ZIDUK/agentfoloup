@@ -57,8 +57,8 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
       const res = await fetch("/api/interviews");
       const response = await res.json();
       setInterviews(response);
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // silent
     } finally {
       setInterviewsLoading(false);
     }
