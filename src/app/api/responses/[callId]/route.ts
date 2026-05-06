@@ -64,6 +64,22 @@ export async function PATCH(req: NextRequest, { params }: { params: { callId: st
     logger.error("responses/[callId] PATCH: update failed", { error });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+
+  // When a candidate ends their call, mark the invitation as submitted.
+  if (raw.is_ended === true) {
+    const { data: responseRow } = await supabase
+      .from("response")
+      .select("application_id")
+      .eq("call_id", callId)
+      .maybeSingle();
+    if (responseRow?.application_id) {
+      await supabase
+        .from("invitations")
+        .update({ is_submitted: true, updated_at: new Date().toISOString() })
+        .eq("application_id", responseRow.application_id);
+    }
+  }
+
   return NextResponse.json(data);
 }
 

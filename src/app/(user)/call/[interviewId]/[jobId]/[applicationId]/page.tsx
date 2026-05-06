@@ -53,6 +53,8 @@ function PopUpMessage({ title, description, image }: PopupProps) {
   );
 }
 
+type InviteState = "checking" | "not_found" | "expired" | "valid";
+
 function InterviewInterface({ params }: Props) {
   const { interviewId, jobId, applicationId } = params;
   const [interview, setInterview] = useState<Interview>();
@@ -60,8 +62,36 @@ function InterviewInterface({ params }: Props) {
   const { getInterviewById } = useInterviews();
   const [interviewNotFound, setInterviewNotFound] = useState(false);
   const [isCheckingApp, setIsCheckingApp] = useState(true);
+  const [inviteState, setInviteState] = useState<InviteState>("checking");
+  const [inviteId, setInviteId] = useState<string | null>(null);
 
+  // Gate: check invitation validity before doing anything else
   useEffect(() => {
+    fetch(`/api/fn/invitations-get?application_id=${encodeURIComponent(applicationId)}`)
+      .then((r) => {
+        if (r.status === 404) return null;
+        return r.json();
+      })
+      .then((result) => {
+        if (!result) {
+          setInviteState("not_found");
+          return;
+        }
+        if (result.is_expired) {
+          setInviteState("expired");
+          return;
+        }
+        setInviteId(result.invitation?.id ?? null);
+        setInviteState("valid");
+      })
+      .catch(() => setInviteState("not_found"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Once invite is valid, check if response already exists
+  useEffect(() => {
+    if (inviteState !== "valid") return;
+
     fetch("/api/check-response", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -77,7 +107,7 @@ function InterviewInterface({ params }: Props) {
       })
       .catch(() => setIsCheckingApp(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [inviteState]);
 
   useEffect(() => {
     if (interview) {
@@ -103,6 +133,70 @@ function InterviewInterface({ params }: Props) {
     fetchInterview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCheckingApp]);
+
+  // Fire-and-forget: mark invite as started once interview begins loading
+  useEffect(() => {
+    if (inviteState === "valid" && inviteId && !isCheckingApp && interview) {
+      fetch(`/api/invitations/${inviteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_started: true }),
+      }).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inviteState, inviteId, isCheckingApp, interview]);
+
+  if (inviteState === "checking") {
+    return (
+      <div className="h-screen overflow-hidden">
+        <div className="hidden md:block p-4 h-full form-container">
+          <PopupLoader />
+        </div>
+      </div>
+    );
+  }
+
+  if (inviteState === "not_found") {
+    return (
+      <div className="h-screen overflow-hidden">
+        <div className="hidden md:block p-4 h-full form-container">
+          <PopUpMessage
+            title="No Invitation Found"
+            description="No invitation found. Please contact the hiring team."
+            image="/invalid-url.png"
+          />
+        </div>
+        <div className="md:hidden flex flex-col items-center justify-center my-auto">
+          <div className="mt-48 px-3">
+            <p className="text-center text-gray-600 my-5">
+              No invitation found. Please contact the hiring team.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (inviteState === "expired") {
+    return (
+      <div className="h-screen overflow-hidden">
+        <div className="hidden md:block p-4 h-full form-container">
+          <PopUpMessage
+            title="Invitation Expired"
+            description="This invitation has expired. Please contact the hiring team."
+            image="/closed.png"
+          />
+        </div>
+        <div className="md:hidden flex flex-col items-center justify-center my-auto">
+          <div className="mt-48 px-3">
+            <p className="text-center text-gray-600 my-5">
+              This invitation has expired. Please contact the hiring team.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen overflow-hidden">
