@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "agentfoloup",
+  "project_id": "e97c80ae-c9f3-416b-84da-208a66e2dcfa"
+}
