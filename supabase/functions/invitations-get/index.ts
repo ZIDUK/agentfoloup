@@ -5,6 +5,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// base64url strings omit = padding; atob() requires it.
+function b64urlDecode(s: string): string {
+  s = s.replace(/-/g, "+").replace(/_/g, "/");
+  while (s.length % 4) s += "=";
+  return atob(s);
+}
+
 // Verifies a Supabase JWT (anon key or user session) using HMAC-SHA256 + SUPABASE_JWT_SECRET.
 // getUser() is intentionally not used here because callers are unauthenticated candidates
 // who only have the anon key available via the /api/fn proxy.
@@ -15,7 +22,7 @@ async function verifySupabaseJWT(token: string, secret: string): Promise<boolean
 
     const [header, payload, signature] = parts;
 
-    const decoded = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    const decoded = JSON.parse(b64urlDecode(payload));
     if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) return false;
 
     const key = await crypto.subtle.importKey(
@@ -26,10 +33,7 @@ async function verifySupabaseJWT(token: string, secret: string): Promise<boolean
       ["verify"],
     );
 
-    const sigBytes = Uint8Array.from(
-      atob(signature.replace(/-/g, "+").replace(/_/g, "/")),
-      (c) => c.charCodeAt(0),
-    );
+    const sigBytes = Uint8Array.from(b64urlDecode(signature), (c) => c.charCodeAt(0));
 
     return await crypto.subtle.verify(
       "HMAC",
