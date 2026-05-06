@@ -7,7 +7,8 @@ import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText
 
 type Props = {
   params: {
-    id: string;
+    interviewId: string;
+    jobId: string;
     applicationId: string;
   };
 };
