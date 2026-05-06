@@ -9,7 +9,7 @@ import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText
 
 type Props = {
   params: {
-    id: string;
+    interviewId: string;
   };
 };
 
@@ -63,7 +63,7 @@ type InvitationData = {
 };
 
 function InterviewInterface({ params }: Props) {
-  const invitationId = params.id;
+  const invitationId = params.interviewId;
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [interview, setInterview] = useState<Interview>();
   const [isActive, setIsActive] = useState(true);
