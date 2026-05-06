@@ -325,6 +325,12 @@ verify_jwt = false
 [functions.bamboo-sync]
 verify_jwt = false
 
+[functions.invitations-create]
+verify_jwt = false
+
+[functions.invitations-get]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.
