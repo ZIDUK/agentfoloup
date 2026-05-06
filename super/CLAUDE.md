@@ -62,6 +62,53 @@ Everything else is an agent's job.
 
 ## Dispatching Work
 
+### Features Always Start with an Epic
+
+When the operator gives you a feature or any task with more than one logical piece, **create an epic first, then break it into small child beads.**
+
+```bash
+# Step 1: create the epic
+bd create --type=epic --title="Feature name" --description="..."
+# → returns agentfoloup-xxx (the epic ID)
+
+# Step 2: create small child beads linked to the epic
+bd create --type=task --parent=agentfoloup-xxx --title="Add DB migration for X table" ...
+bd create --type=task --parent=agentfoloup-xxx --title="Add edge function: x-create" ...
+bd create --type=task --parent=agentfoloup-xxx --title="Add edge function: x-get" ...
+bd create --type=task --parent=agentfoloup-xxx --title="Add API route PATCH /api/x/[id]" ...
+bd create --type=task --parent=agentfoloup-xxx --title="Add gate to existing call page" ...
+```
+
+### Bead Sizing Rules
+
+Each bead should be **one logical unit of work** an engineer can finish, test, and commit independently. If you can split it, split it.
+
+**Good bead sizes (one bead each):**
+- One database migration
+- One edge function
+- One API route or route group
+- One page or component
+- One config change + redeployment
+- One service or hook
+
+**Too large (split it):**
+- "Implement the whole invitation flow" → split into migration, edge functions, API routes, page changes
+- "Add auth to the app" → split by layer (middleware, API, UI)
+
+**Too small (merge it):**
+- "Add one index to a table" that was just created → fold into the migration bead
+- "Fix a typo in an error message" → fold into the relevant bead
+
+### Parallelization
+
+Independent beads go to different engineers simultaneously. Beads with dependencies go sequentially — use `bd dep add` to enforce order:
+
+```bash
+bd dep add agentfoloup-yyy agentfoloup-xxx  # yyy depends on xxx (xxx must finish first)
+```
+
+Assign independent beads in the same message so agents start in parallel. Never make eng2 idle while eng1 does work they could split.
+
 ### Read Before Dispatch
 
 **Always `bd show <id>` before dispatching a bead.** Reading first helps you assess complexity, spot interdependencies, catch missing acceptance criteria, and give the agent better context.
@@ -259,3 +306,4 @@ When the operator corrects behavior, or when an agent interaction reveals a proc
 - Do not run curl tests or deployments yourself to verify agent work — create a bead and assign to QA or eng
 - Do not deploy edge functions yourself — that is eng's job, triggered by a bead
 - Do not read source code and implement fixes inline — stop, create a bead, assign it
+- Features must be decomposed into an epic + multiple small child beads, not one large bead. The invitation flow should have been: one epic containing separate beads for the migration, invitations-create function, invitations-get function, the API PATCH route, the call page gate, and the submission wiring — each assignable and testable independently
