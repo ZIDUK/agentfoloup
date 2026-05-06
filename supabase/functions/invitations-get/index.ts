@@ -12,11 +12,12 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
+    const id = url.searchParams.get("id");
     const applicationId = url.searchParams.get("application_id");
 
-    if (!applicationId) {
+    if (!id && !applicationId) {
       return new Response(
-        JSON.stringify({ error: "application_id is required" }),
+        JSON.stringify({ error: "id or application_id is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -35,12 +36,8 @@ Deno.serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { data, error } = await supabase
-      .from("invitations")
-      .select("*")
-      .eq("application_id", applicationId)
-      .limit(1)
-      .maybeSingle();
+    const query = supabase.from("invitations").select("*").limit(1).maybeSingle();
+    const { data, error } = await (id ? query.eq("id", id) : query.eq("application_id", applicationId!));
 
     if (error) {
       return new Response(

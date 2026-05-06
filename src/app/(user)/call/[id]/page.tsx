@@ -9,9 +9,7 @@ import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText
 
 type Props = {
   params: {
-    interviewId: string;
-    jobId: string;
-    applicationId: string;
+    id: string;
   };
 };
 
@@ -55,19 +53,28 @@ function PopUpMessage({ title, description, image }: PopupProps) {
 
 type InviteState = "checking" | "not_found" | "expired" | "valid";
 
+type InvitationData = {
+  id: string;
+  interview_id: string;
+  application_id: string;
+  job_id: number | null;
+  candidate_email: string;
+  candidate_name: string | null;
+};
+
 function InterviewInterface({ params }: Props) {
-  const { interviewId, jobId, applicationId } = params;
+  const invitationId = params.id;
+  const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [interview, setInterview] = useState<Interview>();
   const [isActive, setIsActive] = useState(true);
   const { getInterviewById } = useInterviews();
   const [interviewNotFound, setInterviewNotFound] = useState(false);
   const [isCheckingApp, setIsCheckingApp] = useState(true);
   const [inviteState, setInviteState] = useState<InviteState>("checking");
-  const [inviteId, setInviteId] = useState<string | null>(null);
 
-  // Gate: check invitation validity before doing anything else
+  // Gate: fetch and validate invitation by UUID
   useEffect(() => {
-    fetch(`/api/fn/invitations-get?application_id=${encodeURIComponent(applicationId)}`)
+    fetch(`/api/fn/invitations-get?id=${encodeURIComponent(invitationId)}`)
       .then((r) => {
         if (r.status === 404) return null;
         return r.json();
@@ -81,21 +88,21 @@ function InterviewInterface({ params }: Props) {
           setInviteState("expired");
           return;
         }
-        setInviteId(result.invitation?.id ?? null);
+        setInvitation(result.invitation);
         setInviteState("valid");
       })
       .catch(() => setInviteState("not_found"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Once invite is valid, check if response already exists
+  // Once invite is valid, check if a response already exists
   useEffect(() => {
-    if (inviteState !== "valid") return;
+    if (inviteState !== "valid" || !invitation) return;
 
     fetch("/api/check-response", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ applicationId }),
+      body: JSON.stringify({ applicationId: invitation.application_id }),
     })
       .then((r) => r.json())
       .then(({ exists, call_id }) => {
@@ -107,19 +114,19 @@ function InterviewInterface({ params }: Props) {
       })
       .catch(() => setIsCheckingApp(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inviteState]);
+  }, [inviteState, invitation]);
 
   useEffect(() => {
     if (interview) {
       setIsActive(interview?.is_active === true);
     }
-  }, [interview, interviewId]);
+  }, [interview]);
 
   useEffect(() => {
-    if (isCheckingApp) return;
+    if (isCheckingApp || !invitation) return;
     const fetchInterview = async () => {
       try {
-        const response = await getInterviewById(interviewId);
+        const response = await getInterviewById(invitation.interview_id);
         if (response) {
           setInterview(response);
           document.title = response.name;
@@ -132,19 +139,19 @@ function InterviewInterface({ params }: Props) {
     };
     fetchInterview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCheckingApp]);
+  }, [isCheckingApp, invitation]);
 
   // Fire-and-forget: mark invite as started once interview begins loading
   useEffect(() => {
-    if (inviteState === "valid" && inviteId && !isCheckingApp && interview) {
-      fetch(`/api/invitations/${inviteId}`, {
+    if (inviteState === "valid" && invitation && !isCheckingApp && interview) {
+      fetch(`/api/invitations/${invitation.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_started: true }),
       }).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inviteState, inviteId, isCheckingApp, interview]);
+  }, [inviteState, invitation, isCheckingApp, interview]);
 
   if (inviteState === "checking") {
     return (
@@ -220,8 +227,10 @@ function InterviewInterface({ params }: Props) {
         ) : (
           <Call
             interview={interview}
-            applicationId={applicationId}
-            jobId={Number(jobId)}
+            applicationId={invitation?.application_id}
+            jobId={invitation?.job_id ?? undefined}
+            prefillEmail={invitation?.candidate_email ?? ""}
+            prefillName={invitation?.candidate_name ?? ""}
           />
         )}
       </div>
