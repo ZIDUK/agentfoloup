@@ -1,0 +1,12 @@
+project: agentfoloup
+root: C:\agentic-dream\internal-tools\agentfoloup
+beads:
+    enabled: true
+    prefix: age
+roles:
+    - super
+    - pm
+    - eng1
+    - eng2
+    - qa1
+    - shipper
