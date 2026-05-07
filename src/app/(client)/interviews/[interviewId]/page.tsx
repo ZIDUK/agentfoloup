@@ -277,14 +277,14 @@ function InterviewHome({ params, searchParams }: Props) {
   };
 
   return (
-    <div className="flex flex-col w-full h-full m-2 bg-white">
+    <div className="flex flex-col w-full h-full m-2 bg-card">
       {loading ? (
         <div className="flex flex-col items-center justify-center h-[80%] w-full">
           <LoaderWithText />
         </div>
       ) : (
         <>
-          <div className="flex flex-row p-3 pt-4 justify-center gap-6 items-center sticky top-2 bg-white">
+          <div className="flex flex-row p-3 pt-4 justify-center gap-6 items-center sticky top-2 bg-card">
             <div className="font-bold text-md">{interview?.name}</div>
 
             <div
@@ -308,7 +308,7 @@ function InterviewHome({ params, searchParams }: Props) {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
-                  <span className="text-black flex flex-row gap-4">Share</span>
+                  <span className="text-foreground flex flex-row gap-4">Share</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -323,7 +323,7 @@ function InterviewHome({ params, searchParams }: Props) {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
-                  <span className="text-black flex flex-row gap-4">Preview</span>
+                  <span className="text-foreground flex flex-row gap-4">Preview</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -338,7 +338,7 @@ function InterviewHome({ params, searchParams }: Props) {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
-                  <span className="text-black flex flex-row gap-4">Theme Color</span>
+                  <span className="text-foreground flex flex-row gap-4">Theme Color</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -353,7 +353,7 @@ function InterviewHome({ params, searchParams }: Props) {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
-                  <span className="text-black flex flex-row gap-4">Edit</span>
+                  <span className="text-foreground flex flex-row gap-4">Edit</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -499,7 +499,7 @@ function InterviewHome({ params, searchParams }: Props) {
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <div className="w-6 h-6 rounded-full bg-white border-2 border-indigo-500 flex items-center justify-center">
+                                      <div className="w-6 h-6 rounded-full bg-background border-2 border-indigo-500 flex items-center justify-center">
                                         <span className="text-indigo-500 text-xs font-semibold">
                                           {response?.analytics?.overallScore}
                                         </span>

@@ -63,12 +63,12 @@ function FileUpload({
   });
 
   return (
-    <div className="p-2 bg-white rounded-xl w-full h-24">
+    <div className="p-2 bg-card rounded-xl w-full h-24">
       {!isUploaded ? (
         <div
           {...getRootProps({
             className:
-              "border-dashed border-2 rounded-xl cursor-pointer bg-gray-50 py-4 flex justify-center items-center flex-col",
+              "border-dashed border-2 rounded-xl cursor-pointer bg-muted py-4 flex justify-center items-center flex-col",
           })}
         >
           <input {...getInputProps()} />

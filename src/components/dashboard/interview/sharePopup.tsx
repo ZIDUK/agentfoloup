@@ -98,7 +98,7 @@ function SharePopup({ open, onClose, shareContent }: SharePopupProps) {
                   <input
                     type="text"
                     value={url}
-                    className="w-full p-2 border border-gray-300 bg-gray-100 rounded"
+                    className="w-full p-2 border border-gray-300 bg-muted rounded"
                     readOnly
                   />
                 </div>
@@ -115,7 +115,7 @@ function SharePopup({ open, onClose, shareContent }: SharePopupProps) {
                   <input
                     type="text"
                     value={embedCode}
-                    className="w-full p-2 border border-gray-300 bg-gray-100 rounded"
+                    className="w-full p-2 border border-gray-300 bg-muted rounded"
                     readOnly
                   />
                 </div>

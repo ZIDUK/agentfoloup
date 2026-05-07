@@ -76,7 +76,7 @@ function TestInterviewContent({ params }: Props) {
   if (linkedJobs.length > 0 && !jobSelected) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="bg-white rounded-xl border-2 border-slate-200 shadow-md p-8 w-[420px] flex flex-col gap-5">
+        <div className="bg-card rounded-xl border-2 border-slate-200 shadow-md p-8 w-[420px] flex flex-col gap-5">
           <h2 className="text-lg font-semibold text-center">Select a Job to Test</h2>
           <p className="text-sm text-gray-500 text-center">
             This interview is linked to multiple jobs. Select one so the test response is tagged correctly, or skip to run a general test.

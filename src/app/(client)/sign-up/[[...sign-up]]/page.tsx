@@ -27,9 +27,9 @@ function SignUpPage() {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen w-full bg-white absolute top-0 left-0 z-50">
+    <div className="flex items-center justify-center h-screen w-full bg-background absolute top-0 left-0 z-50">
       <div className="hidden md:block align-middle my-auto mx-auto">
-        <div className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow-lg border-2 border-gray-200">
+        <div className="flex flex-col items-center justify-center p-8 bg-card rounded-lg shadow-lg border-2 border-gray-200">
           <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
             Welcome to Folo<span className="text-indigo-600">Up</span>
           </h1>
@@ -39,7 +39,7 @@ function SignUpPage() {
           <Button
             onClick={handleGoogleSignUp}
             disabled={loading}
-            className="w-full max-w-sm bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-3"
+            className="w-full max-w-sm bg-card text-gray-700 border-2 border-gray-300 hover:bg-muted flex items-center justify-center gap-3"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path

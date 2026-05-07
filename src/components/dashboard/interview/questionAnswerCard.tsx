@@ -195,7 +195,7 @@ function QuestionAnswerCard({
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <p className="text-xs text-gray-600 italic bg-gray-100 p-2 rounded">
+                    <p className="text-xs text-gray-600 italic bg-muted p-2 rounded">
                       {questionSummary.questionTranscript}
                     </p>
                   </div>

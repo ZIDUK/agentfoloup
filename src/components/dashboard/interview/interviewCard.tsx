@@ -101,7 +101,7 @@ function InterviewCard({ name, interviewerId, id, url: _url, readableSlug: _read
                 className="object-cover object-center"
               />
             </div>
-            <div className="text-black text-sm font-semibold mt-2 mr-2 whitespace-nowrap">
+            <div className="text-foreground text-sm font-semibold mt-2 mr-2 whitespace-nowrap">
               Responses:{" "}
               <span className="font-normal">
                 {responseCount?.toString() || 0}

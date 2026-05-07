@@ -277,7 +277,7 @@ function EditInterview({ interview }: EditInterviewProps) {
           ) : availableJobs.length === 0 ? (
             <p className="text-xs text-gray-400">No jobs available</p>
           ) : (
-            <div className="max-h-28 overflow-y-auto border border-gray-400 rounded px-2 py-1 bg-white">
+            <div className="max-h-28 overflow-y-auto border border-gray-400 rounded px-2 py-1 bg-background">
               {availableJobs.map((job) => (
                 <label key={job.job_id} className="flex items-center gap-2 py-0.5 cursor-pointer text-sm">
                   <input
