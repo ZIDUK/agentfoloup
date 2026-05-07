@@ -46,7 +46,7 @@ function InfoTooltip({ content }: { content: string }) {
             strokeWidth={2.5}
           />
         </TooltipTrigger>
-        <TooltipContent className="bg-gray-500 text-white font-normal">
+        <TooltipContent className="bg-muted text-muted-foreground font-normal">
           <p>{content}</p>
         </TooltipContent>
       </Tooltip>
@@ -425,7 +425,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
   return (
     <div className="h-screen z-[10] mx-2">
       {responses.length > 0 ? (
-        <div className="bg-slate-200 rounded-2xl min-h-[120px] p-2 ">
+        <div className="bg-muted rounded-2xl min-h-[120px] p-2 ">
           <div className="flex flex-row gap-2 justify-between items-center mx-2">
             <div className="flex flex-row gap-2 items-center">
               <p className="font-semibold my-2">Overall Analysis</p>
@@ -439,14 +439,14 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
             Interview Description:{" "}
             <span className="font-medium">{interview?.description}</span>
           </p>
-          <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-4 rounded-2xl bg-slate-50 shadow-md">
+          <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-4 rounded-2xl bg-card shadow-md">
             <ScrollArea className="h-[250px]">
               <DataTable data={tableData} interviewId={interview?.id || ""} />
             </ScrollArea>
           </div>
           <div className="flex flex-row gap-1 my-2 justify-center">
             <div className="flex flex-col">
-              <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-3 rounded-2xl bg-slate-50 shadow-md max-w-[400px]">
+              <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-3 rounded-2xl bg-card shadow-md max-w-[400px]">
                 <div className="flex flex-row items-center justify-center gap-1 font-semibold mb-1 text-[15px]">
                   Average Duration
                   <InfoTooltip content="Average time users took to complete an interview" />
@@ -457,7 +457,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col items-center justify-center gap-1 mx-2 p-3 rounded-2xl bg-slate-50 shadow-md max-w-[360px]">
+              <div className="flex flex-col items-center justify-center gap-1 mx-2 p-3 rounded-2xl bg-card shadow-md max-w-[360px]">
                 <div className="flex flex-row gap-1 font-semibold mb-1 text-[15px] mx-auto text-center">
                   Interview Completion Rate
                   <InfoTooltip content="Percentage of interviews completed successfully" />
@@ -470,7 +470,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 </p>
               </div>
             </div>
-            <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-4 rounded-2xl bg-slate-50 shadow-md max-w-[360px]">
+            <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-4 rounded-2xl bg-card shadow-md max-w-[360px]">
               <div className="flex flex-row gap-2 text-[15px] font-bold mb-3 mx-auto">
                 <SmileIcon />
                 Candidate Sentiment
@@ -516,7 +516,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 height={120}
               />
             </div>
-            <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-4 rounded-2xl bg-slate-50 shadow-md">
+            <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-4 rounded-2xl bg-card shadow-md">
               <div className="flex flex-row gap-2 text-[15px] font-bold mx-auto mb-1">
                 <UserCircleIcon />
                 Candidate Status
@@ -586,85 +586,85 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
           </div>
 
           {/* Answer Quality Metrics Section */}
-          <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
+          <div className="bg-muted rounded-2xl min-h-[120px] p-4 px-5 my-3">
             <div className="flex flex-row gap-2 items-center mb-4">
               <Target className="h-5 w-5 text-indigo-600" />
               <p className="font-semibold my-2">Answer Quality Metrics</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
-                <p className="text-sm font-medium text-gray-600">
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
+                <p className="text-sm font-medium text-muted-foreground">
                   Avg Answer Length
                 </p>
                 <p className="text-2xl font-semibold text-indigo-600">
                   {answerQualityMetrics.averageAnswerLength}
-                  <span className="text-sm text-gray-500 ml-1">words</span>
+                  <span className="text-sm text-muted-foreground ml-1">words</span>
                 </p>
               </div>
-              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
-                <p className="text-sm font-medium text-gray-600">
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
+                <p className="text-sm font-medium text-muted-foreground">
                   Relevance Score
                 </p>
                 <p className="text-2xl font-semibold text-indigo-600">
                   {answerQualityMetrics.averageRelevanceScore.toFixed(1)}
-                  <span className="text-sm text-gray-500 ml-1">/10</span>
+                  <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
               </div>
-              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
-                <p className="text-sm font-medium text-gray-600">Depth Score</p>
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
+                <p className="text-sm font-medium text-muted-foreground">Depth Score</p>
                 <p className="text-2xl font-semibold text-indigo-600">
                   {answerQualityMetrics.averageDepthScore.toFixed(1)}
-                  <span className="text-sm text-gray-500 ml-1">/10</span>
+                  <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
               </div>
-              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
-                <p className="text-sm font-medium text-gray-600">
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
+                <p className="text-sm font-medium text-muted-foreground">
                   Consistency Score
                 </p>
                 <p className="text-2xl font-semibold text-indigo-600">
                   {answerQualityMetrics.averageConsistencyScore.toFixed(1)}
-                  <span className="text-sm text-gray-500 ml-1">/10</span>
+                  <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
               </div>
             </div>
           </div>
 
           {/* Advanced Analysis Section */}
-          <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
+          <div className="bg-muted rounded-2xl min-h-[120px] p-4 px-5 my-3">
             <div className="flex flex-row gap-2 items-center mb-4">
               <TrendingUp className="h-5 w-5 text-indigo-600" />
               <p className="font-semibold my-2">Advanced Analysis</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
-                <p className="text-sm font-medium text-gray-600">
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
+                <p className="text-sm font-medium text-muted-foreground">
                   Engagement Score
                 </p>
                 <p className="text-2xl font-semibold text-indigo-600">
                   {advancedAnalysis.averageEngagementScore.toFixed(1)}
-                  <span className="text-sm text-gray-500 ml-1">/10</span>
+                  <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
               </div>
-              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
-                <p className="text-sm font-medium text-gray-600">
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
+                <p className="text-sm font-medium text-muted-foreground">
                   Problem-Solving
                 </p>
                 <p className="text-2xl font-semibold text-indigo-600">
                   {advancedAnalysis.averageProblemSolvingScore.toFixed(1)}
-                  <span className="text-sm text-gray-500 ml-1">/10</span>
+                  <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
               </div>
-              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
-                <p className="text-sm font-medium text-gray-600">
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
+                <p className="text-sm font-medium text-muted-foreground">
                   Adaptability
                 </p>
                 <p className="text-2xl font-semibold text-indigo-600">
                   {advancedAnalysis.averageAdaptabilityScore.toFixed(1)}
-                  <span className="text-sm text-gray-500 ml-1">/10</span>
+                  <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
               </div>
-              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 shadow-md">
-                <p className="text-sm font-medium text-gray-600">
+              <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
+                <p className="text-sm font-medium text-muted-foreground">
                   Confidence Level
                 </p>
                 <div className="flex flex-col gap-1 mt-1">
@@ -694,7 +694,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
           {/* CEFR Language Proficiency Section */}
           {(cefrMetrics.averagePronunciation > 0 ||
             Object.values(cefrMetrics.levelDistribution).some((v) => v > 0)) && (
-            <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
+            <div className="bg-muted rounded-2xl min-h-[120px] p-4 px-5 my-3">
               <div className="flex flex-row gap-2 items-center mb-4">
                 <Target className="h-5 w-5 text-indigo-600" />
                 <p className="font-semibold my-2">English Language Proficiency (CEFR)</p>
@@ -702,7 +702,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* CEFR Level Distribution */}
-                <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50 shadow-md">
+                <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card shadow-md">
                   <div className="flex flex-row gap-2 items-center mb-2">
                     <p className="font-semibold text-[15px]">CEFR Level Distribution</p>
                   </div>
@@ -724,7 +724,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                               >
                                 {level}
                               </div>
-                              <span className="text-sm text-gray-600">
+                              <span className="text-sm text-muted-foreground">
                                 {level === "A1"
                                   ? "Beginner"
                                   : level === "A2"
@@ -744,21 +744,21 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                       })}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-8">
+                    <p className="text-sm text-muted-foreground text-center py-8">
                       No CEFR data available
                     </p>
                   )}
                 </div>
 
                 {/* Language Skills Scores */}
-                <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50 shadow-md">
+                <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card shadow-md">
                   <div className="flex flex-row gap-2 items-center mb-2">
                     <p className="font-semibold text-[15px]">Average Language Skills</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     {cefrMetrics.averagePronunciation > 0 && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Pronunciation</span>
+                        <span className="text-xs text-muted-foreground">Pronunciation</span>
                         <span className="font-semibold text-indigo-600 text-lg">
                           {cefrMetrics.averagePronunciation.toFixed(1)}/10
                         </span>
@@ -766,7 +766,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     )}
                     {cefrMetrics.averageFluency > 0 && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Fluency</span>
+                        <span className="text-xs text-muted-foreground">Fluency</span>
                         <span className="font-semibold text-indigo-600 text-lg">
                           {cefrMetrics.averageFluency.toFixed(1)}/10
                         </span>
@@ -774,7 +774,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     )}
                     {cefrMetrics.averageGrammar > 0 && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Grammar</span>
+                        <span className="text-xs text-muted-foreground">Grammar</span>
                         <span className="font-semibold text-indigo-600 text-lg">
                           {cefrMetrics.averageGrammar.toFixed(1)}/10
                         </span>
@@ -782,7 +782,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     )}
                     {cefrMetrics.averageVocabulary > 0 && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Vocabulary</span>
+                        <span className="text-xs text-muted-foreground">Vocabulary</span>
                         <span className="font-semibold text-indigo-600 text-lg">
                           {cefrMetrics.averageVocabulary.toFixed(1)}/10
                         </span>
@@ -790,7 +790,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     )}
                     {cefrMetrics.averageCoherence > 0 && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Coherence</span>
+                        <span className="text-xs text-muted-foreground">Coherence</span>
                         <span className="font-semibold text-indigo-600 text-lg">
                           {cefrMetrics.averageCoherence.toFixed(1)}/10
                         </span>
@@ -803,14 +803,14 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
           )}
 
           {/* Comparative Metrics Section */}
-          <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
+          <div className="bg-muted rounded-2xl min-h-[120px] p-4 px-5 my-3">
             <div className="flex flex-row gap-2 items-center mb-4">
               <BarChart3 className="h-5 w-5 text-indigo-600" />
               <p className="font-semibold my-2">Comparative Metrics</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Score Distribution */}
-              <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50 shadow-md">
+              <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card shadow-md">
                 <div className="flex flex-row gap-2 items-center mb-2">
                   <p className="font-semibold text-[15px]">Score Distribution</p>
                   <InfoTooltip content="Distribution of overall scores across all candidates" />
@@ -845,14 +845,14 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     height={200}
                   />
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-8">
+                  <p className="text-sm text-muted-foreground text-center py-8">
                     No score data available
                   </p>
                 )}
               </div>
 
               {/* Top Performers & Average */}
-              <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50 shadow-md">
+              <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card shadow-md">
                 <div className="flex flex-row gap-2 items-center mb-2">
                   <Award className="h-5 w-5 text-indigo-600" />
                   <p className="font-semibold text-[15px]">Top Performers</p>
@@ -886,9 +886,9 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                         </span>
                       </div>
                     ))}
-                    <div className="mt-3 pt-3 border-t border-gray-300">
+                    <div className="mt-3 pt-3 border-t border-border">
                       <div className="flex flex-row justify-between items-center">
-                        <span className="font-medium text-gray-600">
+                        <span className="font-medium text-muted-foreground">
                           Average Score
                         </span>
                         <span className="font-semibold text-indigo-600 text-lg">
@@ -898,7 +898,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-8">
+                  <p className="text-sm text-muted-foreground text-center py-8">
                     No performance data available
                   </p>
                 )}
@@ -908,7 +908,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
             {/* Score Trends and Comparison with Average */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               {/* Score Trends */}
-              <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50 shadow-md">
+              <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card shadow-md">
                 <div className="flex flex-row gap-2 items-center mb-2">
                   <TrendingUp className="h-5 w-5 text-indigo-600" />
                   <p className="font-semibold text-[15px]">Score Trends</p>
@@ -941,14 +941,14 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     height={200}
                   />
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-8">
+                  <p className="text-sm text-muted-foreground text-center py-8">
                     No trend data available
                   </p>
                 )}
               </div>
 
               {/* Comparison with Average */}
-              <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50 shadow-md">
+              <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card shadow-md">
                 <div className="flex flex-row gap-2 items-center mb-2">
                   <BarChart3 className="h-5 w-5 text-indigo-600" />
                   <p className="font-semibold text-[15px]">
@@ -964,7 +964,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                         .map((candidate, index) => (
                           <div
                             key={index}
-                            className="flex flex-row justify-between items-center p-2 rounded-lg bg-slate-100"
+                            className="flex flex-row justify-between items-center p-2 rounded-lg bg-muted"
                           >
                             <span className="font-medium text-sm">
                               {candidate.name}
@@ -979,7 +979,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                                     ? "text-green-600"
                                     : candidate.vsAverage < 0
                                       ? "text-red-600"
-                                      : "text-gray-600"
+                                      : "text-muted-foreground"
                                 }`}
                               >
                                 {candidate.vsAverage > 0 ? "+" : ""}
@@ -991,7 +991,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     </div>
                   </ScrollArea>
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-8">
+                  <p className="text-sm text-muted-foreground text-center py-8">
                     No comparison data available
                   </p>
                 )}
