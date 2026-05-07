@@ -671,7 +671,16 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
             keepalive: true,
           }).catch(() => {});
 
-          window.location.href = `/result/${callId}`;
+          if (isTestResponse) {
+            if (!interview.id) {
+              console.warn("interview.id is undefined, falling back to result page");
+              window.location.href = `/result/${callId}`;
+            } else {
+              window.location.href = `/interviews/${interview.id}`;
+            }
+          } else {
+            window.location.href = `/result/${callId}`;
+          }
         } catch {
           toast.error("Error saving interview. Please try again.");
           setIsCompiling(false);
