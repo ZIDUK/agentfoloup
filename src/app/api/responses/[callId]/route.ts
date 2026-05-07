@@ -29,8 +29,8 @@ export async function GET(_req: NextRequest, { params }: { params: { callId: str
 // candidate_status / is_viewed (authenticated). Unauthenticated callers are
 // restricted to a whitelist of candidate-safe fields.
 const CANDIDATE_FIELDS = new Set([
-  "is_ended", "tab_switch_count", "fullscreen_exit_count", "no_face_count",
-  "multiple_faces_count", "proctoring_events", "recording_url", "details", "duration",
+  "is_ended", "tab_switch_count", "fullscreen_exit_count",
+  "proctoring_events", "recording_url", "details", "duration",
 ]);
 const ADMIN_FIELDS = new Set([...CANDIDATE_FIELDS, "candidate_status", "is_viewed"]);
 

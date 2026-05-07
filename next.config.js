@@ -40,12 +40,6 @@ const nextConfig = {
       }),
     );
 
-    // face-api.js uses dynamic require() internally — suppress the expected warning.
-    webpackConfig.ignoreWarnings = [
-      ...(webpackConfig.ignoreWarnings ?? []),
-      { module: /@vladmandic\/face-api/ },
-    ];
-
     return webpackConfig;
   },
 };
