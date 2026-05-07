@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 function Navbar() {
   const [user, setUser] = useState<any>(null);
@@ -83,7 +84,8 @@ function Navbar() {
             </p>
           </Link>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
           {!loading && user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

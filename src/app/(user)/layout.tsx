@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "../globals.css";
 import Providers from "@/components/providers";
 import { Toaster } from "sonner";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,12 +35,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/browser-user-icon.ico" />
       </head>
       <body className={inter.className}>
           <Providers>
+            <div className="fixed top-4 right-4 z-50">
+              <ThemeToggle />
+            </div>
             {children}
             <Toaster
               toastOptions={{
