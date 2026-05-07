@@ -42,11 +42,9 @@ No account required. Receive an invitation link by email or through DreamIT (an 
 | Metric | Target |
 |---|---|
 | Interview completion rate | ≥ 70% of candidates who start reach `is_ended = true` |
-| Post-interview analysis availability | 100% of completed interviews have analytics within 60 seconds of end |
-| Operator time-to-first-insight | < 2 minutes from candidate completion to dashboard result visible |
 | Duplicate submission prevention | 0 cases where the same `application_id` produces two scored responses |
 | Invitation expiry enforcement | 100% of expired invitations blocked at the `/call/[interviewId]/[jobId]/[applicationId]` resolver |
-| DreamIT notification delivery | `dreamit_notified = true` on every response linked to an `application_id` |
+| DreamIT notification delivery | DreamIT is notified for every non-test response linked to an `application_id` |
 
 ---
 
@@ -55,22 +53,24 @@ No account required. Receive an invitation link by email or through DreamIT (an 
 ### Journey 1 — Operator creates an interview template
 
 1. Operator signs in via Clerk at `/sign-in`.
-2. Navigates to **Dashboard → Interviews**.
+2. Navigates to the **Dashboard** at `/dashboard`.
 3. Clicks **Create Interview**, fills in:
-   - Name, objective, description
-   - Number of questions and time duration (minutes)
-   - Selects or creates an AI interviewer persona (name, empathy 1–10, rapport 1–10, exploration depth 1–10, speaking speed 1–10, voice: Lisa/Thalia or Bob/Orion)
-   - Optionally uploads a logo and sets a theme color
-4. AI generates suggested questions from the job description (via `POST /api/generate-interview-questions`); operator edits or replaces them.
-5. Template saved. Operator copies the shareable link from the **Share** popup.
+   - Interview name and objective
+   - Number of questions (1–5) and time duration (1–10 minutes)
+   - Selects an AI interviewer persona from the existing interviewers list
+   - Optionally uploads a reference document (e.g. job description PDF) as AI context for question generation
+   - Optionally links to one or more DreamIT jobs
+4. AI generates suggested questions (via `POST /api/generate-interview-questions`) or operator enters them manually. The interview description is generated alongside AI questions.
+5. Template is saved. When jobs are linked, the interview URL is synced to DreamIT via the `update-foloup-speech-link` edge function.
+6. Operator copies the shareable candidate link from the **Share** popup on the interview detail page. Theme color can be changed via the palette picker on the same page.
 
-**Outcome:** A reusable interview template with a stable URL candidates can be invited to.
+**Outcome:** A reusable interview template with a stable URL candidates can be invited to. Linked DreamIT jobs receive the interview URL automatically.
 
 ---
 
 ### Journey 2 — Candidate completes an interview (direct link)
 
-1. Candidate opens `/call/[interviewId]`.
+1. Candidate opens `/call/[interviewId]` (or the readable slug variant).
 2. Sees the interview description, camera/microphone consent notice, and proctoring disclosure.
 3. Enters email and first name. Browser permission status (granted/denied/unknown) is shown proactively.
 4. Clicks **Start Interview**:
@@ -82,7 +82,7 @@ No account required. Receive an invitation link by email or through DreamIT (an 
 5. The Deepgram Voice Agent greets the candidate by name and conducts the interview. STT uses Deepgram `flux-general-en v2`; the AI "think" layer uses OpenAI `gpt-4o-mini`; TTS uses Deepgram Aura-2 voices.
 6. Real-time transcript is displayed: interviewer utterances on the left, candidate utterances on the right.
 7. Proctoring runs continuously: tab switches, window blurs, fullscreen exits, and camera cover events are logged.
-8. Interview ends (time limit reached, all questions covered, or candidate clicks **End Interview**).
+8. Interview ends when the timer expires, the AI agent closes the connection (e.g. after covering all questions), or the candidate clicks **End Interview**.
 9. Recording is uploaded; transcript and proctoring events are saved (`PATCH /api/responses/[callId]`).
 10. OpenAI analysis runs (`POST /api/get-call`). Candidate is redirected to `/result/[callId]`.
 
@@ -98,7 +98,7 @@ No account required. Receive an invitation link by email or through DreamIT (an 
    - **`is_expired = true`:** shows "Invitation Expired" error page.
    - **Valid and active:** redirects to `/call/[invitationId]` with `applicationId` and `jobId` pre-set.
 3. Before allowing the interview to start, `POST /api/check-response` checks whether this `applicationId` already has a completed response. If yes, the candidate is redirected to `/result/[call_id]` — no re-interview.
-4. Flow continues as Journey 2. At completion, DreamIT is notified (`dreamit_notified` flag set on the response row).
+4. Flow continues as Journey 2. At completion, DreamIT is notified via the `process-test-result` Supabase edge function, passing analytics and the call ID.
 
 **Outcome:** DreamIT job applicants are screened without requiring a separate FoloUp account; duplicate interviews are blocked.
 
@@ -106,26 +106,28 @@ No account required. Receive an invitation link by email or through DreamIT (an 
 
 ### Journey 4 — Operator reviews results
 
-1. Operator opens the interview on the Dashboard.
-2. **Summary tab** shows: overall analysis table (name, overall score 0–100, communication score, soft-skill summary), average duration, completion rate, candidate sentiment pie chart (Positive/Neutral/Negative), candidate status pie chart (Selected/Potential/Not Selected/No Status).
+1. Operator opens the interview on the Dashboard, navigating to `/interviews/[interviewId]`.
+2. **Summary view** shows: overall analysis table (name, overall score 0–100, communication score, soft-skill summary), average duration, completion rate, candidate sentiment pie chart (Positive/Neutral/Negative), candidate status pie chart (Selected/Potential/Not Selected/No Status).
 3. **Answer Quality Metrics** panel: average answer length (words), relevance score, depth score, consistency score.
 4. **Advanced Analysis** panel: engagement score, problem-solving score, adaptability score, confidence level distribution (High/Medium/Low).
 5. **CEFR Language Proficiency** panel (when data present): distribution of candidates by CEFR level (A1–C2); average pronunciation, fluency, grammar, vocabulary, coherence scores.
 6. **Comparative Metrics** panel: score distribution histogram, top 3 performers, score trends over time (line chart), per-candidate delta from cohort average.
-7. Clicking a candidate row opens the individual response detail with full analytics and collapsible transcript.
-8. Operator can set candidate status (Selected / Potential / Not Selected) and mark viewed.
+7. Clicking a candidate name in the left panel or the table opens the individual response detail (`CallInfo`), which shows: scores (overall, communication, CEFR), descriptive feedback per language skill, integrity & proctoring counters (tab switches, fullscreen exits, window switches, camera covered), user sentiment, call summary, question summaries, video recording (if present), and a scrollable full transcript.
+8. Operator sets candidate status (Selected / Potential / Not Selected) via a dropdown in the response detail. Clicking any response automatically marks it as viewed.
 
-**Outcome:** Operator has enough structured signal to shortlist candidates without listening to recordings.
+**Outcome:** Operator has enough structured signal to shortlist candidates without watching recordings.
 
 ---
 
 ### Journey 5 — Operator runs a test interview
 
-1. From the interview detail page, operator clicks **Test Interview**.
-2. Interview opens with `isTestResponse = true` and pre-filled email/name (operator's own).
-3. An amber "Test Mode" banner is shown. The response is stored with `is_test_response = true`, keeping test data separate from production responses on the dashboard.
+1. Operator navigates directly to `/interviews/[interviewId]/test`.
+2. If the interview is linked to DreamIT jobs, a job picker appears so the test response is tagged to the correct job. Operator may also skip job selection.
+3. Interview opens with `isTestResponse = true` and the operator's email and name pre-filled from their Clerk session.
+4. An amber "Test Mode" banner is shown throughout. The response is stored with `is_test_response = true`.
+5. On the interview detail page, responses can be filtered by type: Candidate Responses, Test Responses, or All.
 
-**Outcome:** Operator validates the interview experience and question flow before sending to real candidates.
+**Outcome:** Operator validates the interview experience and question flow before sending to real candidates. Test responses are kept separate from production data.
 
 ---
 
@@ -158,7 +160,7 @@ These are explicitly out of scope for the current product:
 ### R3 — OpenAI analysis latency or failure
 **Risk:** Post-interview analysis (`/api/get-call`) times out or errors. Candidate is redirected to a result page with no analytics.
 **Impact:** Result page shows "Interview Complete" but no scores—degraded value for both candidate and operator.
-**Mitigation:** `keepalive: true` on the fetch ensures the request completes even if the candidate closes the tab immediately. Result page handles `analytics = null` gracefully. Operator can re-trigger analysis from the dashboard.
+**Mitigation:** `keepalive: true` on the fetch ensures the request completes even if the candidate closes the tab immediately. Result page handles `analytics = null` gracefully. When the operator opens any response on the dashboard, `CallInfo` calls `/api/get-call`, which regenerates analytics if not yet complete.
 
 ### R4 — Duplicate response from a retry or page reload
 **Risk:** Candidate reloads the interview page and starts a second interview, producing two response rows for the same `application_id`.
@@ -173,23 +175,26 @@ These are explicitly out of scope for the current product:
 ### R6 — White-label branding leakage
 **Risk:** Talvin AI or Rapidscreen customers see "FoloUp" or "Agentic Dream" branding inside the interview UI.
 **Impact:** Broken white-label trust; contractual issue.
-**Mitigation:** Per-interview `logo_url` and `theme_color` fields allow operators to inject their branding. The interview UI reads these and applies them to buttons and the header. Operators must set these when configuring a white-label deployment.
+**Mitigation:** Per-interview `theme_color` is set via the palette picker on the interview detail page and is applied to the candidate-facing interview UI (button colors, timer bar, accent elements). A `logo_url` field exists on the interview record and is displayed if set.
 
 ---
 
 ## 7. Scope and Boundaries
 
 ### In scope
-- Interview template creation, editing, and deletion by authenticated operators
-- AI interviewer persona configuration (personality parameters, voice selection)
+- Interview template creation (with AI-generated or manual questions), editing, and deletion by authenticated operators
+- DreamIT job selection during interview creation, with automatic URL sync to DreamIT
+- AI interviewer persona selection (existing personas with configurable personality parameters and voice)
+- AI interviewer persona creation and management via the Interviewers section (`/dashboard/interviewers`)
 - Candidate interview flow: consent, camera/mic grant, live Deepgram Voice Agent session, real-time transcript display, proctoring
-- Video recording of candidate during interview and upload to storage
+- Video recording of candidate during interview and upload to Supabase Storage
 - Post-interview OpenAI analysis producing: overall score, CEFR level (A1–C2), pronunciation/fluency/grammar/vocabulary/coherence scores and feedback, question summaries, soft-skill summary, confidence/engagement/problem-solving/adaptability scores
-- Candidate result page showing own analysis
-- Operator dashboard: per-interview analytics, candidate table, charts, candidate status management
+- Candidate result page showing own CEFR analysis, skill feedback, question summaries, and transcript
+- Operator dashboard: per-interview analytics and charts, candidate response list with status indicators, individual response detail with full analytics, proctoring data, video recording, and transcript
+- Response filtering by type (candidate/test), candidate status, linked job, name, and email
 - DreamIT integration: invitation resolution, expiry enforcement, duplicate prevention, DreamIT notification
-- Test-mode interviews (operator-only, flagged separately in DB)
-- White-label support via per-interview logo and theme color
+- Test-mode interviews (operator-only, flagged separately in DB, filterable in dashboard)
+- White-label support via per-interview theme color
 
 ### Explicitly out of scope (see Non-Goals)
 - Scheduling, calendar sync
@@ -200,7 +205,8 @@ These are explicitly out of scope for the current product:
 - Candidate accounts
 
 ### Boundary conditions
-- The maximum interview duration is set by the operator on the template (`time_duration` in minutes). The timer enforces this hard limit; the agent is closed when it expires.
-- Each interview question may have a `follow_up_count` stored, but follow-up depth is controlled by the AI's exploration personality parameter (1–10), not a hard counter enforced in code.
-- Recordings are stored at the path Supabase Storage returns; the `recording_url` on the response row is null until upload succeeds. Analysis does not depend on the recording; it depends on the in-browser transcript.
+- The maximum interview duration is set by the operator on the template (`time_duration`, capped at 10 minutes in the UI). The client-side timer enforces this hard limit; the Deepgram agent is closed when it expires.
+- Each interview question has a `follow_up_count` field (always 1 when generated). Follow-up depth in conversation is controlled by the AI's `exploration` personality parameter (1–10) in the LLM system prompt, not by a code-level counter.
+- Recordings are stored at the path Supabase Storage returns; the `recording_url` on the response row is null until upload succeeds. Analysis does not depend on the recording; it is derived from the in-browser transcript.
 - The CEFR evaluation is English-only. The Deepgram agent is configured with `language: "en"`.
+- The candidate interview UI is desktop-only. Mobile users on the test interview page (`/interviews/[interviewId]/test`) see a message directing them to use a PC.
