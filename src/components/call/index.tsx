@@ -693,7 +693,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
   }, [isEnded, callId, callStartTime]);
 
   return (
-    <div className="flex justify-center items-center h-full bg-gray-100">
+    <div className="flex justify-center items-center h-full bg-background">
       {/* Proctoring warning dialog — driven by the single shared hook instance */}
       {isStarted && (
         <TabSwitchWarning
@@ -725,7 +725,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
         </div>
       )}
 
-      <div className="bg-white rounded-md md:w-[80%] w-[90%] h-full">
+      <div className="bg-card rounded-md md:w-[80%] w-[90%] h-full">
         {isTestResponse && (
           <div className="bg-amber-100 border border-amber-300 text-amber-800 text-xs font-semibold text-center py-1 rounded-t-lg">
             Test Mode — This response will be stored as a test response
@@ -761,7 +761,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
 
             {/* ── Pre-start screen ── */}
             {!isStarted && !isEnded && !isOldUser && !isCheckingApplication && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
+              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-card">
                 <div>
                   {interview?.logo_url && (interview.logo_url.startsWith("/") || interview.logo_url.startsWith("http")) && (
                     <div className="p-1 flex justify-center">
@@ -822,7 +822,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
                     </div>
                   </div>
                   {isTestResponse ? (
-                    <div className="text-center text-sm text-gray-600 py-2">
+                    <div className="text-center text-sm text-muted-foreground py-2">
                       Testing as: <span className="font-semibold">{name}</span> ({email})
                     </div>
                   ) : (
@@ -872,7 +872,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
-                        className="bg-white border ml-2 text-black min-w-15 h-10 rounded-lg flex flex-row justify-center"
+                        className="bg-background border text-foreground ml-2 min-w-15 h-10 rounded-lg flex flex-row justify-center"
                         style={{ borderColor: interview.theme_color }}
                         disabled={Loading}
                       >
@@ -918,7 +918,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
                     }}
                   />
                 </div>
-                <div className="flex justify-between text-xs text-gray-400 mt-0.5 font-normal">
+                <div className="flex justify-between text-xs text-muted-foreground mt-0.5 font-normal">
                   <span>{Math.floor(Number(currentTimeDuration) / 60)}m {Number(currentTimeDuration) % 60}s</span>
                   <span>{interviewTimeDuration}m limit</span>
                 </div>
@@ -991,7 +991,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
-                      className="w-full bg-white text-black border border-indigo-600 h-10 mx-auto flex flex-row justify-center"
+                      className="w-full bg-background text-foreground border border-indigo-600 h-10 mx-auto flex flex-row justify-center"
                       disabled={Loading}
                     >
                       End Interview{" "}
@@ -1024,15 +1024,15 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
 
             {/* ── End screen ── */}
             {isEnded && !isOldUser && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-card  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
                 <div>
                   {isCompiling ? (
                     <div className="p-6 flex flex-col items-center gap-4">
                       <MiniLoader />
-                      <p className="text-lg font-semibold text-center text-gray-700">
+                      <p className="text-lg font-semibold text-center text-foreground">
                         Compiling your results…
                       </p>
-                      <p className="text-sm text-center text-gray-500">
+                      <p className="text-sm text-center text-muted-foreground">
                         Please wait while we prepare your feedback. You will be redirected automatically.
                       </p>
                       {!isTestResponse && !isFeedbackSubmitted && (
@@ -1102,7 +1102,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
               </div>
             )}
             {isOldUser && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-card  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
                 <div>
                   <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
                     <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />

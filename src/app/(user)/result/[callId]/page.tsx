@@ -51,12 +51,12 @@ function CefrScale({ level }: { level: string }) {
                     ? `${CEFR_COLORS[l]} w-9 h-9 ring-2 ring-offset-2 ring-indigo-400 shadow-md`
                     : isPast
                     ? `${CEFR_COLORS[l]} w-7 h-7 opacity-60`
-                    : "bg-gray-100 w-7 h-7"
+                    : "bg-muted w-7 h-7"
                 } flex items-center justify-center`}
               >
                 <span
                   className={`text-xs font-bold ${
-                    isActive || isPast ? "text-white" : "text-gray-400"
+                    isActive || isPast ? "text-white" : "text-muted-foreground"
                   }`}
                 >
                   {l}
@@ -126,14 +126,14 @@ const SKILL_CONFIG: Record<string, { color: string; bg: string; icon: JSX.Elemen
 function SkillCard({ label, feedback }: { label: string; feedback: string }) {
   const cfg = SKILL_CONFIG[label];
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
       <div className="flex items-center gap-2 mb-2">
         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg ${cfg.bg} ${cfg.color}`}>
           {cfg.icon}
         </span>
         <p className={`text-xs font-bold uppercase tracking-wide ${cfg.color}`}>{label}</p>
       </div>
-      <p className="text-gray-600 text-sm leading-relaxed">{feedback}</p>
+      <p className="text-muted-foreground text-sm leading-relaxed">{feedback}</p>
     </div>
   );
 }
@@ -146,7 +146,7 @@ function TranscriptBubble({ entry }: { entry: TranscriptEntry }) {
     <div className={`flex gap-2.5 ${isAgent ? "justify-start" : "flex-row-reverse justify-start"}`}>
       <div
         className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5 ${
-          isAgent ? "bg-gray-200 text-gray-500" : "bg-indigo-600 text-white"
+          isAgent ? "bg-muted text-muted-foreground" : "bg-indigo-600 text-white"
         }`}
       >
         {isAgent ? "AI" : "You"}
@@ -154,7 +154,7 @@ function TranscriptBubble({ entry }: { entry: TranscriptEntry }) {
       <div
         className={`max-w-[76%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
           isAgent
-            ? "bg-gray-100 text-gray-800 rounded-tl-none"
+            ? "bg-muted text-foreground rounded-tl-none"
             : "bg-indigo-600 text-white rounded-tr-none"
         }`}
       >
@@ -167,22 +167,22 @@ function TranscriptBubble({ entry }: { entry: TranscriptEntry }) {
 function TranscriptSection({ transcript }: { transcript: TranscriptEntry[] }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-accent transition-colors"
       >
         <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
           </svg>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Interview Transcript
           </p>
-          <span className="text-xs text-gray-400">· {transcript.length} messages</span>
+          <span className="text-xs text-muted-foreground">· {transcript.length} messages</span>
         </div>
         <svg
-          className={`w-4 h-4 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -191,7 +191,7 @@ function TranscriptSection({ transcript }: { transcript: TranscriptEntry[] }) {
         </svg>
       </button>
       {open && (
-        <div className="border-t border-gray-100 p-4 space-y-3 max-h-[480px] overflow-y-auto">
+        <div className="border-t border-border p-4 space-y-3 max-h-[480px] overflow-y-auto">
           {transcript.map((entry, i) => (
             <TranscriptBubble key={i} entry={entry} />
           ))}
@@ -243,15 +243,15 @@ export default function ResultPage({ params }: Props) {
   if (!analytics) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl p-10 max-w-md w-full text-center shadow-xl">
+        <div className="bg-card rounded-2xl p-10 max-w-md w-full text-center shadow-xl">
           <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-5">
             <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Interview Complete</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Interview Complete</h1>
           {interviewName && <p className="text-indigo-500 font-medium mb-3">{interviewName}</p>}
-          <p className="text-gray-500 text-sm leading-relaxed">
+          <p className="text-muted-foreground text-sm leading-relaxed">
             Thank you for completing the interview. Your responses have been recorded and will be reviewed shortly.
           </p>
         </div>
@@ -273,7 +273,7 @@ export default function ResultPage({ params }: Props) {
   const hasTranscript = transcript.length > 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
 
       {/* Hero banner */}
       <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 px-4 pt-12 pb-16">
@@ -296,25 +296,25 @@ export default function ResultPage({ params }: Props) {
 
         {/* CEFR Proficiency card */}
         {ep.cefrLevel && (
-          <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+          <div className="bg-card rounded-2xl p-6 shadow-md border border-border">
             <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest text-center mb-4">
               English Proficiency Level
             </p>
             <div className="flex items-center justify-center gap-3">
               <span className="text-4xl font-black text-indigo-700 leading-none">{ep.cefrLevel}</span>
               {CEFR_LABELS[ep.cefrLevel] && (
-                <span className="text-lg font-semibold text-gray-500">{CEFR_LABELS[ep.cefrLevel]}</span>
+                <span className="text-lg font-semibold text-muted-foreground">{CEFR_LABELS[ep.cefrLevel]}</span>
               )}
             </div>
             <CefrScale level={ep.cefrLevel} />
             {ep.cefrDescription && (
-              <p className="text-gray-500 text-sm mt-5 leading-relaxed text-center max-w-md mx-auto">
+              <p className="text-muted-foreground text-sm mt-5 leading-relaxed text-center max-w-md mx-auto">
                 {ep.cefrDescription}
               </p>
             )}
             {ep.ieltsEstimate && (
               <div className="mt-3 flex items-center justify-center gap-2">
-                <span className="text-gray-400 text-xs">IELTS equivalent</span>
+                <span className="text-muted-foreground text-xs">IELTS equivalent</span>
                 <span className="bg-indigo-100 text-indigo-700 font-bold text-sm px-2.5 py-0.5 rounded-full">
                   {ep.ieltsEstimate}
                 </span>
@@ -325,23 +325,23 @@ export default function ResultPage({ params }: Props) {
 
         {/* Overall Feedback */}
         {analytics.overallFeedback && (
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
-                <svg className="w-3.5 h-3.5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+              <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
+                <svg className="w-3.5 h-3.5 text-muted-foreground" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
                 </svg>
               </div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Overall Feedback</p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Overall Feedback</p>
             </div>
-            <p className="text-gray-700 text-sm leading-relaxed">{analytics.overallFeedback}</p>
+            <p className="text-foreground text-sm leading-relaxed">{analytics.overallFeedback}</p>
           </div>
         )}
 
         {/* Language Skills - 2-column grid */}
         {hasSkillFeedback && (
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1 mb-3">Language Skills</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1 mb-3">Language Skills</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {skills.map(
                 (s) => s.feedback && <SkillCard key={s.label} label={s.label} feedback={s.feedback} />
@@ -353,18 +353,18 @@ export default function ResultPage({ params }: Props) {
         {/* Question Summaries */}
         {questionSummaries.length > 0 && (
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1 mb-3">Question Summaries</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1 mb-3">Question Summaries</p>
             <div className="space-y-3">
               {questionSummaries.map((q: any, i: number) => (
-                <div key={i} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div key={i} className="bg-card rounded-xl p-5 shadow-sm border border-border">
                   <div className="flex items-start gap-3">
                     <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center mt-0.5">
                       {i + 1}
                     </span>
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-800 text-sm leading-snug mb-1.5">{q.question}</p>
+                      <p className="font-semibold text-foreground text-sm leading-snug mb-1.5">{q.question}</p>
                       {q.summary && (
-                        <p className="text-gray-500 text-sm leading-relaxed">{q.summary}</p>
+                        <p className="text-muted-foreground text-sm leading-relaxed">{q.summary}</p>
                       )}
                     </div>
                   </div>
@@ -377,7 +377,7 @@ export default function ResultPage({ params }: Props) {
         {/* Transcript - collapsible */}
         {hasTranscript && <TranscriptSection transcript={transcript} />}
 
-        <p className="text-center text-xs text-gray-400 pt-2">
+        <p className="text-center text-xs text-muted-foreground pt-2">
           Your responses have been recorded and will be reviewed by the team.
         </p>
       </div>
