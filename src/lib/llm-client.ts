@@ -15,14 +15,23 @@ export async function callLlmEdgeFunction<T = Record<string, unknown>>(
     throw new Error('NEXT_PUBLIC_SUPABASE_URL is not set')
   }
 
-  const response = await fetch(`${supabaseUrl}/functions/v1/llm-calls`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${serviceRoleKey}`,
-    },
-    body: JSON.stringify({ action, data }),
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 60_000)
+
+  let response: globalThis.Response
+  try {
+    response = await fetch(`${supabaseUrl}/functions/v1/llm-calls`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({ action, data }),
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timeoutId)
+  }
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({ error: `HTTP ${response.status}` }))

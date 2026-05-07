@@ -7,6 +7,8 @@ import { callLlmEdgeFunction } from "@/lib/llm-client";
 import { getSupabaseAdminClient } from "@/lib/supabase-client";
 import { InterviewService } from "@/services/interviews.service";
 
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
   logger.info("get-call request received");
   let body: any;
