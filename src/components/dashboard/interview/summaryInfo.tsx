@@ -452,7 +452,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                   <InfoTooltip content="Average time users took to complete an interview" />
                 </div>
                 <div className="flex items-center justify-center">
-                  <p className="text-2xl font-semibold text-indigo-600 w-fit p-1 px-2 bg-indigo-100 rounded-md">
+                  <p className="text-2xl font-semibold text-indigo-600 w-fit p-1 px-2 bg-indigo-100 dark:bg-indigo-950/40 rounded-md">
                     {convertSecondstoMMSS(totalDuration / responses.length)}
                   </p>
                 </div>
@@ -462,7 +462,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                   Interview Completion Rate
                   <InfoTooltip content="Percentage of interviews completed successfully" />
                 </div>
-                <p className="w-fit text-2xl font-semibold text-indigo-600  p-1 px-2 bg-indigo-100 rounded-md">
+                <p className="w-fit text-2xl font-semibold text-indigo-600  p-1 px-2 bg-indigo-100 dark:bg-indigo-950/40 rounded-md">
                   {Math.round(
                     (completedInterviews / responses.length) * 10000,
                   ) / 100}
@@ -480,6 +480,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 sx={{
                   "& .MuiChartsLegend-series text": {
                     fontSize: "0.8rem !important",
+                    fill: "var(--foreground) !important",
                   },
                 }}
                 series={[
@@ -529,6 +530,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 sx={{
                   "& .MuiChartsLegend-series text": {
                     fontSize: "0.8rem !important",
+                    fill: "var(--foreground) !important",
                   },
                 }}
                 series={[
@@ -593,7 +595,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-foreground">
                   Avg Answer Length
                 </p>
                 <p className="text-2xl font-semibold text-indigo-600">
@@ -602,7 +604,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 </p>
               </div>
               <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-foreground">
                   Relevance Score
                 </p>
                 <p className="text-2xl font-semibold text-indigo-600">
@@ -611,14 +613,14 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 </p>
               </div>
               <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
-                <p className="text-sm font-medium text-muted-foreground">Depth Score</p>
+                <p className="text-sm font-medium text-foreground">Depth Score</p>
                 <p className="text-2xl font-semibold text-indigo-600">
                   {answerQualityMetrics.averageDepthScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
               </div>
               <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-foreground">
                   Consistency Score
                 </p>
                 <p className="text-2xl font-semibold text-indigo-600">
@@ -863,7 +865,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     {comparativeMetrics.topPerformers.map((performer, index) => (
                       <div
                         key={index}
-                        className="flex flex-row justify-between items-center p-2 rounded-lg bg-indigo-50"
+                        className="flex flex-row justify-between items-center p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/30"
                       >
                         <div className="flex items-center gap-2">
                           <div
