@@ -97,7 +97,7 @@ const createInterviewerCard = () => {
           </CardTitle>
           <div className="mt-3 p-2 flex flex-row justify-center space-x-10 items-center">
             <div
-              className=" flex flex-col items-center justify-center overflow-hidden border-4 border-gray-500 rounded-xl h-56 w-52"
+              className=" flex flex-col items-center justify-center overflow-hidden border-4 border-border rounded-xl h-56 w-52"
               onClick={() => setGallery(true)}
             >
               {image ? (
@@ -115,7 +115,7 @@ const createInterviewerCard = () => {
                     size={100}
                     strokeWidth={0.7}
                   />
-                  <h4 className="text-xs text-center font-medium text-gray-400">
+                  <h4 className="text-xs text-center font-medium text-muted-foreground">
                     Choose an Avatar
                   </h4>
                 </div>
@@ -126,7 +126,7 @@ const createInterviewerCard = () => {
                 <h3 className="text-lg font-medium">Name</h3>
                 <input
                   type="text"
-                  className="border-b-2 focus:outline-none border-gray-500 px-2 py-0.5 ml-3 w-[12.5rem]"
+                  className="border-b-2 focus:outline-none border-input px-2 py-0.5 ml-3 w-[12.5rem]"
                   placeholder="e.g. Empathetic Bob"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -215,7 +215,7 @@ const createInterviewerCard = () => {
               {avatars.map((item, key) => (
                 <div
                   key={item.id}
-                  className="flex flex-col items-center justify-center border-2 border-gray-500 rounded-xl overflow-hidden m-2 cursor-pointer"
+                  className="flex flex-col items-center justify-center border-2 border-border rounded-xl overflow-hidden m-2 cursor-pointer"
                   onClick={() => {
                     setImage(item.img);
                     setGallery(false);
@@ -224,7 +224,7 @@ const createInterviewerCard = () => {
                   {item.img ? (
                   <Image alt="avatar" width={125} height={100} src={item.img} />
                   ) : (
-                    <div className="w-[125px] h-[100px] bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                    <div className="w-[125px] h-[100px] bg-muted flex items-center justify-center text-muted-foreground text-xs">
                       No Image
                     </div>
                   )}
