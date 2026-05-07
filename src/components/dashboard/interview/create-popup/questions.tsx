@@ -105,7 +105,7 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
       >
         <div className="relative flex justify-center w-full">
           <ChevronLeft
-            className="absolute left-0 opacity-50 cursor-pointer hover:opacity-100 text-gray-600 mr-36"
+            className="absolute left-0 opacity-50 cursor-pointer hover:opacity-100 text-muted-foreground mr-36"
             size={30}
             onClick={() => {
               setProceed(false);
@@ -155,7 +155,7 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
       </p>
       <textarea
         value={description}
-        className="h-fit mt-3 mx-2 py-2 border-2 rounded-md px-2 w-full border-gray-400"
+        className="h-fit mt-3 mx-2 py-2 border-2 rounded-md px-2 w-full border-input"
         placeholder="Enter your interview description."
         rows={3}
         onChange={(e) => {

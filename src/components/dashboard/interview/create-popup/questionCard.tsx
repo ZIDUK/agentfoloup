@@ -49,8 +49,8 @@ const questionCard = ({
                       Low
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="bg-zinc-200">
-                    <p className="text-zinc-800">Brief follow-up</p>
+                  <TooltipContent className="bg-popover">
+                    <p className="text-popover-foreground">Brief follow-up</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -74,8 +74,8 @@ const questionCard = ({
                       Medium
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="bg-zinc-200">
-                    <p className="text-zinc-800">Moderate follow-up</p>
+                  <TooltipContent className="bg-popover">
+                    <p className="text-popover-foreground">Moderate follow-up</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -99,8 +99,8 @@ const questionCard = ({
                       High
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="bg-zinc-200">
-                    <p className="text-zinc-800">In-depth follow-up</p>
+                  <TooltipContent className="bg-popover">
+                    <p className="text-popover-foreground">In-depth follow-up</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -109,7 +109,7 @@ const questionCard = ({
           <div className="flex flex-row items-center">
             <textarea
               value={questionData?.question}
-              className="h-fit mt-3 pt-1 border-2 rounded-md w-full px-2 border-gray-400"
+              className="h-fit mt-3 pt-1 border-2 rounded-md w-full px-2 border-input"
               placeholder="e.g. Can you tell me about a challenging project you’ve worked on?"
               rows={3}
               onChange={(e) =>

@@ -75,19 +75,19 @@ function FileUpload({
           <>
             <>
               <Inbox className="w-8 h-8 text-blue-500" />
-              <p className="mt-2 text-sm text-slate-400">Drop PDF Here</p>
+              <p className="mt-2 text-sm text-muted-foreground">Drop PDF Here</p>
             </>
           </>
         </div>
       ) : (
         <div className="text-left">
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             File uploaded successfully. {fileName}
           </p>
-          <p className="mt-2 text-xs text-slate-600">
+          <p className="mt-2 text-xs text-muted-foreground">
             Do you want to{" "}
             <span
-              className="underline text-slate-950 cursor-pointer font-semibold"
+              className="underline text-foreground cursor-pointer font-semibold"
               onClick={() => setIsUploaded(false)}
             >
               Reupload?

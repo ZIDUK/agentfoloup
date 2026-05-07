@@ -28,7 +28,7 @@ export default function Modal({
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          className="absolute top-2 right-2 p-1 rounded-lg text-gray-400 bg-background hover:text-gray-600"
+          className="absolute top-2 right-2 p-1 rounded-lg text-muted-foreground bg-background hover:text-foreground"
           onClick={onClose}
         >
           <X size={24} />

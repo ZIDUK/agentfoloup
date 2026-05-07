@@ -170,7 +170,7 @@ function DetailsPopup({
             <h3 className="text-sm font-medium">Interview Name:</h3>
             <input
               type="text"
-              className="border-b-2 focus:outline-none border-gray-500 px-2 w-96 py-0.5 ml-3"
+              className="border-b-2 focus:outline-none border-input px-2 w-96 py-0.5 ml-3"
               placeholder="e.g. Name of the Interview"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -180,11 +180,11 @@ function DetailsPopup({
           <div className="flex flex-col mt-3 w-full">
             <h3 className="text-sm font-medium">Jobs:</h3>
             {jobsLoading ? (
-              <p className="text-xs text-gray-400 mt-1">Loading jobs…</p>
+              <p className="text-xs text-muted-foreground mt-1">Loading jobs…</p>
             ) : jobs.length === 0 ? (
-              <p className="text-xs text-gray-400 mt-1">No jobs available</p>
+              <p className="text-xs text-muted-foreground mt-1">No jobs available</p>
             ) : (
-              <div className="mt-1 max-h-28 overflow-y-auto border border-gray-300 rounded px-2 py-1 w-full">
+              <div className="mt-1 max-h-28 overflow-y-auto border border-border rounded px-2 py-1 w-full">
                 {jobs.map((job) => (
                   <label key={job.job_id} className="flex items-center gap-2 py-0.5 cursor-pointer text-sm">
                     <input
@@ -211,7 +211,7 @@ function DetailsPopup({
               className=" h-36 pt-1 overflow-x-scroll scroll whitespace-nowrap scroll-smooth scrollbar-hide w-[27.5rem]"
             >
               {interviewers.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
                   No interviewers available. Please create one first.
                 </div>
               ) : (
@@ -229,7 +229,7 @@ function DetailsPopup({
                       setOpenInterviewerDetails(true);
                     }}
                   >
-                    <Info size={18} color="#4f46e5" strokeWidth={2.2} />
+                    <Info size={18} strokeWidth={2.2} className="text-indigo-600" />
                   </button>
                   <div
                     className={`w-[96px] overflow-hidden rounded-full ${
@@ -275,7 +275,7 @@ function DetailsPopup({
           <h3 className="text-sm font-medium">Objective:</h3>
           <Textarea
             value={objective}
-            className="h-24 mt-2 border-2 border-gray-500 w-[33.2rem]"
+            className="h-24 mt-2 border-2 border-input w-[33.2rem]"
             placeholder="e.g. Find best candidates based on their technical skills and previous projects."
             onChange={(e) => setObjective(e.target.value)}
             onBlur={(e) => setObjective(e.target.value.trim())}
@@ -298,7 +298,7 @@ function DetailsPopup({
                 step="1"
                 max="5"
                 min="1"
-                className="border-b-2 text-center focus:outline-none  border-gray-500 w-14 px-2 py-0.5 ml-3"
+                className="border-b-2 text-center focus:outline-none  border-input w-14 px-2 py-0.5 ml-3"
                 value={numQuestions}
                 onChange={(e) => {
                   let value = e.target.value;
@@ -321,7 +321,7 @@ function DetailsPopup({
                 step="1"
                 max="10"
                 min="1"
-                className="border-b-2 text-center focus:outline-none  border-gray-500 w-14 px-2 py-0.5 ml-3"
+                className="border-b-2 text-center focus:outline-none  border-input w-14 px-2 py-0.5 ml-3"
                 value={duration}
                 onChange={(e) => {
                   let value = e.target.value;
