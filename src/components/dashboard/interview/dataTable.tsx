@@ -107,7 +107,7 @@ function DataTable({ data, interviewId }: DataTableProps) {
               </TooltipTrigger>
               <TooltipContent
                 side="top"
-                className="bg-gray-500 text-white font-normal"
+                className="bg-popover text-popover-foreground font-normal"
               >
                 View Response
               </TooltipContent>

@@ -598,7 +598,7 @@ function CallInfo({
                 </div>
                 {proctoringEvents.filter((e) => e.type !== "window_switch_summary").length > 0 && (
                   <div className="mt-1">
-                    <p className="text-xs text-gray-500 font-mono mb-1">proctoring_events</p>
+                    <p className="text-xs text-muted-foreground font-mono mb-1">proctoring_events</p>
                     <div className="max-h-28 overflow-y-auto bg-background rounded border border-border p-2 space-y-1">
                       {proctoringEvents
                         .filter((e) => e.type !== "window_switch_summary")

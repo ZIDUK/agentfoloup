@@ -67,7 +67,7 @@ function TestInterviewContent({ params }: Props) {
   if (!interview) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500">Interview not found.</p>
+        <p className="text-muted-foreground">Interview not found.</p>
       </div>
     );
   }
@@ -78,7 +78,7 @@ function TestInterviewContent({ params }: Props) {
       <div className="flex items-center justify-center h-full">
         <div className="bg-card rounded-xl border-2 border-slate-200 shadow-md p-8 w-[420px] flex flex-col gap-5">
           <h2 className="text-lg font-semibold text-center">Select a Job to Test</h2>
-          <p className="text-sm text-gray-500 text-center">
+          <p className="text-sm text-muted-foreground text-center">
             This interview is linked to multiple jobs. Select one so the test response is tagged correctly, or skip to run a general test.
           </p>
           <div className="flex flex-col gap-2">
@@ -98,7 +98,7 @@ function TestInterviewContent({ params }: Props) {
           </div>
           <div className="flex gap-3 mt-2">
             <button
-              className="flex-1 py-2 rounded-lg border-2 border-slate-200 text-sm text-gray-500 hover:border-slate-400 transition-colors"
+              className="flex-1 py-2 rounded-lg border-2 border-border text-sm text-muted-foreground hover:border-border/60 transition-colors"
               onClick={() => { setSelectedJobId(null); setJobSelected(true); }}
             >
               Skip (no job)
@@ -130,7 +130,7 @@ function TestInterviewContent({ params }: Props) {
       <div className="md:hidden flex flex-col items-center justify-center my-auto">
         <div className="mt-48 px-3">
           <p className="text-center my-5 text-md font-semibold">{interview.name}</p>
-          <p className="text-center text-gray-600 my-5">
+          <p className="text-center text-muted-foreground my-5">
             Please use a PC to run the test interview. Apologies for any inconvenience.
           </p>
         </div>

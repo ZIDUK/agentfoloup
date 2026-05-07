@@ -28,9 +28,9 @@ function Interviewers() {
     return (
       <>
         <div className="flex">
-          <div className="h-40 w-36 ml-1 mr-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-          <div className="h-40 w-36 ml-1 mr-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-          <div className="h-40 w-36 ml-1 mr-3 flex-none animate-pulse rounded-xl bg-gray-300" />
+          <div className="h-40 w-36 ml-1 mr-3 flex-none animate-pulse rounded-xl bg-muted" />
+          <div className="h-40 w-36 ml-1 mr-3 flex-none animate-pulse rounded-xl bg-muted" />
+          <div className="h-40 w-36 ml-1 mr-3 flex-none animate-pulse rounded-xl bg-muted" />
         </div>
       </>
     );
@@ -44,7 +44,7 @@ function Interviewers() {
             <h2 className="mr-2 text-2xl font-semibold tracking-tight mt-3">
               Interviewers
             </h2>
-            <h3 className=" text-sm tracking-tight text-gray-600 font-medium ">
+            <h3 className=" text-sm tracking-tight text-muted-foreground font-medium ">
               Get to know them by clicking the profile.
             </h3>
           </div>

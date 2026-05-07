@@ -831,7 +831,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
                         <input
                           value={email}
                           className={`h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 text-sm font-normal ${
-                            email && !isValidEmail ? "border-red-400" : "border-gray-400"
+                            email && !isValidEmail ? "border-red-400" : "border-input"
                           }`}
                           placeholder="Enter your email address"
                           onChange={(e) => setEmail(e.target.value)}
@@ -843,7 +843,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
                       <div className="flex justify-center">
                         <input
                           value={name}
-                          className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
+                          className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-input text-sm font-normal"
                           placeholder="Enter your first name"
                           onChange={(e) => setName(e.target.value)}
                         />

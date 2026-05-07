@@ -390,7 +390,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <div className="flex w-full justify-center py-2">
                 <Select onValueChange={(v) => setFilterStatus(v)}>
                   <SelectTrigger className="w-[95%] bg-secondary rounded-lg">
-                    <Filter size={18} className="text-slate-400" />
+                    <Filter size={18} className="text-muted-foreground" />
                     <SelectValue placeholder="Filter By Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -407,7 +407,7 @@ function InterviewHome({ params, searchParams }: Props) {
                       <div className="flex items-center"><div className="w-3 h-3 bg-green-500 rounded-full mr-2" />Selected</div>
                     </SelectItem>
                     <SelectItem value="ALL">
-                      <div className="flex items-center"><div className="w-3 h-3 border-2 border-gray-300 rounded-full mr-2" />All</div>
+                      <div className="flex items-center"><div className="w-3 h-3 border-2 border-border rounded-full mr-2" />All</div>
                     </SelectItem>
                   </SelectContent>
                 </Select>

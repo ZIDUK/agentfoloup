@@ -8,9 +8,9 @@ import { useInterviews } from "@/contexts/interviews.context";
 function InterviewsLoader() {
   return (
     <div className="flex flex-row">
-      <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-      <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-      <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
+      <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-muted" />
+      <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-muted" />
+      <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-muted" />
     </div>
   );
 }
@@ -24,7 +24,7 @@ function Interviews() {
         <h2 className="mr-2 text-2xl font-semibold tracking-tight mt-8">
           My Interviews
         </h2>
-        <h3 className="text-sm tracking-tight text-gray-600 font-medium">
+        <h3 className="text-sm tracking-tight text-muted-foreground font-medium">
           Start getting responses now!
         </h3>
         <div className="relative flex items-center mt-1 flex-wrap">
