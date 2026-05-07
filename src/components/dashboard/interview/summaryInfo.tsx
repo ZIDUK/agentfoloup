@@ -843,6 +843,11 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                         color: "#4F46E5",
                       },
                     ]}
+                    sx={{
+                      '& .MuiChartsAxis-tickLabel': { fill: 'var(--foreground) !important' },
+                      '& .MuiChartsAxis-line': { stroke: 'var(--border) !important' },
+                      '& .MuiChartsAxis-tick': { stroke: 'var(--border) !important' },
+                    }}
                     width={400}
                     height={200}
                   />
@@ -939,6 +944,12 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                         strokeDasharray: "5 5",
                       },
                     ]}
+                    sx={{
+                      '& .MuiChartsAxis-tickLabel': { fill: 'var(--foreground) !important' },
+                      '& .MuiChartsAxis-line': { stroke: 'var(--border) !important' },
+                      '& .MuiChartsAxis-tick': { stroke: 'var(--border) !important' },
+                      '& .MuiChartsLegend-series text': { fill: 'var(--foreground) !important' },
+                    }}
                     width={400}
                     height={200}
                   />
