@@ -29,7 +29,7 @@ function QuestionAnswerCard({
 
   return (
     <>
-      <div className="shadow-md mb-2 bg-slate-50 rounded-2xl py-2">
+      <div className="shadow-md mb-2 bg-card rounded-2xl py-2">
         <div className="flex flex-row items-center">
           <CardTitle className="text-lg min-w-[42px] bg-indigo-200 rounded-full p-1 mx-3">
             <p className="my-auto text-center">{questionNumber}</p>
@@ -40,7 +40,7 @@ function QuestionAnswerCard({
 
             {/* CEFR Analysis per Question */}
             {hasCEFRData && (
-              <div className="mt-3 pt-3 border-t border-gray-300">
+              <div className="mt-3 pt-3 border-t border-border">
                 <div className="flex flex-row gap-3 items-center mb-2">
                   {questionSummary.cefrLevel && (
                     <div
@@ -52,7 +52,7 @@ function QuestionAnswerCard({
                     </div>
                   )}
                   {questionSummary.wordsPerMinute !== undefined && (
-                    <div className="flex items-center gap-1 text-xs text-gray-600">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <span className="font-semibold text-indigo-600">
                         {Math.round(questionSummary.wordsPerMinute)}
                       </span>
@@ -60,7 +60,7 @@ function QuestionAnswerCard({
                     </div>
                   )}
                   {questionSummary.badPauses !== undefined && (
-                    <div className="flex items-center gap-1 text-xs text-gray-600">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <span className="font-semibold text-red-600">
                         {questionSummary.badPauses}
                       </span>
@@ -77,7 +77,7 @@ function QuestionAnswerCard({
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
                     {questionSummary.pronunciationLevel && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs text-muted-foreground">
                           Pronunciation
                         </span>
                         <span
@@ -91,7 +91,7 @@ function QuestionAnswerCard({
                     )}
                     {questionSummary.fluencyLevel && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Fluency</span>
+                        <span className="text-xs text-muted-foreground">Fluency</span>
                         <span
                           className={`text-xs font-semibold ${getCEFRColor(
                             questionSummary.fluencyLevel,
@@ -103,7 +103,7 @@ function QuestionAnswerCard({
                     )}
                     {questionSummary.vocabularyLevel && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Vocabulary</span>
+                        <span className="text-xs text-muted-foreground">Vocabulary</span>
                         <span
                           className={`text-xs font-semibold ${getCEFRColor(
                             questionSummary.vocabularyLevel,
@@ -115,7 +115,7 @@ function QuestionAnswerCard({
                     )}
                     {questionSummary.grammarLevel && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Grammar</span>
+                        <span className="text-xs text-muted-foreground">Grammar</span>
                         <span
                           className={`text-xs font-semibold ${getCEFRColor(
                             questionSummary.grammarLevel,
@@ -136,40 +136,40 @@ function QuestionAnswerCard({
                   <div className="mt-3 space-y-2">
                     {questionSummary.pronunciationFeedback && (
                       <div className="text-xs">
-                        <span className="font-semibold text-gray-700">
+                        <span className="font-semibold text-foreground">
                           Pronunciation:{" "}
                         </span>
-                        <span className="text-gray-600">
+                        <span className="text-muted-foreground">
                           {questionSummary.pronunciationFeedback}
                         </span>
                       </div>
                     )}
                     {questionSummary.fluencyFeedback && (
                       <div className="text-xs">
-                        <span className="font-semibold text-gray-700">
+                        <span className="font-semibold text-foreground">
                           Fluency:{" "}
                         </span>
-                        <span className="text-gray-600">
+                        <span className="text-muted-foreground">
                           {questionSummary.fluencyFeedback}
                         </span>
                       </div>
                     )}
                     {questionSummary.vocabularyFeedback && (
                       <div className="text-xs">
-                        <span className="font-semibold text-gray-700">
+                        <span className="font-semibold text-foreground">
                           Vocabulary:{" "}
                         </span>
-                        <span className="text-gray-600">
+                        <span className="text-muted-foreground">
                           {questionSummary.vocabularyFeedback}
                         </span>
                       </div>
                     )}
                     {questionSummary.grammarFeedback && (
                       <div className="text-xs">
-                        <span className="font-semibold text-gray-700">
+                        <span className="font-semibold text-foreground">
                           Grammar:{" "}
                         </span>
-                        <span className="text-gray-600">
+                        <span className="text-muted-foreground">
                           {questionSummary.grammarFeedback}
                         </span>
                       </div>
@@ -179,23 +179,23 @@ function QuestionAnswerCard({
 
                 {/* Question Transcript */}
                 {questionSummary.questionTranscript && (
-                  <div className="mt-3 pt-3 border-t border-gray-300">
+                  <div className="mt-3 pt-3 border-t border-border">
                     <div className="flex items-center gap-1 mb-1">
-                      <span className="text-xs font-semibold text-gray-700">
+                      <span className="text-xs font-semibold text-foreground">
                         Transcript:
                       </span>
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger>
-                            <Info className="h-3 w-3 text-gray-500" />
+                            <Info className="h-3 w-3 text-muted-foreground" />
                           </TooltipTrigger>
-                          <TooltipContent className="bg-gray-500 text-white text-xs max-w-xs">
+                          <TooltipContent className="bg-muted text-foreground text-xs max-w-xs">
                             <p>Exact transcript of the candidate's answer</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <p className="text-xs text-gray-600 italic bg-muted p-2 rounded">
+                    <p className="text-xs text-muted-foreground italic bg-muted p-2 rounded">
                       {questionSummary.questionTranscript}
                     </p>
                   </div>
