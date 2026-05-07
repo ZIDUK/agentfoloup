@@ -37,7 +37,6 @@ import { DeepgramAgentService } from "@/services/deepgram-agent.service";
 import { AudioPlayer } from "@/lib/audio-player";
 import { AgentEvents } from "@deepgram/sdk";
 import { useCameraRecording } from "@/hooks/useCameraRecording";
-import { useFaceDetection } from "@/hooks/useFaceDetection";
 
 type InterviewProps = {
   interview: Interview;
@@ -140,14 +139,6 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
       mic.addEventListener("change", () => update(cam.state, mic.state));
     }).catch(() => {});
   }, []);
-
-  // Face detection — runs only while interview is active.
-  const { noFaceCount, multipleFacesCount, getFaceDetectionData } =
-    useFaceDetection(cameraVideoRef, isStarted && !isEnded);
-  const faceDetectionDataRef = useRef(getFaceDetectionData());
-  useEffect(() => {
-    faceDetectionDataRef.current = getFaceDetectionData();
-  }, [getFaceDetectionData]);
 
   const lastUserResponseRef = useRef<HTMLDivElement | null>(null);
 
@@ -466,6 +457,12 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
   }, [isStarted, isEnded, cameraStream]);
 
   const startConversation = async () => {
+    // Must be called synchronously within the user-gesture call stack before any
+    // awaits — browsers block requestFullscreen() outside the gesture window.
+    if (typeof document !== 'undefined' && document.fullscreenEnabled && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+
     let reuseCallId: string | null = null;
 
     if (!isTestResponse) {
@@ -636,7 +633,6 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
 
         // Capture final proctoring snapshot.
         const proctoring = proctoringDataRef.current;
-        const faceDetection = faceDetectionDataRef.current;
 
         setIsCompiling(true);
         try {
@@ -647,11 +643,8 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
               is_ended: true,
               tab_switch_count: proctoring.tabSwitchCount,
               fullscreen_exit_count: proctoring.fullscreenExitCount,
-              no_face_count: faceDetection.noFaceCount,
-              multiple_faces_count: faceDetection.multipleFacesCount,
               proctoring_events: [
                 ...proctoring.events,
-                ...faceDetection.events,
                 ...(proctoring.windowSwitchCount > 0
                   ? [{ type: "window_switch_summary", count: proctoring.windowSwitchCount, timestamp: endTime }]
                   : []),

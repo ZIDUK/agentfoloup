@@ -44,12 +44,10 @@ const useTabSwitchPrevention = (isActive: boolean = false) => {
     }
   }, []);
 
-  // Request fullscreen when the interview starts; exit when it ends.
+  // Exit fullscreen when the interview ends (requestFullscreen is called in the
+  // startConversation click handler to stay within the user-gesture window).
   useEffect(() => {
     if (!isActive) return;
-    if (typeof document !== "undefined" && document.fullscreenEnabled) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
     return () => {
       // Exit fullscreen when proctoring deactivates so the fullscreenchange
       // event fires after the listener below has already been removed.
