@@ -98,7 +98,7 @@ function SharePopup({ open, onClose, shareContent }: SharePopupProps) {
                   <input
                     type="text"
                     value={url}
-                    className="w-full p-2 border border-gray-300 bg-muted rounded"
+                    className="w-full p-2 border border-input bg-muted rounded"
                     readOnly
                   />
                 </div>
@@ -115,7 +115,7 @@ function SharePopup({ open, onClose, shareContent }: SharePopupProps) {
                   <input
                     type="text"
                     value={embedCode}
-                    className="w-full p-2 border border-gray-300 bg-muted rounded"
+                    className="w-full p-2 border border-input bg-muted rounded"
                     readOnly
                   />
                 </div>
@@ -130,7 +130,7 @@ function SharePopup({ open, onClose, shareContent }: SharePopupProps) {
                       min="1050"
                       placeholder="Width"
                       value={embedWidth}
-                      className="w-full p-2 border border-gray-300 rounded"
+                      className="w-full p-2 border border-input rounded"
                       onChange={(e) => setEmbedWidth(Number(e.target.value))}
                       onBlur={(e) => {
                         const value = Math.max(1050, Number(e.target.value));
@@ -148,7 +148,7 @@ function SharePopup({ open, onClose, shareContent }: SharePopupProps) {
                       min="700"
                       placeholder="Height"
                       value={embedHeight}
-                      className="w-full p-2 border border-gray-300 rounded"
+                      className="w-full p-2 border border-input rounded"
                       onChange={(e) => setEmbedHeight(Number(e.target.value))}
                       onBlur={(e) => {
                         const value = Math.max(700, Number(e.target.value));

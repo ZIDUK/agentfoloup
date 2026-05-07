@@ -29,17 +29,17 @@ function SignUpPage() {
   return (
     <div className="flex items-center justify-center h-screen w-full bg-background absolute top-0 left-0 z-50">
       <div className="hidden md:block align-middle my-auto mx-auto">
-        <div className="flex flex-col items-center justify-center p-8 bg-card rounded-lg shadow-lg border-2 border-gray-200">
-          <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
+        <div className="flex flex-col items-center justify-center p-8 bg-card rounded-lg shadow-lg border-2 border-border">
+          <h1 className="text-3xl font-bold text-center text-foreground mb-2">
             Welcome to Folo<span className="text-indigo-600">Up</span>
           </h1>
-          <p className="text-gray-600 mb-8 text-center">
+          <p className="text-muted-foreground mb-8 text-center">
             Sign up to get started with AI-powered interviews
           </p>
           <Button
             onClick={handleGoogleSignUp}
             disabled={loading}
-            className="w-full max-w-sm bg-card text-gray-700 border-2 border-gray-300 hover:bg-muted flex items-center justify-center gap-3"
+            className="w-full max-w-sm bg-card text-foreground border-2 border-border hover:bg-muted flex items-center justify-center gap-3"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -64,13 +64,13 @@ function SignUpPage() {
         </div>
       </div>
       <div className="block md:hidden px-3 h-[60%] my-auto">
-        <h1 className="text-2xl font-bold text-center text-gray-800">
+        <h1 className="text-2xl font-bold text-center text-foreground">
           Welcome to Folo<span className="text-indigo-600">Up</span>
         </h1>
-        <h1 className="text-md my-3 text-center text-gray-800">
+        <h1 className="text-md my-3 text-center text-foreground">
           Mobile version is currently under construction. 🚧
         </h1>
-        <p className="text-center text-gray-600 mt-3">
+        <p className="text-center text-muted-foreground mt-3">
           Please sign in using a PC for the best experience. Sorry for the
           inconvenience.
         </p>

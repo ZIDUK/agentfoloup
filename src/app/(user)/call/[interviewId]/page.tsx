@@ -21,7 +21,7 @@ type PopupProps = {
 
 function PopupLoader() {
   return (
-    <div className="bg-white rounded-md absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 md:w-[80%] w-[90%]">
+    <div className="bg-background rounded-md absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 md:w-[80%] w-[90%]">
       <div className="h-[88vh] justify-center items-center rounded-lg border-2 border-b-4 border-r-4 border-black font-bold transition-all md:block dark:border-white">
         <div className="relative flex flex-col items-center justify-center h-full">
           <LoaderWithText />
@@ -33,7 +33,7 @@ function PopupLoader() {
 
 function PopUpMessage({ title, description, image }: PopupProps) {
   return (
-    <div className="bg-white rounded-md absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 md:w-[80%] w-[90%]">
+    <div className="bg-card rounded-md absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 md:w-[80%] w-[90%]">
       <div className="h-[88vh] content-center rounded-lg border-2 border-b-4 border-r-4 border-black font-bold transition-all md:block dark:border-white">
         <div className="flex flex-col items-center justify-center my-auto">
           <Image
@@ -175,7 +175,7 @@ function InterviewInterface({ params }: Props) {
         </div>
         <div className="md:hidden flex flex-col items-center justify-center my-auto">
           <div className="mt-48 px-3">
-            <p className="text-center text-gray-600 my-5">
+            <p className="text-center text-muted-foreground my-5">
               No invitation found. Please contact the hiring team.
             </p>
           </div>
@@ -196,7 +196,7 @@ function InterviewInterface({ params }: Props) {
         </div>
         <div className="md:hidden flex flex-col items-center justify-center my-auto">
           <div className="mt-48 px-3">
-            <p className="text-center text-gray-600 my-5">
+            <p className="text-center text-muted-foreground my-5">
               This invitation has expired. Please contact the hiring team.
             </p>
           </div>
@@ -239,7 +239,7 @@ function InterviewInterface({ params }: Props) {
           <p className="text-center my-5 text-md font-semibold">
             {interview?.name}
           </p>
-          <p className="text-center text-gray-600 my-5">
+          <p className="text-center text-muted-foreground my-5">
             Please use a PC to respond to the interview. Apologies for any
             inconvenience caused.
           </p>
