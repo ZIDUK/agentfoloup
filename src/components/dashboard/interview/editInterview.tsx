@@ -187,7 +187,7 @@ function EditInterview({ interview }: EditInterviewProps) {
 
   return (
     <div className=" h-screen z-[10] mx-2">
-      <div className="flex flex-col bg-gray-200 rounded-md min-h-[120px] p-2 pl-4">
+      <div className="flex flex-col bg-muted rounded-md min-h-[120px] p-2 pl-4">
         <div>
           <div
             className="mt-2 ml-1 pr-2 inline-flex items-center text-indigo-600 hover:cursor-pointer"
@@ -251,7 +251,7 @@ function EditInterview({ interview }: EditInterviewProps) {
         </div>
         <textarea
           value={description}
-          className="h-fit mt-3 ml-2 py-2 border-2 rounded-md w-[75%] px-2 border-gray-400"
+          className="h-fit mt-3 ml-2 py-2 border-2 rounded-md w-[75%] px-2 border-input"
           placeholder="Enter your interview description here."
           rows={3}
           onChange={(e) => {
@@ -264,7 +264,7 @@ function EditInterview({ interview }: EditInterviewProps) {
         <p className="mt-3 mb-1 ml-2 font-medium">Objective</p>
         <textarea
           value={objective}
-          className="h-fit mt-3 ml-2 py-2 border-2 rounded-md w-[75%] px-2 border-gray-400"
+          className="h-fit mt-3 ml-2 py-2 border-2 rounded-md w-[75%] px-2 border-input"
           placeholder="Enter your interview objective here."
           rows={3}
           onChange={(e) => setObjective(e.target.value)}
@@ -273,11 +273,11 @@ function EditInterview({ interview }: EditInterviewProps) {
         <div className="flex flex-col mt-3 ml-2 w-[75%]">
           <p className="font-medium mb-1">Jobs</p>
           {jobsLoading ? (
-            <p className="text-xs text-gray-400">Loading jobs…</p>
+            <p className="text-xs text-muted-foreground">Loading jobs…</p>
           ) : availableJobs.length === 0 ? (
-            <p className="text-xs text-gray-400">No jobs available</p>
+            <p className="text-xs text-muted-foreground">No jobs available</p>
           ) : (
-            <div className="max-h-28 overflow-y-auto border border-gray-400 rounded px-2 py-1 bg-background">
+            <div className="max-h-28 overflow-y-auto border border-border rounded px-2 py-1 bg-background">
               {availableJobs.map((job) => (
                 <label key={job.job_id} className="flex items-center gap-2 py-0.5 cursor-pointer text-sm">
                   <input
@@ -345,7 +345,7 @@ function EditInterview({ interview }: EditInterviewProps) {
               step="1"
               max="5"
               min={questions.length.toString()}
-              className="border-2 text-center focus:outline-none  bg-slate-100 rounded-md border-gray-500 w-14 px-2 py-0.5 ml-3"
+              className="border-2 text-center focus:outline-none  bg-secondary rounded-md border-input w-14 px-2 py-0.5 ml-3"
               value={numQuestions}
               onChange={(e) => {
                 let value = e.target.value;
@@ -368,7 +368,7 @@ function EditInterview({ interview }: EditInterviewProps) {
               step="1"
               max="10"
               min="1"
-              className="border-2 text-center focus:outline-none bg-slate-100 rounded-md border-gray-500 w-14 px-2 py-0.5 ml-3"
+              className="border-2 text-center focus:outline-none bg-secondary rounded-md border-input w-14 px-2 py-0.5 ml-3"
               value={Number(duration)}
               onChange={(e) => {
                 let value = e.target.value;
@@ -386,7 +386,7 @@ function EditInterview({ interview }: EditInterviewProps) {
           </div>
         </div>
         <p className="mt-3 mb-1 ml-2 font-medium">Questions</p>
-        <ScrollArea className="flex ml-2 p-2 pr-4 mb-4 flex-col justify-center items-center w-[75%] max-h-[500px] bg-slate-100 rounded-md text-sm mt-3">
+        <ScrollArea className="flex ml-2 p-2 pr-4 mb-4 flex-col justify-center items-center w-[75%] max-h-[500px] bg-secondary rounded-md text-sm mt-3">
           {questions.map((question, index) => (
             <QuestionCard
               key={question.id}
