@@ -66,6 +66,7 @@ export async function middleware(req: NextRequest) {
   if (pathname.startsWith("/sign-in") && session) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
+    redirectUrl.search = "";
     return NextResponse.redirect(redirectUrl);
   }
 
