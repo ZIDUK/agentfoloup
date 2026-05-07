@@ -307,7 +307,7 @@ function InterviewHome({ params, searchParams }: Props) {
                     <Share2 size={16} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
+                <TooltipContent className="bg-popover" side="bottom" sideOffset={4}>
                   <span className="text-foreground flex flex-row gap-4">Share</span>
                 </TooltipContent>
               </Tooltip>
@@ -322,7 +322,7 @@ function InterviewHome({ params, searchParams }: Props) {
                     <Eye />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
+                <TooltipContent className="bg-popover" side="bottom" sideOffset={4}>
                   <span className="text-foreground flex flex-row gap-4">Preview</span>
                 </TooltipContent>
               </Tooltip>
@@ -337,7 +337,7 @@ function InterviewHome({ params, searchParams }: Props) {
                     <Palette size={19} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
+                <TooltipContent className="bg-popover" side="bottom" sideOffset={4}>
                   <span className="text-foreground flex flex-row gap-4">Theme Color</span>
                 </TooltipContent>
               </Tooltip>
@@ -352,7 +352,7 @@ function InterviewHome({ params, searchParams }: Props) {
                     <Pencil size={16} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
+                <TooltipContent className="bg-popover" side="bottom" sideOffset={4}>
                   <span className="text-foreground flex flex-row gap-4">Edit</span>
                 </TooltipContent>
               </Tooltip>
@@ -362,20 +362,20 @@ function InterviewHome({ params, searchParams }: Props) {
               <span className="ms-3 my-auto text-sm">Active</span>
               <Switch
                 checked={isActive}
-                className={`ms-3 my-auto ${isActive ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
+                className={`ms-3 my-auto ${isActive ? "bg-indigo-600" : "bg-secondary"}`}
                 onCheckedChange={handleToggle}
               />
             </label>
           </div>
           <div className="flex flex-row w-full p-2 h-[85%] gap-1">
-            <div className="w-[20%] flex flex-col p-2 divide-y-2 rounded-sm border-2 border-slate-100">
+            <div className="w-[20%] flex flex-col p-2 divide-y-2 rounded-sm border-2 border-border">
               {/* Response type filter */}
               <div className="flex w-full justify-center py-2">
                 <Select
                   defaultValue="CANDIDATE"
                   onValueChange={(v) => setResponseType(v)}
                 >
-                  <SelectTrigger className="w-[95%] bg-slate-100 rounded-lg">
+                  <SelectTrigger className="w-[95%] bg-secondary rounded-lg">
                     <SelectValue placeholder="Response Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -389,7 +389,7 @@ function InterviewHome({ params, searchParams }: Props) {
               {/* Candidate status filter */}
               <div className="flex w-full justify-center py-2">
                 <Select onValueChange={(v) => setFilterStatus(v)}>
-                  <SelectTrigger className="w-[95%] bg-slate-100 rounded-lg">
+                  <SelectTrigger className="w-[95%] bg-secondary rounded-lg">
                     <Filter size={18} className="text-slate-400" />
                     <SelectValue placeholder="Filter By Status" />
                   </SelectTrigger>
@@ -420,7 +420,7 @@ function InterviewHome({ params, searchParams }: Props) {
                     value={filterJobId}
                     onValueChange={(v) => setFilterJobId(v === "ALL" ? "" : v)}
                   >
-                    <SelectTrigger className="w-[95%] bg-slate-100 rounded-lg">
+                    <SelectTrigger className="w-[95%] bg-secondary rounded-lg">
                       <SelectValue placeholder="Filter By Job" />
                     </SelectTrigger>
                     <SelectContent>
@@ -439,7 +439,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <div className="flex w-full justify-center py-2">
                 <input
                   type="text"
-                  className="w-[95%] bg-slate-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  className="w-[95%] bg-secondary rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
                   placeholder="Filter by name…"
                   value={nameInput}
                   onChange={(e) => handleNameInputChange(e.target.value)}
@@ -450,7 +450,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <div className="flex w-full justify-center py-2">
                 <input
                   type="text"
-                  className="w-[95%] bg-slate-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  className="w-[95%] bg-secondary rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
                   placeholder="Filter by email…"
                   value={emailInput}
                   onChange={(e) => handleEmailInputChange(e.target.value)}
@@ -462,8 +462,8 @@ function InterviewHome({ params, searchParams }: Props) {
                 {filterResponses().length > 0 ? (
                   filterResponses().map((response) => (
                     <div
-                      className={`p-2 rounded-md hover:bg-indigo-100 border-2 my-1 text-left text-xs ${
-                        searchParams.call == response.call_id ? "bg-indigo-200" : "border-indigo-100"
+                      className={`p-2 rounded-md hover:bg-accent border-2 my-1 text-left text-xs ${
+                        searchParams.call == response.call_id ? "bg-accent" : "border-border"
                       } flex flex-row justify-between cursor-pointer w-full`}
                       key={response?.id}
                       onClick={() => {
@@ -505,8 +505,8 @@ function InterviewHome({ params, searchParams }: Props) {
                                         </span>
                                       </div>
                                     </TooltipTrigger>
-                                    <TooltipContent className="bg-gray-500" side="bottom" sideOffset={4}>
-                                      <span className="text-white font-normal flex flex-row gap-4">Overall Score</span>
+                                    <TooltipContent className="bg-popover" side="bottom" sideOffset={4}>
+                                      <span className="text-popover-foreground font-normal flex flex-row gap-4">Overall Score</span>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -518,7 +518,7 @@ function InterviewHome({ params, searchParams }: Props) {
                     </div>
                   ))
                 ) : (
-                  <p className="text-center text-gray-500">No responses to display</p>
+                  <p className="text-center text-muted-foreground">No responses to display</p>
                 )}
               </ScrollArea>
 
@@ -526,15 +526,15 @@ function InterviewHome({ params, searchParams }: Props) {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-2 px-1">
                   <button
-                    className="p-1 rounded hover:bg-slate-100 disabled:opacity-30"
+                    className="p-1 rounded hover:bg-accent disabled:opacity-30"
                     disabled={currentPage <= 1}
                     onClick={() => setCurrentPage((p) => p - 1)}
                   >
                     <ChevronLeft size={16} />
                   </button>
-                  <span className="text-xs text-gray-500">{currentPage} / {totalPages}</span>
+                  <span className="text-xs text-muted-foreground">{currentPage} / {totalPages}</span>
                   <button
-                    className="p-1 rounded hover:bg-slate-100 disabled:opacity-30"
+                    className="p-1 rounded hover:bg-accent disabled:opacity-30"
                     disabled={currentPage >= totalPages}
                     onClick={() => setCurrentPage((p) => p + 1)}
                   >

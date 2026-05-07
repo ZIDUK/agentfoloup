@@ -179,7 +179,7 @@ function CallInfo({
         </div>
       ) : (
         <>
-          <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 y-3">
+          <div className="bg-secondary rounded-2xl min-h-[120px] p-4 px-5 y-3">
             <div className="flex flex-col justify-between bt-2">
               {/* <p className="font-semibold my-2 ml-2">
                 Response Analysis and Insights
@@ -241,7 +241,7 @@ function CallInfo({
                         onCandidateStatusChange(call_id, newValue);
                       }}
                     >
-                      <SelectTrigger className="w-[180px]  bg-slate-50 rounded-2xl">
+                      <SelectTrigger className="w-[180px]  bg-secondary rounded-2xl">
                         <SelectValue placeholder="Not Selected" />
                       </SelectTrigger>
                       <SelectContent>
@@ -332,7 +332,7 @@ function CallInfo({
                       <div className="flex flex-row gap-3 mt-1 items-start">
                         <video
                           controls
-                          className="rounded-md border border-slate-300 max-w-sm"
+                          className="rounded-md border border-border max-w-sm"
                         >
                           <source
                             src={recordingUrl}
@@ -355,12 +355,12 @@ function CallInfo({
             </div>
             {/* <div>{call.}</div> */}
           </div>
-          <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
+          <div className="bg-secondary rounded-2xl min-h-[120px] p-4 px-5 my-3">
             <p className="font-semibold my-2">General Summary</p>
 
             <div className="grid grid-cols-3 gap-4 my-2 mt-4 ">
               {analytics?.overallScore !== undefined && (
-                <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-slate-50">
+                <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-card">
                   <div className="flex flex-row gap-2 align-middle">
                     <CircularProgress
                       classNames={{
@@ -394,7 +394,7 @@ function CallInfo({
                 </div>
               )}
               {analytics?.communication && (
-                <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-slate-50">
+                <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-card">
                   <div className="flex flex-row gap-2 align-middle">
                     <CircularProgress
                       classNames={{
@@ -434,7 +434,7 @@ function CallInfo({
                 </div>
               )}
               {analytics?.cefrLevel && (
-                <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-slate-50">
+                <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-card">
                   <div className="flex flex-row gap-2 align-middle">
                     <div
                       className={`px-3 py-1 rounded-lg border-2 font-semibold text-lg ${getCEFRColor(
@@ -444,7 +444,7 @@ function CallInfo({
                       CEFR: {analytics.cefrLevel}
                     </div>
                     {analytics.ieltsEstimate && (
-                      <div className="px-3 py-1 rounded-lg bg-gray-100 border-2 border-gray-300 font-medium text-sm my-auto">
+                      <div className="px-3 py-1 rounded-lg bg-muted border-2 border-border font-medium text-sm my-auto">
                         IELTS: {analytics.ieltsEstimate}
                       </div>
                     )}
@@ -452,7 +452,7 @@ function CallInfo({
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-2">
                     {analytics.pronunciationScore !== undefined && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs text-muted-foreground">
                           Pronunciation
                         </span>
                         <span className="font-semibold text-indigo-600">
@@ -462,7 +462,7 @@ function CallInfo({
                     )}
                     {analytics.fluencyScore !== undefined && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Fluency</span>
+                        <span className="text-xs text-muted-foreground">Fluency</span>
                         <span className="font-semibold text-indigo-600">
                           {analytics.fluencyScore.toFixed(1)}/10
                         </span>
@@ -470,7 +470,7 @@ function CallInfo({
                     )}
                     {analytics.grammarScore !== undefined && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Grammar</span>
+                        <span className="text-xs text-muted-foreground">Grammar</span>
                         <span className="font-semibold text-indigo-600">
                           {analytics.grammarScore.toFixed(1)}/10
                         </span>
@@ -478,7 +478,7 @@ function CallInfo({
                     )}
                     {analytics.vocabularyScore !== undefined && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs text-muted-foreground">
                           Vocabulary
                         </span>
                         <span className="font-semibold text-indigo-600">
@@ -488,7 +488,7 @@ function CallInfo({
                     )}
                     {analytics.coherenceScore !== undefined && (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Coherence</span>
+                        <span className="text-xs text-muted-foreground">Coherence</span>
                         <span className="font-semibold text-indigo-600">
                           {analytics.coherenceScore.toFixed(1)}/10
                         </span>
@@ -511,7 +511,7 @@ function CallInfo({
                 analytics?.vocabularyFeedback ||
                 analytics?.grammarFeedback ||
                 analytics?.coherenceFeedback) && (
-                <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-slate-50">
+                <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-card">
                   <p className="font-semibold text-lg mb-2">
                     Descriptive Feedback
                   </p>
@@ -520,7 +520,7 @@ function CallInfo({
                       <p className="font-semibold text-indigo-600 mb-1">
                         Pronunciation
                       </p>
-                      <p className="text-gray-700 text-sm">
+                      <p className="text-foreground text-sm">
                         {analytics.pronunciationFeedback}
                       </p>
                     </div>
@@ -530,7 +530,7 @@ function CallInfo({
                       <p className="font-semibold text-green-600 mb-1">
                         Fluency
                       </p>
-                      <p className="text-gray-700 text-sm">
+                      <p className="text-foreground text-sm">
                         {analytics.fluencyFeedback}
                       </p>
                     </div>
@@ -540,7 +540,7 @@ function CallInfo({
                       <p className="font-semibold text-blue-600 mb-1">
                         Vocabulary
                       </p>
-                      <p className="text-gray-700 text-sm">
+                      <p className="text-foreground text-sm">
                         {analytics.vocabularyFeedback}
                       </p>
                     </div>
@@ -550,7 +550,7 @@ function CallInfo({
                       <p className="font-semibold text-purple-600 mb-1">
                         Grammar
                       </p>
-                      <p className="text-gray-700 text-sm">
+                      <p className="text-foreground text-sm">
                         {analytics.grammarFeedback}
                       </p>
                     </div>
@@ -560,7 +560,7 @@ function CallInfo({
                       <p className="font-semibold text-orange-600 mb-1">
                         Coherence
                       </p>
-                      <p className="text-gray-700 text-sm">
+                      <p className="text-foreground text-sm">
                         {analytics.coherenceFeedback}
                       </p>
                     </div>
@@ -568,29 +568,29 @@ function CallInfo({
                 </div>
               )}
               {/* Integrity & Proctoring */}
-              <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-slate-50">
+              <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-card">
                 <p className="font-semibold text-lg mb-1">Integrity & Proctoring</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-gray-500 font-mono">tab_switch_count</p>
+                    <p className="text-xs text-muted-foreground font-mono">tab_switch_count</p>
                     <p className={`font-semibold ${(tabSwitchCount ?? 0) > 0 ? "text-red-600" : "text-green-600"}`}>
                       {tabSwitchCount ?? 0}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 font-mono">full_screen_events</p>
+                    <p className="text-xs text-muted-foreground font-mono">full_screen_events</p>
                     <p className={`font-semibold ${(fullscreenExitCount ?? 0) > 0 ? "text-orange-600" : "text-green-600"}`}>
                       {fullscreenExitCount ?? 0}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 font-mono">window_switch_count</p>
+                    <p className="text-xs text-muted-foreground font-mono">window_switch_count</p>
                     <p className={`font-semibold ${(windowSwitchCount ?? 0) > 0 ? "text-orange-600" : "text-green-600"}`}>
                       {windowSwitchCount ?? 0}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 font-mono">camera_covered</p>
+                    <p className="text-xs text-muted-foreground font-mono">camera_covered</p>
                     <p className={`font-semibold ${cameraCovered ? "text-red-600" : "text-green-600"}`}>
                       {cameraCovered ? "Yes" : "No"}
                     </p>
@@ -599,11 +599,11 @@ function CallInfo({
                 {proctoringEvents.filter((e) => e.type !== "window_switch_summary").length > 0 && (
                   <div className="mt-1">
                     <p className="text-xs text-gray-500 font-mono mb-1">proctoring_events</p>
-                    <div className="max-h-28 overflow-y-auto bg-white rounded border border-slate-200 p-2 space-y-1">
+                    <div className="max-h-28 overflow-y-auto bg-background rounded border border-border p-2 space-y-1">
                       {proctoringEvents
                         .filter((e) => e.type !== "window_switch_summary")
                         .map((event: any, idx: number) => (
-                          <div key={idx} className="flex justify-between text-xs text-slate-600">
+                          <div key={idx} className="flex justify-between text-xs text-muted-foreground">
                             <span className="font-medium">
                               {event.type === "tab_hidden"
                                 ? "Tab switch"
@@ -630,7 +630,7 @@ function CallInfo({
                   </div>
                 )}
               </div>
-              <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-slate-50">
+              <div className="flex flex-col gap-3 text-sm p-4 rounded-2xl bg-card">
                 <div className="flex flex-row gap-2  align-middle">
                   <p className="my-auto">User Sentiment: </p>
                   <span className="font-medium my-auto">
@@ -676,7 +676,7 @@ function CallInfo({
           {analytics &&
             analytics.questionSummaries &&
             analytics.questionSummaries.length > 0 && (
-              <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
+              <div className="bg-secondary rounded-2xl min-h-[120px] p-4 px-5 my-3">
                 <p className="font-semibold my-2 mb-4">Question Summary</p>
                 <ScrollArea className="rounded-md h-72 text-sm mt-3 py-3 leading-6 overflow-y-scroll whitespace-pre-line px-2">
                   {analytics?.questionSummaries.map((qs, index) => (
@@ -691,11 +691,11 @@ function CallInfo({
                 </ScrollArea>
               </div>
             )}
-          <div className="bg-slate-200 rounded-2xl min-h-[150px] max-h-[500px] p-4 px-5 mb-[150px]">
+          <div className="bg-secondary rounded-2xl min-h-[150px] max-h-[500px] p-4 px-5 mb-[150px]">
             <p className="font-semibold my-2 mb-4">Transcript</p>
             <ScrollArea className="rounded-2xl text-sm h-96  overflow-y-auto whitespace-pre-line px-2">
               <div
-                className="text-sm p-4 rounded-2xl leading-5 bg-slate-50"
+                className="text-sm p-4 rounded-2xl leading-5 bg-card"
                 // eslint-disable-next-line react/no-danger
                 dangerouslySetInnerHTML={{ __html: marked(transcript) }}
               />
