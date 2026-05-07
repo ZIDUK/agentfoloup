@@ -639,7 +639,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-foreground">
                   Engagement Score
                 </p>
                 <p className="text-2xl font-semibold text-indigo-600">
@@ -648,7 +648,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 </p>
               </div>
               <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-foreground">
                   Problem-Solving
                 </p>
                 <p className="text-2xl font-semibold text-indigo-600">
@@ -657,7 +657,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 </p>
               </div>
               <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-foreground">
                   Adaptability
                 </p>
                 <p className="text-2xl font-semibold text-indigo-600">
@@ -666,25 +666,25 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 </p>
               </div>
               <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-foreground">
                   Confidence Level
                 </p>
                 <div className="flex flex-col gap-1 mt-1">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-green-500 rounded-full" />
-                    <span className="text-sm">
+                    <span className="text-sm text-foreground">
                       High: {advancedAnalysis.confidenceLevels.High}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-yellow-500 rounded-full" />
-                    <span className="text-sm">
+                    <span className="text-sm text-foreground">
                       Medium: {advancedAnalysis.confidenceLevels.Medium}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-red-500 rounded-full" />
-                    <span className="text-sm">
+                    <span className="text-sm text-foreground">
                       Low: {advancedAnalysis.confidenceLevels.Low}
                     </span>
                   </div>
@@ -884,7 +884,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                           >
                             {index + 1}
                           </div>
-                          <span className="font-medium">
+                          <span className="font-medium text-foreground">
                             {performer.name}
                           </span>
                         </div>
@@ -979,7 +979,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                             key={index}
                             className="flex flex-row justify-between items-center p-2 rounded-lg bg-muted"
                           >
-                            <span className="font-medium text-sm">
+                            <span className="font-medium text-sm text-foreground">
                               {candidate.name}
                             </span>
                             <div className="flex items-center gap-2">
