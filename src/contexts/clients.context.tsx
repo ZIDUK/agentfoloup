@@ -23,30 +23,51 @@ export function ClientProvider({ children }: ClientProviderProps) {
   const router = useRouter();
 
   useEffect(() => {
+    let isMounted = true;
+
     const handleAuthUser = async (authUser: any) => {
-      if (!authUser?.email) return;
+      try {
+        if (!authUser?.email) return;
 
-      const email = authUser.email.toLowerCase();
+        const email = authUser.email.toLowerCase();
 
-      if (!email.endsWith("@agenticdream.com")) {
+        if (!email.endsWith("@agenticdream.com")) {
+          await supabase.auth.signOut();
+          if (isMounted) router.push("/sign-in?error=unauthorized");
+          return;
+        }
+
+        let userData: any;
+        try {
+          const res = await fetch(`/api/user?email=${encodeURIComponent(email)}`);
+          if (!res.ok) {
+            await supabase.auth.signOut();
+            if (isMounted) router.push("/sign-in?error=auth_failed");
+            return;
+          }
+          userData = await res.json();
+        } catch {
+          await supabase.auth.signOut();
+          if (isMounted) router.push("/sign-in?error=auth_failed");
+          return;
+        }
+
+        if (!userData) {
+          await supabase.auth.signOut();
+          if (isMounted) router.push("/sign-in?error=unauthorized");
+          return;
+        }
+
+        if (isMounted) setClient(userData);
+      } catch {
         await supabase.auth.signOut();
-        router.push("/sign-in?error=unauthorized");
-        return;
+        if (isMounted) router.push("/sign-in?error=auth_failed");
       }
-
-      const res = await fetch(`/api/user?email=${encodeURIComponent(email)}`);
-      const userData = await res.json();
-      if (!userData) {
-        await supabase.auth.signOut();
-        router.push("/sign-in?error=unauthorized");
-        return;
-      }
-      setClient(userData);
     };
 
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error?.code === "refresh_token_not_found") {
-        supabase.auth.signOut().then(() => router.push("/sign-in"));
+        supabase.auth.signOut().then(() => { if (isMounted) router.push("/sign-in"); });
         return;
       }
       if (session?.user) handleAuthUser(session.user);
@@ -56,11 +77,14 @@ export function ClientProvider({ children }: ClientProviderProps) {
       if (session?.user) {
         handleAuthUser(session.user);
       } else {
-        setClient(undefined);
+        if (isMounted) setClient(undefined);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [supabase]);
 
   return (
