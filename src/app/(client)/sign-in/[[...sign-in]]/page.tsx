@@ -2,20 +2,23 @@
 
 import { getSupabaseClient } from "@/lib/supabase-client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 function SignInPage() {
   const [loading, setLoading] = useState(false);
+  const [oauthError, setOauthError] = useState<string | null>(null);
   const supabase = getSupabaseClient();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
   const isUnauthorized = searchParams.get("error") === "unauthorized";
+  const isAuthFailed = searchParams.get("error") === "auth_failed";
 
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
+      setOauthError(null);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -23,11 +26,21 @@ function SignInPage() {
         },
       });
 
+      if (error) {
+        setOauthError("Sign-in failed. Please try again.");
+      }
     } catch {
+      setOauthError("Sign-in failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
+  const urlErrorMessage = isUnauthorized
+    ? "Your account is not authorized to access this application. Please contact your administrator."
+    : isAuthFailed
+    ? "Authentication failed. Please try again."
+    : null;
 
   return (
     <div className="flex items-center justify-center h-screen w-full bg-background absolute top-0 left-0 z-50">
@@ -36,10 +49,9 @@ function SignInPage() {
           <h1 className="text-3xl font-bold text-center text-foreground mb-2">
             Welcome to Folo<span className="text-indigo-600">Up</span>
           </h1>
-          {isUnauthorized ? (
+          {!oauthError && urlErrorMessage ? (
             <p className="text-red-500 mb-8 text-center text-sm">
-              Your account is not authorized to access this application.
-              Please contact your administrator.
+              {urlErrorMessage}
             </p>
           ) : (
             <p className="text-muted-foreground mb-8 text-center">
@@ -71,6 +83,9 @@ function SignInPage() {
             </svg>
             {loading ? "Signing in..." : "Continue with Google"}
           </Button>
+          {oauthError && (
+            <p className="text-red-500 mt-3 text-center text-sm">{oauthError}</p>
+          )}
         </div>
       </div>
       <div className="block md:hidden px-3 h-[60%] my-auto">
