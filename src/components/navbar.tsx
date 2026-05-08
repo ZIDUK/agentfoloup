@@ -35,14 +35,31 @@ function Navbar() {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     const getUser = async () => {
       const {
         data: { session },
+        error,
       } = await supabase.auth.getSession();
+
+      if (!isMounted) return;
+
+      if (error) {
+        if (error.code === "refresh_token_not_found") {
+          await supabase.auth.signOut();
+        } else {
+          console.error(error);
+        }
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       const user = session?.user ?? null;
       setUser(user);
       if (user?.email) await resolvePhoto(user.email);
-      setLoading(false);
+      if (isMounted) setLoading(false);
     };
 
     getUser();
@@ -54,7 +71,10 @@ function Navbar() {
       if (session?.user?.email) resolvePhoto(session.user.email);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
 
