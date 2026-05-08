@@ -45,6 +45,7 @@ type InterviewProps = {
   isTestResponse?: boolean;
   prefillEmail?: string;
   prefillName?: string;
+  invitationEmail?: string;
 };
 
 type transcriptType = {
@@ -52,7 +53,7 @@ type transcriptType = {
   content: string;
 };
 
-function Call({ interview, applicationId, jobId, isTestResponse = false, prefillEmail = "", prefillName = "" }: InterviewProps) {
+function Call({ interview, applicationId, jobId, isTestResponse = false, prefillEmail = "", prefillName = "", invitationEmail = "" }: InterviewProps) {
   const { createResponse } = useResponses();
   const [lastInterviewerResponse, setLastInterviewerResponse] =
     useState<string>("");
@@ -67,6 +68,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
   const [name, setName] = useState<string>(prefillName);
   const [isValidEmail, setIsValidEmail] = useState<boolean>(false);
   const [isOldUser, setIsOldUser] = useState<boolean>(false);
+  const [emailMismatchError, setEmailMismatchError] = useState(false);
   const [isCompiling, setIsCompiling] = useState<boolean>(false);
   const [isCheckingApplication, setIsCheckingApplication] = useState<boolean>(!!applicationId);
   const [callId, setCallId] = useState<string>("");
@@ -457,6 +459,13 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
   }, [isStarted, isEnded, cameraStream]);
 
   const startConversation = async () => {
+    setEmailMismatchError(false);
+
+    if (!isTestResponse && invitationEmail && email.trim().toLowerCase() !== invitationEmail.trim().toLowerCase()) {
+      setEmailMismatchError(true);
+      return;
+    }
+
     // Must be called synchronously within the user-gesture call stack before any
     // awaits — browsers block requestFullscreen() outside the gesture window.
     if (typeof document !== 'undefined' && document.fullscreenEnabled && !document.fullscreenElement) {
@@ -838,6 +847,9 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
                         />
                         {email && !isValidEmail && (
                           <p className="text-red-500 text-xs w-[75%]">Please enter a valid email address</p>
+                        )}
+                        {emailMismatchError && (
+                          <p className="text-red-500 text-xs w-[75%]">This interview was sent to a different email address. Please use the email you were invited with.</p>
                         )}
                       </div>
                       <div className="flex justify-center">

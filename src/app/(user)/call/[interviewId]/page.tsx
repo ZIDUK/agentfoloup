@@ -229,8 +229,7 @@ function InterviewInterface({ params }: Props) {
             interview={interview}
             applicationId={invitation?.application_id}
             jobId={invitation?.job_id ?? undefined}
-            prefillEmail={invitation?.candidate_email ?? ""}
-            prefillName={invitation?.candidate_name ?? ""}
+            invitationEmail={invitation?.candidate_email ?? ""}
           />
         )}
       </div>
