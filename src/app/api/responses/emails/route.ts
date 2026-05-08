@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-client";
+import { getAuthSession } from "@/lib/route-auth";
 import { logger } from "@/lib/logger";
 
-// Public — candidate call page checks whether a given email already has a
-// response for this interview. Returns { exists: boolean } only, so no
-// other candidates' email addresses are ever exposed.
 export async function GET(req: NextRequest) {
+  const session = await getAuthSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const interviewId = req.nextUrl.searchParams.get("interviewId");
   const email = req.nextUrl.searchParams.get("email");
   if (!interviewId || !email) {

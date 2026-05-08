@@ -50,6 +50,11 @@ export async function middleware(req: NextRequest) {
     return redirectResponse;
   }
 
+  // Treat non-@agenticdream.com sessions as unauthenticated
+  const validSession = session?.user?.email?.toLowerCase().endsWith("@agenticdream.com")
+    ? session
+    : null;
+
   const pathname = req.nextUrl.pathname;
 
   // Check if route is public
@@ -63,7 +68,7 @@ export async function middleware(req: NextRequest) {
   );
 
   // Redirect to sign-in if accessing protected route without session
-  if (isProtectedRoute && !session) {
+  if (isProtectedRoute && !validSession) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/sign-in";
     redirectUrl.searchParams.set("redirect", pathname);
@@ -78,7 +83,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Redirect to dashboard if accessing sign-in with active session
-  if (pathname.startsWith("/sign-in") && session) {
+  if (pathname.startsWith("/sign-in") && validSession) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
     redirectUrl.search = "";
