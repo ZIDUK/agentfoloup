@@ -10,7 +10,11 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = createRouteHandlerClient({ cookies });
-    await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const origin = process.env.NEXT_PUBLIC_LIVE_URL || requestUrl.origin;
+    if (error || !data.session) {
+      return NextResponse.redirect(new URL("/sign-in?error=auth_failed", origin));
+    }
   }
 
   // Redirect to the requested page or dashboard

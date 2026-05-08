@@ -44,7 +44,11 @@ export function ClientProvider({ children }: ClientProviderProps) {
       setClient(userData);
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error?.code === "refresh_token_not_found") {
+        supabase.auth.signOut().then(() => router.push("/sign-in"));
+        return;
+      }
       if (session?.user) handleAuthUser(session.user);
     });
 

@@ -33,7 +33,22 @@ export async function middleware(req: NextRequest) {
 
   const {
     data: { session },
+    error: sessionError,
   } = await supabase.auth.getSession();
+
+  if (sessionError) {
+    await supabase.auth.signOut();
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = "/sign-in";
+    redirectUrl.search = "";
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    res.headers.forEach((value, key) => {
+      if (key.toLowerCase() === "set-cookie") {
+        redirectResponse.headers.append("set-cookie", value);
+      }
+    });
+    return redirectResponse;
+  }
 
   const pathname = req.nextUrl.pathname;
 
