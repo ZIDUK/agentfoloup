@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-client";
-import { getAuthSession } from "@/lib/route-auth";
 import { logger } from "@/lib/logger";
 
+// Public — candidates submit feedback after completing an interview.
 export async function POST(req: NextRequest) {
-  const session = await getAuthSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const supabase = getSupabaseAdminClient();
   if (!supabase) {
     logger.error("feedback POST: admin client unavailable");

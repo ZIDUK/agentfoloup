@@ -17,6 +17,7 @@ const publicRoutes = [
   "/api/get-call",
   "/api/fn",
   "/api/invitations",
+  "/api/feedback",
 ];
 
 const protectedRoutes = ["/dashboard", "/interview"];
