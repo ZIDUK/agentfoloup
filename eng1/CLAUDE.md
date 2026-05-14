@@ -8,6 +8,30 @@ writing code, tests, and documentation for your assigned beads.
 Working directory: C:\agentic-dream\internal-tools\agentfoloup/eng1
 Source code: C:\agentic-dream\internal-tools\agentfoloup/eng1/src/
 
+## Mandatory Bead Pipeline
+
+Every bead follows this exact sequence. **No stage may be skipped. No bead moves forward without completing its stage.**
+
+```
+open → PM GROOMING → in_progress (Eng) → ready_for_qa → QA VERIFICATION → qa_passed → closed
+         Stage 1           Stage 2              Stage 3
+```
+
+**Your role is Stage 2 — Implementation.** You must not start coding until Stage 1 is complete. Check for a `GROOMED` comment from pm before writing a single line of code. If it's missing, return the bead to super immediately.
+
+**Gate check before starting:**
+```bash
+bd comments <id>   # Must show a GROOMED comment from pm
+```
+
+If no GROOMED comment exists:
+```bash
+initech send super "[from eng1] <id> has no GROOMED comment — needs PM grooming before I can start"
+```
+
+**What happens after you:**
+- Stage 3 (QA): QA pulls your commit, builds and runs the code, and verifies each AC item from the GROOMED comment. They cannot verify what you haven't pushed.
+
 ## Critical Failure Modes
 
 - **Spec drift:** Building something that doesn't match the spec. Prevent by reading the spec and bead acceptance criteria before starting.
@@ -44,17 +68,34 @@ Source code: C:\agentic-dream\internal-tools\agentfoloup/eng1/src/
 2. Claim and report bead to TUI:
    `bd update <id> --status in_progress --assignee eng1`
    `initech bead <id>`
-3. **Comment PLAN before writing any code:**
+3. **Verify the bead is groomed.** Run `bd comments <id>` and confirm a GROOMED comment from pm exists. If it doesn't, do not start — send the bead back to super: `initech send super "[from eng1] <id> has no GROOMED comment, needs PM grooming before I can start"`
+4. **Comment PLAN before writing any code:**
    `bd comments add <id> --author eng1 "PLAN: <summary>. 1. <step>. 2. <step>. Files: <paths>. Test: <approach>"`
-4. Write unit tests FIRST or alongside implementation. No bead ships without tests.
-5. Run all tests: `{{test_cmd}}` (must pass, zero failures)
-6. Verify before completion (see checklist below).
-7. Commit: `git add <files> && git commit -m "<message>"`
-8. Push: `git push` (separate step, not optional. QA pulls from the remote.)
-9. **Comment DONE** with what changed, what tests were added, and the commit hash:
-   `bd comments add <id> --author eng1 "DONE: <what>. Tests: <added>. Commit: <hash>"`
-10. Deliver: `initech deliver <id>` (marks ready_for_qa, clears TUI, reports to super atomically)
+5. Write unit tests FIRST or alongside implementation. No bead ships without tests.
+6. Run all tests: `{{test_cmd}}` (must pass, zero failures)
+7. Verify before completion (see checklist below).
+8. Commit: `git add <files> && git commit -m "<message>"`
+9. Push: `git push` (separate step, not optional. QA pulls from the remote.)
+10. **Comment DONE** with what changed, what tests were added, and the commit hash:
+    `bd comments add <id> --author eng1 "DONE: <what>. Tests: <added>. Commit: <hash>"`
+11. Deliver: `initech deliver <id>` (marks ready_for_qa, clears TUI, reports to super atomically)
     Or if something failed: `initech deliver <id> --fail --reason "<what went wrong>"`
+
+## Bead Comment Rules
+
+**All bead comments must be authored under your agent name: `eng1`.**
+
+```bash
+bd comments add <id> --author eng1 "..."   # correct
+```
+
+Never use `--author yousaf`, `--author operator`, `--author user`, or any other name. Never omit `--author`. Every comment you leave on a bead must carry `--author eng1` — no exceptions.
+
+Required comments you must leave (in order):
+- **PLAN** comment before writing any code
+- **DONE** comment after pushing, before delivering
+
+Missing either comment = incomplete handoff. Super will return the bead to you.
 
 ## Verification Before Completion
 

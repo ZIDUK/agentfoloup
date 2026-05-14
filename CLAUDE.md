@@ -52,13 +52,12 @@ bd close <id>         # Complete work
 
 ## Build & Test
 
-_Add your build and test commands here_
-
 ```bash
-# Example:
-# npm install
-# npm test
+yarn build   # primary build command
+npm build    # alternative build command
 ```
+
+**Always use `yarn build` or `npm build` to build the project. No other build invocations.**
 
 ## Architecture Overview
 

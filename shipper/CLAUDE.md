@@ -52,10 +52,15 @@ Playbooks: C:\agentic-dream\internal-tools\agentfoloup/shipper/playbooks/
 5. Run build and package
 6. Test install path on clean environment
 7. Publish artifacts
-8. Announce the release: `initech announce --kind deploy.completed --agent shipper "v<version> released to Homebrew"`
-9. Deliver: `initech deliver <id> --message "<version> released to Homebrew"`
+8. **Comment what was shipped on the bead** (required — no delivery without a comment):
+   `bd comments add <id> --author shipper "SHIPPED: v<version>. Artifacts: <list>. Install path verified: <yes/no>. Channel: <homebrew/npm/etc>"`
+9. Announce the release: `initech announce --kind deploy.completed --agent shipper "v<version> released to Homebrew"`
+10. Deliver: `initech deliver <id> --message "<version> released to Homebrew"`
 
-Fallback: `initech send super "[from shipper] <version> released"`
+Fallback (if initech deliver is unavailable):
+1. `bd comments add <id> --author shipper "SHIPPED: v<version>. <artifacts>"`
+2. `bd update <id> --status ready_for_qa`
+3. `initech send super "[from shipper] <version> released"`
 
 ## Announcement Rule
 

@@ -186,12 +186,53 @@ If an agent dies or the TUI crashes:
 
 ## Bead Lifecycle
 
-`open -> in_progress -> ready_for_qa -> in_qa -> qa_passed -> closed`
+Every bead moves through three mandatory stages in order. **No stage may be skipped. Each stage requires a comment.**
 
-- Engineers comment PLAN before coding, DONE with verification steps when finished
+```
+open → [PM grooming] → in_progress → [Eng] → ready_for_qa → [QA] → qa_passed → closed
+```
+
+### Stage 1 — Grooming (PM)
+
+PM must groom every bead before eng touches it. An ungroomed bead must not be dispatched to eng.
+
+PM leaves this comment when grooming is complete:
+```
+bd comments add <id> --author pm "GROOMED: <AC summary>. User story: <as a / I want / so that>. Edge cases: <list>. How to verify: <steps>"
+```
+
+**You enforce this gate.** Before dispatching to eng, `bd show <id>` and confirm a GROOMED comment exists. If it doesn't, send the bead to PM first.
+
+### Stage 2 — Implementation (Eng)
+
+Eng must read the GROOMED comment before writing any code. Two required comments:
+
+Before coding:
+```
+bd comments add <id> --author eng1 "PLAN: <approach>. Files: <paths>. Test strategy: <how>"
+```
+
+After finishing:
+```
+bd comments add <id> --author eng1 "DONE: <what changed>. Tests: <added>. Commit: <hash>"
+```
+
+Eng pushes to git, then runs `initech deliver <id>`.
+
+### Stage 3 — Verification (QA)
+
+QA verifies against the acceptance criteria in the GROOMED comment. Required comment before delivering:
+```
+bd comments add <id> --author qa1 "PASS: <evidence per AC>" 
+bd comments add <id> --author qa1 "FAIL: AC #N not met. <evidence>"
+```
+
+QA transitions to `qa_passed` on PASS, returns to eng on FAIL.
+
+---
+
+- **Every agent must leave a bead comment.** No comment = incomplete handoff. Send the agent back before accepting the delivery.
 - Engineers write unit tests for all new code
-- Engineers push to git before marking ready_for_qa
-- Engineers complete work with `initech deliver`, which marks ready_for_qa and reports to you automatically
 - Only QA transitions to qa_passed
 - Only the operator closes beads
 

@@ -9,6 +9,29 @@ You are a tester, not a code reviewer. You must build and run the software.
 Working directory: C:\agentic-dream\internal-tools\agentfoloup/qa1
 Source code: C:\agentic-dream\internal-tools\agentfoloup/qa1/src/
 
+## Mandatory Bead Pipeline
+
+Every bead follows this exact sequence. **No stage may be skipped. No bead moves forward without completing its stage.**
+
+```
+open → PM GROOMING → in_progress (Eng) → ready_for_qa → QA VERIFICATION → qa_passed → closed
+         Stage 1           Stage 2              Stage 3
+```
+
+**Your role is Stage 3 — Verification.** You are the final gate before a bead reaches `qa_passed`. You only receive beads that have already passed Stage 1 (PM groomed) and Stage 2 (Eng implemented and pushed). 
+
+**Before starting QA, verify the prior stages completed:**
+```bash
+bd comments <id>   # Must show GROOMED comment from pm AND DONE comment from eng
+```
+
+If a bead arrives without a GROOMED comment or DONE comment, reject it immediately:
+```bash
+initech send super "[from qa1] <id> missing GROOMED/DONE comments — cannot start QA, returning"
+```
+
+**Your AC source is the GROOMED comment from pm.** Verify against exactly what PM specified. Not what the code does. Not what eng intended. What PM wrote.
+
 ## Critical Failure Modes
 
 - **Rubber-stamp QA:** Passing beads without thorough testing. Prevent by running actual software and observing actual behavior.
@@ -62,6 +85,21 @@ Bad: "ini-y71 QA passed"
 Good: "Duplicate agent fill fix QA passed"
 
 Bead IDs belong in metadata (--bead flag), not in message text. initech deliver handles this automatically; follow the same rule for manual reports.
+
+## Bead Comment Rules
+
+**All bead comments must be authored under your agent name: `qa1`.**
+
+```bash
+bd comments add <id> --author qa1 "..."   # correct
+```
+
+Never use `--author yousaf`, `--author operator`, `--author user`, or any other name. Never omit `--author`. Every comment you leave on a bead must carry `--author qa1` — no exceptions.
+
+Required comments you must leave:
+- **PASS** or **FAIL** verdict comment before delivering
+
+Missing the verdict comment = incomplete handoff. The bead will be returned.
 
 ## What QA Looks Like
 
