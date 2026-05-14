@@ -116,6 +116,8 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
     startRecording,
     stopAndUpload,
     stopCamera,
+    startScreenRecording,
+    stopAndUploadScreen,
   } = useCameraRecording();
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
   const screenShareStreamRef = useRef<MediaStream | null>(null);
@@ -629,6 +631,10 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
         startRecording(stream, player.getRecordingStream());
       }
 
+      if (screenShareStreamRef.current) {
+        startScreenRecording(screenShareStreamRef.current);
+      }
+
       if (!reuseCallId) {
         await createResponse({
           interview_id: interview.id,
@@ -699,9 +705,12 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
         const endTime = Date.now();
         const duration = Math.round((endTime - callStartTime) / 1000);
 
-        // Stop recording and upload; get back the public URL (null if no recording).
+        // Stop recording and upload; get back the public URLs (null if no recording).
         stopScreenShare();
-        const recordingUrl = await stopAndUpload(callId);
+        const [recordingUrl, screenRecordingUrl] = await Promise.all([
+          stopAndUpload(callId),
+          stopAndUploadScreen(callId),
+        ]);
 
         // Capture final proctoring snapshot.
         const proctoring = proctoringDataRef.current;
@@ -725,6 +734,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
                   : []),
               ],
               recording_url: recordingUrl,
+              screen_recording_url: screenRecordingUrl,
               details: {
                 transcript: transcriptString,
                 transcript_object: transcript,

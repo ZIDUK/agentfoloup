@@ -30,7 +30,7 @@ export async function GET(_req: NextRequest, { params }: { params: { callId: str
 // restricted to a whitelist of candidate-safe fields.
 const CANDIDATE_FIELDS = new Set([
   "is_ended", "tab_switch_count", "fullscreen_exit_count",
-  "proctoring_events", "recording_url", "details", "duration",
+  "proctoring_events", "recording_url", "screen_recording_url", "details", "duration",
 ]);
 const ADMIN_FIELDS = new Set([...CANDIDATE_FIELDS, "candidate_status", "is_viewed"]);
 

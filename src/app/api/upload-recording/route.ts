@@ -22,8 +22,17 @@ export async function POST(req: NextRequest) {
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+  const rawType = (formData.get("type") as string | null) || "";
   const ext = mimeType.includes("mp4") ? "mp4" : "webm";
-  const fileName = `${callId}.${ext}`;
+  let fileName: string;
+  if (rawType === "screen") {
+    fileName = `${callId}_screen.${ext}`;
+  } else {
+    if (rawType !== "") {
+      console.warn(`[upload-recording] unexpected type value: ${rawType} — treating as camera`);
+    }
+    fileName = `${callId}.${ext}`;
+  }
 
   const { error } = await supabase.storage
     .from("interview-recordings")

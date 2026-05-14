@@ -24,6 +24,8 @@ export const useCameraRecording = () => {
   const streamRef = useRef<MediaStream | null>(null);
   // Mixing AudioContext used to combine mic + AI audio into a single track
   const mixingContextRef = useRef<AudioContext | null>(null);
+  const screenRecorderRef = useRef<MediaRecorder | null>(null);
+  const screenChunksRef = useRef<Blob[]>([]);
 
   const requestCameraAccess = useCallback(async (): Promise<MediaStream | null> => {
     try {
@@ -208,6 +210,100 @@ export const useCameraRecording = () => {
     setIsRecording(false);
   }, []);
 
+  const startScreenRecording = useCallback((screenStream: MediaStream): void => {
+    screenChunksRef.current = [];
+
+    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+      ? "video/webm;codecs=vp9"
+      : MediaRecorder.isTypeSupported("video/webm")
+      ? "video/webm"
+      : "video/mp4";
+
+    let recorder: MediaRecorder;
+    try {
+      recorder = new MediaRecorder(screenStream, { mimeType });
+    } catch {
+      try {
+        recorder = new MediaRecorder(screenStream);
+      } catch {
+        console.warn("Screen recording not supported on this browser.");
+        return;
+      }
+    }
+
+    recorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        screenChunksRef.current.push(e.data);
+      }
+    };
+
+    recorder.start(5000);
+    screenRecorderRef.current = recorder;
+  }, []);
+
+  const stopAndUploadScreen = useCallback(
+    (callId: string): Promise<string | null> =>
+      new Promise((resolve) => {
+        if (!callId) {
+          resolve(null);
+          return;
+        }
+
+        const recorder = screenRecorderRef.current;
+        if (!recorder) {
+          resolve(null);
+          return;
+        }
+
+        const uploadChunks = async () => {
+          if (screenChunksRef.current.length === 0) {
+            resolve(null);
+            return;
+          }
+
+          const mimeType = recorder.mimeType || "video/webm";
+          const blob = new Blob(screenChunksRef.current, { type: mimeType });
+
+          try {
+            const formData = new FormData();
+            formData.append("file", blob);
+            formData.append("callId", callId);
+            formData.append("mimeType", mimeType);
+            formData.append("type", "screen");
+
+            const response = await fetch("/api/upload-recording", {
+              method: "POST",
+              body: formData,
+            });
+
+            if (!response.ok) {
+              resolve(null);
+              return;
+            }
+
+            const { url } = await response.json();
+            resolve(url ?? null);
+          } catch {
+            resolve(null);
+          }
+        };
+
+        if (recorder.state !== "inactive") {
+          recorder.onstop = async () => {
+            recorder.stream.getTracks().forEach((t) => {
+              t.onended = null;
+              t.stop();
+            });
+            await uploadChunks();
+          };
+          recorder.stop();
+        } else {
+          uploadChunks();
+        }
+      }),
+    [],
+  );
+
   return {
     cameraStream,
     isRecording,
@@ -218,5 +314,7 @@ export const useCameraRecording = () => {
     startRecording,
     stopAndUpload,
     stopCamera,
+    startScreenRecording,
+    stopAndUploadScreen,
   };
 };
