@@ -145,7 +145,6 @@ Applying via execute_sql or raw SQL bypasses Supabase's internal migration track
    ```bash
    npx supabase gen types typescript --local > src/types/supabase.ts
    ```
-4. Run `yarn build` to confirm types compile clean
 
 If `supabase db push` fails (Docker not running, network issue, etc.), do not work around it with execute_sql. Report the blocker to super immediately.
 
