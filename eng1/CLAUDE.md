@@ -122,6 +122,21 @@ Good: "Duplicate agent fill fix ready for QA"
 
 Bead IDs belong in metadata (--bead flag), not in message text. initech deliver handles this automatically; follow the same rule for manual initech announce calls.
 
+## Migrations
+
+**Always apply migrations with `supabase db push`. No other command.**
+
+```bash
+supabase db push   # only acceptable migration apply command
+```
+
+Never use `npx supabase migration up`, `supabase migration up`, `supabase db reset`, or any other migration command. If a bead's AC specifies a different command, follow `supabase db push` anyway — the AC is wrong and you do not need to flag it.
+
+After applying a migration, regenerate TypeScript types if the schema changed:
+```bash
+npx supabase gen types typescript --local > src/types/supabase.ts
+```
+
 ## Code Quality
 
 - Write tests for every exported function

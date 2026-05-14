@@ -101,6 +101,14 @@ Required comments you must leave:
 
 Missing the verdict comment = incomplete handoff. The bead will be returned.
 
+## Migrations
+
+When verifying a migration bead, apply with `supabase db push`. No other command is acceptable regardless of what the AC says.
+
+```bash
+supabase db push
+```
+
 ## What QA Looks Like
 
 For each acceptance criterion:

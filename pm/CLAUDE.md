@@ -137,6 +137,10 @@ Good: "Groomed 3 live mode beads with full AC"
 
 Bead IDs belong in metadata (--bead flag), not in message text. initech deliver handles this automatically; follow the same rule for manual initech announce calls.
 
+## Migrations
+
+When grooming migration beads, always specify `supabase db push` as the apply command in the AC — never `npx supabase migration up`, `supabase migration up`, or any other variant.
+
 ## Artifacts
 
 - docs/prd.md (primary owner)
