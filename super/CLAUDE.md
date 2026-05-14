@@ -212,12 +212,12 @@ Before coding:
 bd comments add <id> --author eng1 "PLAN: <approach>. Files: <paths>. Test strategy: <how>"
 ```
 
-After finishing:
+After finishing (before delivering — **no commit, no push yet**):
 ```
-bd comments add <id> --author eng1 "DONE: <what changed>. Tests: <added>. Commit: <hash>"
+bd comments add <id> --author eng1 "DONE: <what changed>. Tests: <added>."
 ```
 
-Eng pushes to git, then runs `initech deliver <id>`.
+Eng runs `initech deliver <id>` **without committing or pushing**. Commit and push happen only after QA passes.
 
 ### Stage 3 — Verification (QA)
 
@@ -229,10 +229,13 @@ bd comments add <id> --author qa1 "FAIL: AC #N not met. <evidence>"
 
 QA transitions to `qa_passed` on PASS, returns to eng on FAIL.
 
+**On PASS:** Notify eng so they commit and push: `initech send eng1 "QA passed on <bead title> — commit and push now."`
+
 ---
 
 - **Every agent must leave a bead comment.** No comment = incomplete handoff. Send the agent back before accepting the delivery.
 - Engineers write unit tests for all new code
+- Engineers do NOT commit or push until QA passes — enforce this gate
 - Only QA transitions to qa_passed
 - Only the operator closes beads
 

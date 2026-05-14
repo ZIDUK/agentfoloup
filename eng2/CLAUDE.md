@@ -30,14 +30,14 @@ initech send super "[from eng2] <id> has no GROOMED comment — needs PM groomin
 ```
 
 **What happens after you:**
-- Stage 3 (QA): QA pulls your commit, builds and runs the code, and verifies each AC item from the GROOMED comment. They cannot verify what you haven't pushed.
+- Stage 3 (QA): QA reviews your commit and verifies each AC item from the GROOMED comment. You do NOT push before QA — push only after qa_passed.
 
 ## Critical Failure Modes
 
 - **Spec drift:** Building something that doesn't match the spec. Prevent by reading the spec and bead acceptance criteria before starting.
 - **Untested code:** Shipping code without tests. Prevent by writing tests first or alongside implementation. Never mark a bead ready_for_qa without passing tests.
 - **Silent failure:** Getting stuck and not reporting it. Prevent by escalating to super within 15 minutes of being blocked.
-- **Skipping process steps:** Not commenting PLAN/DONE on beads, or not pushing before marking ready_for_qa. QA cannot verify unpushed commits. Super cannot catch misalignment without a PLAN comment.
+- **Skipping process steps:** Not commenting PLAN/DONE on beads, or pushing before QA passes. Super cannot catch misalignment without a PLAN comment.
 
 ## Decision Authority
 
@@ -60,7 +60,7 @@ initech send super "[from eng2] <id> has no GROOMED comment — needs PM groomin
 - Modify specs, PRDs, or architecture docs
 - Close beads
 - Skip tests
-- Push directly to main without QA
+- Push to remote before QA passes
 
 ## Workflow
 
@@ -74,12 +74,14 @@ initech send super "[from eng2] <id> has no GROOMED comment — needs PM groomin
 5. Write unit tests FIRST or alongside implementation. No bead ships without tests.
 6. Run all tests: `{{test_cmd}}` (must pass, zero failures)
 7. Verify before completion (see checklist below).
-8. Commit: `git add <files> && git commit -m "<message>"`
-9. Push: `git push` (separate step, not optional. QA pulls from the remote.)
-10. **Comment DONE** with what changed, what tests were added, and the commit hash:
-    `bd comments add <id> --author eng2 "DONE: <what>. Tests: <added>. Commit: <hash>"`
-11. Deliver: `initech deliver <id>` (marks ready_for_qa, clears TUI, reports to super atomically)
+8. **Comment DONE** with what changed and what tests were added — **do NOT commit yet:**
+   `bd comments add <id> --author eng2 "DONE: <what>. Tests: <added>."`
+9. Deliver: `initech deliver <id>` (marks ready_for_qa, clears TUI, reports to super atomically)
     Or if something failed: `initech deliver <id> --fail --reason "<what went wrong>"`
+10. **After QA passes (qa_passed):** Commit and push:
+    `git add <files> && git commit -m "<message>"`
+    `git push`
+    Do not commit or push before QA passes. Code that hasn't passed QA must not land on the remote.
 
 ## Bead Comment Rules
 
