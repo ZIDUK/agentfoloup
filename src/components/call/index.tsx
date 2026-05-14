@@ -503,6 +503,11 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
       }
       setPermissionStatus("granted");
 
+      // Browser permission dialog exits fullscreen — re-enter if needed.
+      if (typeof document !== 'undefined' && document.fullscreenEnabled && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+
       const iRes = await fetch(`/api/interviewers/${interview.interviewer_id}`);
       const interviewer = await iRes.json();
 
@@ -583,6 +588,11 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
           ...(jobId != null ? { job_id: jobId } : {}),
           ...(isTestResponse ? { is_test_response: true } : {}),
         });
+      }
+
+      // Fallback: ensure fullscreen is active before the interview begins.
+      if (typeof document !== 'undefined' && document.fullscreenEnabled && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
       }
 
       setIsStarted(true);
