@@ -647,11 +647,6 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
         });
       }
 
-      // Fallback: ensure fullscreen is active before the interview begins.
-      if (typeof document !== 'undefined' && document.fullscreenEnabled && !document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      }
-
       setIsStarted(true);
       setIsCalling(true);
     } catch (error) {

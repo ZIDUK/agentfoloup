@@ -2,21 +2,12 @@
 
 import { useCallback, useRef, useState } from "react";
 
-export interface CameraRecordingState {
-  cameraStream: MediaStream | null;
-  isRecording: boolean;
-  recordingUrl: string | null;
-  cameraError: string | null;
-}
-
 export type ScreenShareResult =
   | { stream: MediaStream; reason: null }
   | { stream: null; reason: "denied" | "wrong_surface" | "unsupported" };
 
 export const useCameraRecording = () => {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -102,7 +93,6 @@ export const useCameraRecording = () => {
     };
 
     recorder.start(5000); // collect a chunk every 5 seconds
-    setIsRecording(true);
   }, []);
 
   /**
@@ -120,8 +110,6 @@ export const useCameraRecording = () => {
         }
 
         recorder.onstop = async () => {
-          setIsRecording(false);
-
           // Stop camera tracks
           const stream = streamRef.current;
           if (stream) {
@@ -161,7 +149,6 @@ export const useCameraRecording = () => {
             }
 
             const { url } = await response.json();
-            setRecordingUrl(url ?? null);
             resolve(url ?? null);
           } catch {
             resolve(null);
@@ -208,7 +195,6 @@ export const useCameraRecording = () => {
       mixingContextRef.current.close().catch(() => {});
       mixingContextRef.current = null;
     }
-    setIsRecording(false);
   }, []);
 
   const startScreenRecording = useCallback((screenStream: MediaStream, cameraStream?: MediaStream | null): void => {
@@ -349,8 +335,6 @@ export const useCameraRecording = () => {
 
   return {
     cameraStream,
-    isRecording,
-    recordingUrl,
     cameraError,
     requestCameraAccess,
     requestScreenShare,
