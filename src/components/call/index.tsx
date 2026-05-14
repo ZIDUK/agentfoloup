@@ -340,7 +340,10 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
   const stopScreenShare = () => {
     const stream = screenShareStreamRef.current;
     if (stream) {
-      stream.getTracks().forEach((t) => t.stop());
+      stream.getTracks().forEach((t) => {
+        t.onended = null;
+        t.stop();
+      });
       screenShareStreamRef.current = null;
     }
   };
