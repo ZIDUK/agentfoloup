@@ -134,6 +134,7 @@ const useTabSwitchPrevention = (isActive: boolean = false) => {
     dialogMessage,
     handleUnderstand,
     getProctoringData,
+    addEvent,
   };
 };
 

@@ -97,6 +97,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
     dialogMessage: proctoringDialogMessage,
     handleUnderstand,
     getProctoringData,
+    addEvent,
   } = useTabSwitchPrevention(isStarted && !isEnded);
 
   // Keep a ref so the save effect always reads the latest proctoring snapshot
@@ -111,11 +112,14 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
     cameraStream,
     cameraError,
     requestCameraAccess,
+    requestScreenShare,
     startRecording,
     stopAndUpload,
     stopCamera,
   } = useCameraRecording();
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
+  const screenShareStreamRef = useRef<MediaStream | null>(null);
+  const [isScreenShareWarningOpen, setIsScreenShareWarningOpen] = useState(false);
 
   // Attach the camera stream to the preview video element whenever it changes.
   useEffect(() => {
@@ -333,10 +337,19 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
     };
   }, [agentService]);
 
+  const stopScreenShare = () => {
+    const stream = screenShareStreamRef.current;
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      screenShareStreamRef.current = null;
+    }
+  };
+
   const onEndCallClick = async () => {
     setLoading(true);
     if (agentService) agentService.close();
     if (audioPlayerRef.current) await audioPlayerRef.current.stop();
+    stopScreenShare();
     setIsEnded(true);
     setLoading(false);
   };
@@ -508,6 +521,41 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
         document.documentElement.requestFullscreen().catch(() => {});
       }
 
+      // Screen share is required before proceeding.
+      const screenShareResult = await requestScreenShare();
+      if (screenShareResult.reason === 'denied') {
+        toast.error('Screen sharing is required to start the interview. Please allow it and try again.');
+        setLoading(false);
+        stopCamera();
+        return;
+      }
+      if (screenShareResult.reason === 'wrong_surface') {
+        toast.error('Please share your full screen (monitor), not a tab or window. Click Start Interview to try again.');
+        setLoading(false);
+        stopCamera();
+        return;
+      }
+      if (screenShareResult.reason === 'unsupported') {
+        toast.error('Your browser does not support screen sharing required for this interview. Please use Chrome or Firefox.');
+        setLoading(false);
+        stopCamera();
+        return;
+      }
+
+      // getDisplayMedia dialog also exits fullscreen — re-enter if needed.
+      if (typeof document !== 'undefined' && document.fullscreenEnabled && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+
+      screenShareStreamRef.current = screenShareResult.stream;
+      const screenVideoTrack = screenShareResult.stream.getVideoTracks()[0];
+      if (screenVideoTrack) {
+        screenVideoTrack.onended = () => {
+          addEvent('screen_share_ended');
+          setIsScreenShareWarningOpen(true);
+        };
+      }
+
       const iRes = await fetch(`/api/interviewers/${interview.interviewer_id}`);
       const interviewer = await iRes.json();
 
@@ -600,6 +648,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
     } catch (error) {
       toast.error("Failed to start interview. Please try again.");
       stopCamera();
+      stopScreenShare();
     } finally {
       setLoading(false);
     }
@@ -648,6 +697,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
         const duration = Math.round((endTime - callStartTime) / 1000);
 
         // Stop recording and upload; get back the public URL (null if no recording).
+        stopScreenShare();
         const recordingUrl = await stopAndUpload(callId);
 
         // Capture final proctoring snapshot.
@@ -720,6 +770,28 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
           dialogMessage={proctoringDialogMessage}
           onUnderstand={handleUnderstand}
         />
+      )}
+
+      {/* Screen share stopped warning */}
+      {isStarted && (
+        <AlertDialog open={isScreenShareWarningOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Screen Share Stopped</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your screen share has stopped. This has been recorded. The interview is still running — please acknowledge to continue.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction
+                className="bg-indigo-400 hover:bg-indigo-600 text-white"
+                onClick={() => setIsScreenShareWarningOpen(false)}
+              >
+                I understand
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
 
       {/* Camera preview — small floating thumbnail visible during the interview */}

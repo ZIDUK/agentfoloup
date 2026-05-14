@@ -9,6 +9,10 @@ export interface CameraRecordingState {
   cameraError: string | null;
 }
 
+export type ScreenShareResult =
+  | { stream: MediaStream; reason: null }
+  | { stream: null; reason: "denied" | "wrong_surface" | "unsupported" };
+
 export const useCameraRecording = () => {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -166,6 +170,27 @@ export const useCameraRecording = () => {
     [],
   );
 
+  const requestScreenShare = useCallback(async (): Promise<ScreenShareResult> => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getDisplayMedia) {
+      return { stream: null, reason: "unsupported" };
+    }
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: "monitor" } as any,
+        audio: false,
+      });
+      const track = stream.getVideoTracks()[0];
+      const surface = track ? (track.getSettings() as any).displaySurface : undefined;
+      if (surface !== undefined && surface !== "monitor") {
+        stream.getTracks().forEach((t) => t.stop());
+        return { stream: null, reason: "wrong_surface" };
+      }
+      return { stream, reason: null };
+    } catch {
+      return { stream: null, reason: "denied" };
+    }
+  }, []);
+
   const stopCamera = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
@@ -189,6 +214,7 @@ export const useCameraRecording = () => {
     recordingUrl,
     cameraError,
     requestCameraAccess,
+    requestScreenShare,
     startRecording,
     stopAndUpload,
     stopCamera,

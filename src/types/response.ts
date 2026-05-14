@@ -3,7 +3,8 @@ export interface ProctoringEvent {
     | "tab_hidden"
     | "window_blur"
     | "fullscreen_exit"
-    | "camera_covered";
+    | "camera_covered"
+    | "screen_share_ended";
   timestamp: number;
 }
 
