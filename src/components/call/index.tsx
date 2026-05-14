@@ -632,7 +632,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
       }
 
       if (screenShareStreamRef.current) {
-        startScreenRecording(screenShareStreamRef.current);
+        startScreenRecording(screenShareStreamRef.current, stream);
       }
 
       if (!reuseCallId) {

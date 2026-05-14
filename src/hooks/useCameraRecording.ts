@@ -26,6 +26,7 @@ export const useCameraRecording = () => {
   const mixingContextRef = useRef<AudioContext | null>(null);
   const screenRecorderRef = useRef<MediaRecorder | null>(null);
   const screenChunksRef = useRef<Blob[]>([]);
+  const screenMixingContextRef = useRef<AudioContext | null>(null);
 
   const requestCameraAccess = useCallback(async (): Promise<MediaStream | null> => {
     try {
@@ -179,7 +180,7 @@ export const useCameraRecording = () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { displaySurface: "monitor" } as any,
-        audio: false,
+        audio: true,
       });
       const track = stream.getVideoTracks()[0];
       const surface = track ? (track.getSettings() as any).displaySurface : undefined;
@@ -210,8 +211,41 @@ export const useCameraRecording = () => {
     setIsRecording(false);
   }, []);
 
-  const startScreenRecording = useCallback((screenStream: MediaStream): void => {
+  const startScreenRecording = useCallback((screenStream: MediaStream, cameraStream?: MediaStream | null): void => {
     screenChunksRef.current = [];
+
+    // Mix mic audio (from cameraStream) and system audio (from screenStream) into one track.
+    let recordingStream: MediaStream = screenStream;
+    try {
+      const screenContext = new AudioContext();
+      screenMixingContextRef.current = screenContext;
+      screenContext.resume().catch(() => {});
+      const destination = screenContext.createMediaStreamDestination();
+
+      let sourcesConnected = 0;
+      if (cameraStream && cameraStream.getAudioTracks().length > 0) {
+        screenContext.createMediaStreamSource(cameraStream).connect(destination);
+        sourcesConnected++;
+      }
+      if (screenStream.getAudioTracks().length > 0) {
+        screenContext.createMediaStreamSource(screenStream).connect(destination);
+        sourcesConnected++;
+      }
+
+      if (sourcesConnected > 0) {
+        recordingStream = new MediaStream([
+          ...screenStream.getVideoTracks(),
+          ...destination.stream.getAudioTracks(),
+        ]);
+      } else {
+        // No audio sources — close context and record video only
+        screenContext.close().catch(() => {});
+        screenMixingContextRef.current = null;
+      }
+    } catch {
+      screenMixingContextRef.current = null;
+      recordingStream = screenStream;
+    }
 
     const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
       ? "video/webm;codecs=vp9"
@@ -221,10 +255,10 @@ export const useCameraRecording = () => {
 
     let recorder: MediaRecorder;
     try {
-      recorder = new MediaRecorder(screenStream, { mimeType });
+      recorder = new MediaRecorder(recordingStream, { mimeType });
     } catch {
       try {
-        recorder = new MediaRecorder(screenStream);
+        recorder = new MediaRecorder(recordingStream);
       } catch {
         console.warn("Screen recording not supported on this browser.");
         return;
@@ -254,6 +288,13 @@ export const useCameraRecording = () => {
           resolve(null);
           return;
         }
+
+        const closeScreenMixingContext = () => {
+          if (screenMixingContextRef.current) {
+            screenMixingContextRef.current.close().catch(() => {});
+            screenMixingContextRef.current = null;
+          }
+        };
 
         const uploadChunks = async () => {
           if (screenChunksRef.current.length === 0) {
@@ -294,10 +335,12 @@ export const useCameraRecording = () => {
               t.onended = null;
               t.stop();
             });
+            closeScreenMixingContext();
             await uploadChunks();
           };
           recorder.stop();
         } else {
+          closeScreenMixingContext();
           uploadChunks();
         }
       }),

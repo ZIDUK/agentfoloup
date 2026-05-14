@@ -67,6 +67,7 @@ function CallInfo({
   const [windowSwitchCount, setWindowSwitchCount] = useState<number>();
   const [cameraCovered, setCameraCovered] = useState<boolean>(false);
   const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
+  const [screenRecordingUrl, setScreenRecordingUrl] = useState<string | null>(null);
   const [proctoringEvents, setProctoringEvents] = useState<any[]>([]);
 
   useEffect(() => {
@@ -94,6 +95,7 @@ function CallInfo({
   useEffect(() => {
     const fetchEmail = async () => {
       setIsLoading(true);
+      setScreenRecordingUrl(null);
       try {
         const res = await fetch(`/api/responses/${call_id}`);
         const response = await res.json();
@@ -104,6 +106,7 @@ function CallInfo({
         setTabSwitchCount(response.tab_switch_count);
         setFullscreenExitCount(response.fullscreen_exit_count ?? 0);
         setRecordingUrl(response.recording_url ?? null);
+        setScreenRecordingUrl(response.screen_recording_url ?? null);
         // Derive window switch count from proctoring events
         const events: any[] = response.proctoring_events ?? [];
         setProctoringEvents(events);
@@ -325,29 +328,57 @@ function CallInfo({
                       </div>
                     </div>
                   )}
-                  {/* Video recording captured from the candidate's camera */}
-                  {recordingUrl && (
-                    <div>
-                      <p className="font-semibold text-sm">Video Recording</p>
-                      <div className="flex flex-row gap-3 mt-1 items-start">
-                        <video
-                          controls
-                          className="rounded-md border border-border max-w-sm"
-                        >
-                          <source
-                            src={recordingUrl}
-                            type={recordingUrl.endsWith(".mp4") ? "video/mp4" : "video/webm"}
-                          />
-                        </video>
-                        <a
-                          className="my-auto"
-                          href={recordingUrl}
-                          download=""
-                          aria-label="Download video"
-                        >
-                          <DownloadIcon size={20} />
-                        </a>
-                      </div>
+                  {/* Video recordings — side by side when both present */}
+                  {(recordingUrl || screenRecordingUrl) && (
+                    <div className="flex flex-row gap-4 flex-wrap items-start">
+                      {recordingUrl && (
+                        <div>
+                          <p className="font-semibold text-sm">Video Recording</p>
+                          <div className="flex flex-row gap-3 mt-1 items-start">
+                            <video
+                              controls
+                              className="rounded-md border border-border max-w-sm"
+                            >
+                              <source
+                                src={recordingUrl}
+                                type={recordingUrl.endsWith(".mp4") ? "video/mp4" : "video/webm"}
+                              />
+                            </video>
+                            <a
+                              className="my-auto"
+                              href={recordingUrl}
+                              download=""
+                              aria-label="Download video"
+                            >
+                              <DownloadIcon size={20} />
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                      {screenRecordingUrl && (
+                        <div>
+                          <p className="font-semibold text-sm">Screen Recording</p>
+                          <div className="flex flex-row gap-3 mt-1 items-start">
+                            <video
+                              controls
+                              className="rounded-md border border-border max-w-sm"
+                            >
+                              <source
+                                src={screenRecordingUrl}
+                                type={screenRecordingUrl.endsWith(".mp4") ? "video/mp4" : "video/webm"}
+                              />
+                            </video>
+                            <a
+                              className="my-auto"
+                              href={screenRecordingUrl}
+                              download=""
+                              aria-label="Download screen recording"
+                            >
+                              <DownloadIcon size={20} />
+                            </a>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
