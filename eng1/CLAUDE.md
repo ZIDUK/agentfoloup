@@ -124,18 +124,30 @@ Bead IDs belong in metadata (--bead flag), not in message text. initech deliver 
 
 ## Migrations
 
-**Always apply migrations with `supabase db push`. No other command.**
+**Always apply migrations with `supabase db push`. No other command. No exceptions.**
 
 ```bash
 supabase db push   # only acceptable migration apply command
 ```
 
-Never use `npx supabase migration up`, `supabase migration up`, `supabase db reset`, or any other migration command. If a bead's AC specifies a different command, follow `supabase db push` anyway — the AC is wrong and you do not need to flag it.
+**Never use any of these to apply a migration:**
+- `npx supabase migration up` / `supabase migration up`
+- `supabase db reset`
+- MCP `execute_sql` or any raw SQL execution tool
+- Any direct database connection (psql, Supabase Studio SQL editor, MCP tools)
 
-After applying a migration, regenerate TypeScript types if the schema changed:
-```bash
-npx supabase gen types typescript --local > src/types/supabase.ts
-```
+Applying via execute_sql or raw SQL bypasses Supabase's internal migration tracking table. The schema change lands on the database but Supabase has no record of it. The next `supabase db push` will re-apply the same migration and may fail or produce a corrupted migration history. This is exactly what happened with agentfoloup-1sz.1 — QA had to run `supabase db push` to repair the tracking gap.
+
+**The only acceptable workflow for a migration bead:**
+1. Create the migration file in `supabase/migrations/`
+2. Run `supabase db push` — this applies the file AND records it in migration history
+3. Regenerate TypeScript types if the schema changed:
+   ```bash
+   npx supabase gen types typescript --local > src/types/supabase.ts
+   ```
+4. Run `yarn build` to confirm types compile clean
+
+If `supabase db push` fails (Docker not running, network issue, etc.), do not work around it with execute_sql. Report the blocker to super immediately.
 
 ## Code Quality
 
