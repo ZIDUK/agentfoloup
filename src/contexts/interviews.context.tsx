@@ -3,6 +3,7 @@
 import React, { useState, useContext, ReactNode, useEffect } from "react";
 import { Interview } from "@/types/interview";
 import { getSupabaseClient } from "@/lib/supabase-client";
+import { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface InterviewContextProps {
   interviews: Interview[];
@@ -44,7 +45,7 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setUser(session?.user ?? null);
     });
 

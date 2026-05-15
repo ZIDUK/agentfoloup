@@ -3,6 +3,7 @@
 import React, { useState, useContext, ReactNode, useEffect } from "react";
 import { User } from "@/types/user";
 import { getSupabaseClient } from "@/lib/supabase-client";
+import { AuthChangeEvent, Session, AuthError } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
 interface ClientContextProps {
@@ -65,7 +66,7 @@ export function ClientProvider({ children }: ClientProviderProps) {
       }
     };
 
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }: { data: { session: Session | null }; error: AuthError | null }) => {
       if (error?.code === "refresh_token_not_found") {
         supabase.auth.signOut().then(() => { if (isMounted) router.push("/sign-in"); });
         return;
@@ -73,7 +74,7 @@ export function ClientProvider({ children }: ClientProviderProps) {
       if (session?.user) handleAuthUser(session.user);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       if (session?.user) {
         handleAuthUser(session.user);
       } else {
