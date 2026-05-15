@@ -12,7 +12,7 @@ import { avatars } from "@/components/dashboard/interviewer/avatars";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useInterviewers } from "@/contexts/interviewers.context";
 import { getSupabaseClient } from "@/lib/supabase-client";
-import { useEffect, useState as useStateHook } from "react";
+import { useState as useStateHook } from "react";
 
 const createInterviewerCard = () => {
   const [open, setOpen] = useState(false);
