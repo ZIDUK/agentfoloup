@@ -76,7 +76,7 @@ export async function POST(req: Request, res: Response) {
           { status: 200 },
         );
       } catch (error) {
-        logger.error("Error generating Deepgram token:", error);
+        logger.error("Error generating Deepgram token:", error instanceof Error ? error.message : String(error));
         return NextResponse.json(
           { error: "Internal server error" },
           { status: 500 },
@@ -101,7 +101,7 @@ export async function POST(req: Request, res: Response) {
   );
   }
   } catch (error) {
-    logger.error("Error in register-call:", error);
+    logger.error("Error in register-call:", error instanceof Error ? error.message : String(error));
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

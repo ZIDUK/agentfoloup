@@ -52,7 +52,7 @@ export async function GET(res: NextRequest) {
       { status: 200 },
     );
   } catch (error) {
-    logger.error("Error creating interviewers:", error);
+    logger.error("Error creating interviewers:", error instanceof Error ? error.message : String(error));
     return NextResponse.json(
       { error: "Failed to create interviewers" },
       { status: 500 },
