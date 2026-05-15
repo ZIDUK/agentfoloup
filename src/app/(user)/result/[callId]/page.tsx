@@ -250,7 +250,7 @@ export default function ResultPage({ params }: Props) {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">Interview Complete</h1>
-          {interviewName && <p className="text-indigo-500 font-medium mb-3">{interviewName}</p>}
+          {interviewName && <p className="text-indigo-500 dark:text-indigo-400 font-medium mb-3">{interviewName}</p>}
           <p className="text-muted-foreground text-sm leading-relaxed">
             Thank you for completing the interview. Your responses have been recorded and will be reviewed shortly.
           </p>
@@ -301,7 +301,7 @@ export default function ResultPage({ params }: Props) {
               English Proficiency Level
             </p>
             <div className="flex items-center justify-center gap-3">
-              <span className="text-4xl font-black text-indigo-700 leading-none">{ep.cefrLevel}</span>
+              <span className="text-4xl font-black text-indigo-700 dark:text-indigo-400 leading-none">{ep.cefrLevel}</span>
               {CEFR_LABELS[ep.cefrLevel] && (
                 <span className="text-lg font-semibold text-muted-foreground">{CEFR_LABELS[ep.cefrLevel]}</span>
               )}
