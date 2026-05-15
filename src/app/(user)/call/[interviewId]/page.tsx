@@ -228,6 +228,7 @@ function InterviewInterface({ params }: Props) {
           <Call
             interview={interview}
             applicationId={invitation?.application_id}
+            invitationId={invitation?.id ?? undefined}
             jobId={invitation?.job_id ?? undefined}
             invitationEmail={invitation?.candidate_email ?? ""}
           />

@@ -41,6 +41,7 @@ import { useCameraRecording } from "@/hooks/useCameraRecording";
 type InterviewProps = {
   interview: Interview;
   applicationId?: string;
+  invitationId?: string;
   jobId?: number;
   isTestResponse?: boolean;
   prefillEmail?: string;
@@ -53,7 +54,7 @@ type transcriptType = {
   content: string;
 };
 
-function Call({ interview, applicationId, jobId, isTestResponse = false, prefillEmail = "", prefillName = "", invitationEmail = "" }: InterviewProps) {
+function Call({ interview, applicationId, invitationId, jobId, isTestResponse = false, prefillEmail = "", prefillName = "", invitationEmail = "" }: InterviewProps) {
   const { createResponse } = useResponses();
   const [lastInterviewerResponse, setLastInterviewerResponse] =
     useState<string>("");
@@ -651,6 +652,7 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
           ...(applicationId ? { application_id: applicationId } : {}),
           ...(jobId != null ? { job_id: jobId } : {}),
           ...(isTestResponse ? { is_test_response: true } : {}),
+          invitation_id: invitationId ?? null,
         });
       }
 
