@@ -16,7 +16,7 @@ function SideMenu() {
             className={`flex flex-row p-3 rounded-md hover:bg-accent cursor-pointer ${
               pathname.endsWith("/dashboard") ||
               pathname.includes("/interviews")
-                ? "bg-indigo-200 dark:bg-indigo-800/60"
+                ? "bg-indigo-100 dark:bg-indigo-900/40"
                 : "bg-secondary"
             }`}
             onClick={() => router.push("/dashboard")}
@@ -27,7 +27,7 @@ function SideMenu() {
           <div
             className={`flex flex-row p-3 rounded-md hover:bg-accent cursor-pointer ${
               pathname.endsWith("/interviewers")
-                ? "bg-indigo-200 dark:bg-indigo-800/60"
+                ? "bg-indigo-100 dark:bg-indigo-900/40"
                 : "bg-secondary"
             }`}
             onClick={() => router.push("/dashboard/interviewers")}

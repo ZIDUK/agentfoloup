@@ -237,7 +237,6 @@ function EditInterview({ interview }: EditInterviewProps) {
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
-                    className="bg-indigo-600 hover:bg-indigo-800"
                     onClick={async () => {
                       await onDeleteInterviewClick();
                     }}
@@ -251,7 +250,7 @@ function EditInterview({ interview }: EditInterviewProps) {
         </div>
         <textarea
           value={description}
-          className="h-fit mt-3 ml-2 py-2 border-2 rounded-md w-[75%] px-2 border-input"
+          className="h-fit mt-3 ml-2 py-2 border-2 rounded-md w-[75%] px-2 border-input bg-background text-foreground"
           placeholder="Enter your interview description here."
           rows={3}
           onChange={(e) => {
@@ -264,7 +263,7 @@ function EditInterview({ interview }: EditInterviewProps) {
         <p className="mt-3 mb-1 ml-2 font-medium">Objective</p>
         <textarea
           value={objective}
-          className="h-fit mt-3 ml-2 py-2 border-2 rounded-md w-[75%] px-2 border-input"
+          className="h-fit mt-3 ml-2 py-2 border-2 rounded-md w-[75%] px-2 border-input bg-background text-foreground"
           placeholder="Enter your interview objective here."
           rows={3}
           onChange={(e) => setObjective(e.target.value)}
