@@ -116,7 +116,10 @@ If you cannot answer yes to all three, the bead is not groomed. Improve it befor
 4. **Leave a GROOMED comment on the bead** (required — eng must not start without this):
    `bd comments add <id> --author pm "GROOMED: <AC summary>. User story: <as a / I want / so that>. Edge cases: <list>. How to verify: <steps>"`
 5. Deliver: `initech deliver <id>` (marks ready_for_qa, clears TUI, reports to super)
-6. Announce: `initech announce --kind agent.completed --agent pm "<what you delivered>"`
+6. **Immediately message super** so super can dispatch to engineers — do NOT wait to be polled:
+   `initech send super "[from pm] Groomed <bead title> — ready for dispatch to eng"`
+   Super cannot dispatch until you report. This message unblocks the entire pipeline.
+7. Announce: `initech announce --kind agent.completed --agent pm "<what you delivered>"`
 
 Example: `initech announce --kind agent.completed --agent pm "Groomed 3 live mode beads with full AC"`
 
