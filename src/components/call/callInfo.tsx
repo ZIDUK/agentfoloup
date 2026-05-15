@@ -644,10 +644,6 @@ function CallInfo({
                                 ? "Fullscreen exit"
                                 : event.type === "camera_covered"
                                 ? "Camera covered"
-                                : event.type === "no_face"
-                                ? "No face detected (10s+)"
-                                : event.type === "multiple_faces"
-                                ? "Multiple faces detected"
                                 : event.type}
                             </span>
                             <span>

@@ -142,7 +142,7 @@ Deno.serve(async (_req) => {
     const dbFetchStart = Date.now();
     const { data: responses, error } = await supabase
       .from("response")
-      .select("call_id, interview_id, details, analytics, application_id, tab_switch_count, fullscreen_exit_count, proctoring_events, no_face_count, multiple_faces_count")
+      .select("call_id, interview_id, details, analytics, application_id, tab_switch_count, fullscreen_exit_count, proctoring_events")
       .eq("is_analysed", false)
       .eq("is_ended", true);
 
