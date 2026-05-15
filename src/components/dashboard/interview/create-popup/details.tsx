@@ -229,12 +229,12 @@ function DetailsPopup({
                       setOpenInterviewerDetails(true);
                     }}
                   >
-                    <Info size={18} strokeWidth={2.2} className="text-indigo-600" />
+                    <Info size={18} strokeWidth={2.2} className="text-indigo-600 dark:text-primary" />
                   </button>
                   <div
                     className={`w-[96px] overflow-hidden rounded-full ${
                       selectedInterviewer === item.id
-                        ? "border-4 border-indigo-600"
+                        ? "border-4 border-indigo-600 dark:border-primary"
                         : ""
                     }`}
                     onClick={() => setSelectedInterviewer(item.id)}
@@ -349,7 +349,7 @@ function DetailsPopup({
                   ? false
                   : true) || isClicked
               }
-              className="bg-indigo-600 hover:bg-indigo-800  w-40"
+              className="bg-primary hover:bg-primary/80  w-40"
               onClick={() => {
                 setIsClicked(true);
                 onGenrateQuestions();
@@ -367,7 +367,7 @@ function DetailsPopup({
                   ? false
                   : true) || isClicked
               }
-              className="bg-indigo-600 w-40 hover:bg-indigo-800"
+              className="bg-primary w-40 hover:bg-primary/80"
               onClick={() => {
                 setIsClicked(true);
                 onManual();

@@ -300,7 +300,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="bg-transparent shadow-none relative text-xs text-indigo-600 px-1 h-7 hover:scale-110 hover:bg-transparent"
+                    className="bg-transparent shadow-none relative text-xs text-indigo-600 dark:text-primary px-1 h-7 hover:scale-110 hover:bg-transparent"
                     variant="secondary"
                     onClick={(e) => { e.stopPropagation(); setIsSharePopupOpen(true); }}
                   >
@@ -316,7 +316,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="bg-transparent shadow-none text-xs text-indigo-600 px-0 h-7 hover:scale-110 relative"
+                    className="bg-transparent shadow-none text-xs text-indigo-600 dark:text-primary px-0 h-7 hover:scale-110 relative"
                     onClick={(e) => { e.stopPropagation(); seeInterviewPreviewPage(); }}
                   >
                     <Eye />
@@ -331,7 +331,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="bg-transparent shadow-none text-xs text-indigo-600 px-0 h-7 hover:scale-110 relative"
+                    className="bg-transparent shadow-none text-xs text-indigo-600 dark:text-primary px-0 h-7 hover:scale-110 relative"
                     onClick={(e) => { e.stopPropagation(); setShowColorPicker(!showColorPicker); }}
                   >
                     <Palette size={19} />
@@ -346,7 +346,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="bg-transparent shadow-none text-xs text-indigo-600 px-0 h-7 hover:scale-110 relative"
+                    className="bg-transparent shadow-none text-xs text-indigo-600 dark:text-primary px-0 h-7 hover:scale-110 relative"
                     onClick={() => router.push(`/interviews/${params.interviewId}?edit=true`)}
                   >
                     <Pencil size={16} />
@@ -362,7 +362,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <span className="ms-3 my-auto text-sm">Active</span>
               <Switch
                 checked={isActive}
-                className={`ms-3 my-auto ${isActive ? "bg-indigo-600" : "bg-secondary"}`}
+                className={`ms-3 my-auto ${isActive ? "bg-indigo-600 dark:bg-primary" : "bg-secondary"}`}
                 onCheckedChange={handleToggle}
               />
             </label>
@@ -439,7 +439,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <div className="flex w-full justify-center py-2">
                 <input
                   type="text"
-                  className="w-[95%] bg-secondary rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  className="w-[95%] bg-secondary rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                   placeholder="Filter by name…"
                   value={nameInput}
                   onChange={(e) => handleNameInputChange(e.target.value)}
@@ -450,7 +450,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <div className="flex w-full justify-center py-2">
                 <input
                   type="text"
-                  className="w-[95%] bg-secondary rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  className="w-[95%] bg-secondary rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                   placeholder="Filter by email…"
                   value={emailInput}
                   onChange={(e) => handleEmailInputChange(e.target.value)}
@@ -491,7 +491,7 @@ function InterviewHome({ params, searchParams }: Props) {
                           <div className="flex flex-col items-center justify-center ml-auto flex-shrink-0">
                             {!response.is_viewed && (
                               <div className="w-4 h-4 flex items-center justify-center mb-1">
-                                <div className="text-indigo-500 text-xl leading-none">●</div>
+                                <div className="text-indigo-600 dark:text-primary text-xl leading-none">●</div>
                               </div>
                             )}
                             <div className={`w-6 h-6 flex items-center justify-center ${response.is_viewed ? "h-full" : ""}`}>
@@ -499,8 +499,8 @@ function InterviewHome({ params, searchParams }: Props) {
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <div className="w-6 h-6 rounded-full bg-background border-2 border-indigo-500 flex items-center justify-center">
-                                        <span className="text-indigo-500 text-xs font-semibold">
+                                      <div className="w-6 h-6 rounded-full bg-background border-2 border-indigo-500 dark:border-primary flex items-center justify-center">
+                                        <span className="text-indigo-600 dark:text-primary text-xs font-semibold">
                                           {response?.analytics?.overallScore}
                                         </span>
                                       </div>
