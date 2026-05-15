@@ -59,6 +59,20 @@ npm build    # alternative build command
 
 **Always use `yarn build` or `npm build` to build the project. No other build invocations.**
 
+## Database Migrations
+
+**Rules — no exceptions:**
+
+1. **Never edit existing migration files.** Every schema change gets a new timestamped file in `supabase/migrations/`.
+2. **Always apply with `supabase db push`.** This is the only permitted apply command.
+3. **Never apply migrations via the Supabase MCP tool** (`apply_migration`). MCP bypasses the CLI migration tracker, causes timestamp drift between local files and the remote, and leaves the local state out of sync with the DB. Any eng that uses MCP to apply a migration will create reconciliation work for the whole team.
+
+```bash
+# Correct workflow
+supabase db push        # apply pending migrations to remote
+supabase db pull        # pull remote state back to local (use to reconcile if drift occurs)
+```
+
 ## Architecture Overview
 
 _Add a brief overview of your project architecture_
