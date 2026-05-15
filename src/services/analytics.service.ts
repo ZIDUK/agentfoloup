@@ -127,6 +127,7 @@ export const generateInterviewAnalytics = async (payload: {
     if (
       analyticsResponse.questionSummaries &&
       Array.isArray(analyticsResponse.questionSummaries) &&
+      transcriptObject != null &&
       transcriptObject.length > 0
     ) {
       analyticsResponse.questionSummaries = analyticsResponse.questionSummaries.map(
