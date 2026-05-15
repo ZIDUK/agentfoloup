@@ -547,6 +547,13 @@ function Call({ interview, applicationId, jobId, isTestResponse = false, prefill
         return;
       }
 
+      if (!screenShareResult.stream) {
+        toast.error('Screen sharing failed. Please try again.');
+        setLoading(false);
+        stopCamera();
+        return;
+      }
+
       // getDisplayMedia dialog also exits fullscreen — re-enter if needed.
       if (typeof document !== 'undefined' && document.fullscreenEnabled && !document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(() => {});
