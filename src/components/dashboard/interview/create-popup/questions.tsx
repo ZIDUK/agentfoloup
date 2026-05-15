@@ -75,7 +75,7 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
         ...interviewData,
         interviewer_id: interviewData.interviewer_id.toString(),
         response_count: interviewData.response_count.toString(),
-        logo_url: interviewData.logo_url || "",
+        logo_url: (interviewData as { logo_url?: string }).logo_url ?? "",
       };
 
       const response = await axios.post("/api/create-interview", {

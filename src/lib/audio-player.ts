@@ -37,7 +37,7 @@ export class AudioPlayer {
     if (audioData instanceof ArrayBuffer) {
       arrayBuffer = audioData;
     } else if (audioData instanceof Uint8Array) {
-      arrayBuffer = audioData.buffer;
+      arrayBuffer = audioData.buffer as ArrayBuffer;
     } else if ((audioData as any).buffer instanceof ArrayBuffer) {
       arrayBuffer = (audioData as any).buffer;
     } else {
@@ -84,7 +84,7 @@ export class AudioPlayer {
       }> = [];
 
       while (this.audioBuffer.length > 0) {
-        const chunk = this.audioBuffer.shift();
+        const chunk = this.audioBuffer.shift() as ArrayBuffer | Int16Array | Uint8Array | undefined;
         if (!chunk) continue;
 
         try {

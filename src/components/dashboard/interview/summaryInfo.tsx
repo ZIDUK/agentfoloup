@@ -949,7 +949,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                         color: "#9ca3af",
                         label: "Overall Average",
                         strokeDasharray: "5 5",
-                      },
+                      } as any, // MUI x-charts v7.7 does not expose strokeDasharray on LineSeriesType
                     ]}
                     sx={{
                       '& .MuiChartsAxis-tickLabel': { fill: 'hsl(var(--foreground))' },
