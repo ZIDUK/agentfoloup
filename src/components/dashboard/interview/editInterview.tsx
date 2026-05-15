@@ -342,7 +342,7 @@ function EditInterview({ interview }: EditInterviewProps) {
             <input
               type="number"
               step="1"
-              max="5"
+              max="50"
               min={questions.length.toString()}
               className="border-2 text-center focus:outline-none  bg-secondary rounded-md border-input w-14 px-2 py-0.5 ml-3"
               value={numQuestions}

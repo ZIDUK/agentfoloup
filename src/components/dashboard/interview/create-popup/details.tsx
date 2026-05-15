@@ -296,7 +296,7 @@ function DetailsPopup({
               <input
                 type="number"
                 step="1"
-                max="5"
+                max="50"
                 min="1"
                 className="border-b-2 text-center focus:outline-none  border-input w-14 px-2 py-0.5 ml-3"
                 value={numQuestions}
