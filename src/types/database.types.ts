@@ -293,14 +293,13 @@ export type Database = {
           fullscreen_exit_count: number | null
           id: number
           interview_id: string | null
+          invitation_id: string | null
           is_analysed: boolean | null
           is_ended: boolean | null
           is_test_response: boolean | null
           is_viewed: boolean | null
           job_id: number | null
-          multiple_faces_count: number | null
           name: string | null
-          no_face_count: number | null
           proctoring_events: Json | null
           recording_url: string | null
           screen_recording_url: string | null
@@ -319,14 +318,13 @@ export type Database = {
           fullscreen_exit_count?: number | null
           id?: number
           interview_id?: string | null
+          invitation_id?: string | null
           is_analysed?: boolean | null
           is_ended?: boolean | null
           is_test_response?: boolean | null
           is_viewed?: boolean | null
           job_id?: number | null
-          multiple_faces_count?: number | null
           name?: string | null
-          no_face_count?: number | null
           proctoring_events?: Json | null
           recording_url?: string | null
           screen_recording_url?: string | null
@@ -345,14 +343,13 @@ export type Database = {
           fullscreen_exit_count?: number | null
           id?: number
           interview_id?: string | null
+          invitation_id?: string | null
           is_analysed?: boolean | null
           is_ended?: boolean | null
           is_test_response?: boolean | null
           is_viewed?: boolean | null
           job_id?: number | null
-          multiple_faces_count?: number | null
           name?: string | null
-          no_face_count?: number | null
           proctoring_events?: Json | null
           recording_url?: string | null
           screen_recording_url?: string | null
@@ -364,6 +361,13 @@ export type Database = {
             columns: ["interview_id"]
             isOneToOne: false
             referencedRelation: "interview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "response_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "invitations"
             referencedColumns: ["id"]
           },
         ]

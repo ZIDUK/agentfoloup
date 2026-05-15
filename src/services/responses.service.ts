@@ -3,9 +3,22 @@ import { getSupabaseClient } from "@/lib/supabase-client";
 const createResponse = async (payload: any) => {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
+
+  let invitationId: string | null = null;
+  if (payload.application_id) {
+    const { data: invitation } = await supabase
+      .from("invitations")
+      .select("id")
+      .eq("application_id", payload.application_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    invitationId = invitation?.id ?? null;
+  }
+
   const { error, data } = await supabase
     .from("response")
-    .insert({ ...payload })
+    .insert({ ...payload, invitation_id: invitationId })
     .select("id");
 
   if (error) return [];
