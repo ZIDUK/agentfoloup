@@ -2,10 +2,39 @@
 
 import { getSupabaseClient } from "@/lib/supabase-client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-function SignInPage() {
+function SignInFallback() {
+  return (
+    <div className="flex items-center justify-center h-screen w-full bg-background absolute top-0 left-0 z-50">
+      <div className="hidden md:block align-middle my-auto mx-auto">
+        <div className="flex flex-col items-center justify-center p-8 bg-card rounded-lg shadow-lg border-2 border-border">
+          <h1 className="text-3xl font-bold text-center text-foreground mb-2">
+            Welcome to Folo<span className="text-indigo-600">Up</span>
+          </h1>
+          <p className="text-muted-foreground mb-8 text-center">
+            Sign in to continue to your dashboard
+          </p>
+        </div>
+      </div>
+      <div className="block md:hidden px-3 h-[60%] my-auto">
+        <h1 className="text-2xl font-bold text-center text-foreground">
+          Welcome to Folo<span className="text-indigo-600">Up</span>
+        </h1>
+        <h1 className="text-md my-3 text-center text-foreground">
+          Mobile version is currently under construction. 🚧
+        </h1>
+        <p className="text-center text-muted-foreground mt-3">
+          Please sign in using a PC for the best experience. Sorry for the
+          inconvenience.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SignInContent() {
   const [loading, setLoading] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
   const supabase = getSupabaseClient();
@@ -104,4 +133,10 @@ function SignInPage() {
   );
 }
 
-export default SignInPage;
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<SignInFallback />}>
+      <SignInContent />
+    </Suspense>
+  );
+}
