@@ -1,6 +1,20 @@
 services:
+  supabase-deploy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: deployer
+    environment:
+      - SUPABASE_PROJECT_ID=${SUPABASE_PROJECT_ID}
+      - SUPABASE_ACCESS_TOKEN=${SUPABASE_ACCESS_TOKEN}
+      - SUPABASE_DB_PASSWORD=${SUPABASE_DB_PASSWORD}
+    restart: "no"
+
   foloup:
     container_name: foloup-app
+    depends_on:
+      supabase-deploy:
+        condition: service_completed_successfully
     build:
       context: .
       dockerfile: Dockerfile
