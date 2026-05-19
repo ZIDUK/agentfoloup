@@ -300,7 +300,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="bg-transparent shadow-none relative text-xs text-indigo-600 dark:text-primary px-1 h-7 hover:scale-110 hover:bg-transparent"
+                    className="bg-transparent shadow-none relative text-xs text-primary px-1 h-7 hover:scale-110 hover:bg-transparent"
                     variant="secondary"
                     onClick={(e) => { e.stopPropagation(); setIsSharePopupOpen(true); }}
                   >
@@ -316,7 +316,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="bg-transparent shadow-none text-xs text-indigo-600 dark:text-primary px-0 h-7 hover:scale-110 relative"
+                    className="bg-transparent shadow-none text-xs text-primary px-0 h-7 hover:scale-110 relative"
                     onClick={(e) => { e.stopPropagation(); seeInterviewPreviewPage(); }}
                   >
                     <Eye />
@@ -331,7 +331,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="bg-transparent shadow-none text-xs text-indigo-600 dark:text-primary px-0 h-7 hover:scale-110 relative"
+                    className="bg-transparent shadow-none text-xs text-primary px-0 h-7 hover:scale-110 relative"
                     onClick={(e) => { e.stopPropagation(); setShowColorPicker(!showColorPicker); }}
                   >
                     <Palette size={19} />
@@ -346,7 +346,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="bg-transparent shadow-none text-xs text-indigo-600 dark:text-primary px-0 h-7 hover:scale-110 relative"
+                    className="bg-transparent shadow-none text-xs text-primary px-0 h-7 hover:scale-110 relative"
                     onClick={() => router.push(`/interviews/${params.interviewId}?edit=true`)}
                   >
                     <Pencil size={16} />
@@ -362,7 +362,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <span className="ms-3 my-auto text-sm">Active</span>
               <Switch
                 checked={isActive}
-                className={`ms-3 my-auto ${isActive ? "bg-indigo-600 dark:bg-primary" : "bg-secondary"}`}
+                className={`ms-3 my-auto ${isActive ? "bg-primary" : "bg-secondary"}`}
                 onCheckedChange={handleToggle}
               />
             </label>
@@ -395,16 +395,16 @@ function InterviewHome({ params, searchParams }: Props) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={CandidateStatus.NO_STATUS}>
-                      <div className="flex items-center"><div className="w-3 h-3 bg-gray-400 rounded-full mr-2" />No Status</div>
+                      <div className="flex items-center"><div className="w-3 h-3 bg-muted-foreground rounded-full mr-2" />No Status</div>
                     </SelectItem>
                     <SelectItem value={CandidateStatus.NOT_SELECTED}>
-                      <div className="flex items-center"><div className="w-3 h-3 bg-red-500 rounded-full mr-2" />Not Selected</div>
+                      <div className="flex items-center"><div className="w-3 h-3 bg-destructive rounded-full mr-2" />Not Selected</div>
                     </SelectItem>
                     <SelectItem value={CandidateStatus.POTENTIAL}>
-                      <div className="flex items-center"><div className="w-3 h-3 bg-yellow-500 rounded-full mr-2" />Potential</div>
+                      <div className="flex items-center"><div className="w-3 h-3 bg-warning rounded-full mr-2" />Potential</div>
                     </SelectItem>
                     <SelectItem value={CandidateStatus.SELECTED}>
-                      <div className="flex items-center"><div className="w-3 h-3 bg-green-500 rounded-full mr-2" />Selected</div>
+                      <div className="flex items-center"><div className="w-3 h-3 bg-success rounded-full mr-2" />Selected</div>
                     </SelectItem>
                     <SelectItem value="ALL">
                       <div className="flex items-center"><div className="w-3 h-3 border-2 border-border rounded-full mr-2" />All</div>
@@ -473,13 +473,13 @@ function InterviewHome({ params, searchParams }: Props) {
                     >
                       <div className="flex flex-row gap-1 items-center w-full">
                         {response.candidate_status === "NOT_SELECTED" ? (
-                          <div className="w-[5%] h-full bg-red-500 rounded-sm" />
+                          <div className="w-[5%] h-full bg-destructive rounded-sm" />
                         ) : response.candidate_status === "POTENTIAL" ? (
-                          <div className="w-[5%] h-full bg-yellow-500 rounded-sm" />
+                          <div className="w-[5%] h-full bg-warning rounded-sm" />
                         ) : response.candidate_status === "SELECTED" ? (
-                          <div className="w-[5%] h-full bg-green-500 rounded-sm" />
+                          <div className="w-[5%] h-full bg-success rounded-sm" />
                         ) : (
-                          <div className="w-[5%] h-full bg-gray-400 rounded-sm" />
+                          <div className="w-[5%] h-full bg-muted-foreground rounded-sm" />
                         )}
                         <div className="flex items-center justify-between w-full">
                           <div className="flex flex-col my-auto">
@@ -491,7 +491,7 @@ function InterviewHome({ params, searchParams }: Props) {
                           <div className="flex flex-col items-center justify-center ml-auto flex-shrink-0">
                             {!response.is_viewed && (
                               <div className="w-4 h-4 flex items-center justify-center mb-1">
-                                <div className="text-indigo-600 dark:text-primary text-xl leading-none">●</div>
+                                <div className="text-primary text-xl leading-none">●</div>
                               </div>
                             )}
                             <div className={`w-6 h-6 flex items-center justify-center ${response.is_viewed ? "h-full" : ""}`}>
@@ -499,8 +499,8 @@ function InterviewHome({ params, searchParams }: Props) {
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <div className="w-6 h-6 rounded-full bg-background border-2 border-indigo-500 dark:border-primary flex items-center justify-center">
-                                        <span className="text-indigo-600 dark:text-primary text-xs font-semibold">
+                                      <div className="w-6 h-6 rounded-full bg-background border-2 border-primary flex items-center justify-center">
+                                        <span className="text-primary text-xs font-semibold">
                                           {response?.analytics?.overallScore}
                                         </span>
                                       </div>

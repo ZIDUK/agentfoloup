@@ -801,7 +801,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogAction
-                className="bg-indigo-400 hover:bg-indigo-600 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 onClick={() => setIsScreenShareWarningOpen(false)}
               >
                 I understand
@@ -813,7 +813,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
 
       {/* Camera preview — small floating thumbnail visible during the interview */}
       {isStarted && !isEnded && cameraStream && (
-        <div className="fixed bottom-4 right-4 z-50 rounded-lg overflow-hidden border-2 border-indigo-400 shadow-lg bg-black">
+        <div className="fixed bottom-4 right-4 z-50 rounded-lg overflow-hidden border-2 border-primary shadow-lg bg-black">
           <video
             ref={cameraVideoRef}
             autoPlay
@@ -822,11 +822,11 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
             className="w-36 h-28 object-cover"
           />
           <div className="absolute top-1 right-1">
-            <VideoIcon className="h-3 w-3 text-red-500" />
+            <VideoIcon className="h-3 w-3 text-destructive" />
           </div>
           {isCameraCovered && (
             <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center text-white text-xs text-center p-1 gap-1">
-              <VideoOffIcon className="h-4 w-4 text-red-400" />
+              <VideoOffIcon className="h-4 w-4 text-destructive" />
               <span>Camera appears covered</span>
             </div>
           )}
@@ -835,7 +835,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
 
       <div className="bg-card rounded-md md:w-[80%] w-[90%] h-full">
         {isTestResponse && (
-          <div className="bg-amber-100 border border-amber-300 text-amber-800 text-xs font-semibold text-center py-1 rounded-t-lg">
+          <div className="bg-warning-light border border-warning/30 text-warning text-xs font-semibold text-center py-1 rounded-t-lg">
             Test Mode — This response will be stored as a test response
           </div>
         )}
@@ -850,7 +850,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
               {!isEnded && (
                 <div className="flex mt-2 flex-row">
                   <AlarmClockIcon
-                    className="text-indigo-600 h-[1rem] w-[1rem] rotate-0 scale-100  dark:-rotate-90 dark:scale-0 mr-2 font-bold"
+                    className="text-primary h-[1rem] w-[1rem] rotate-0 scale-100  dark:-rotate-90 dark:scale-0 mr-2 font-bold"
                     style={{ color: interview.theme_color }}
                   />
                   <div className="text-sm font-normal">
@@ -869,7 +869,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
 
             {/* ── Pre-start screen ── */}
             {!isStarted && !isEnded && !isOldUser && !isCheckingApplication && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-card">
+              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-primary/20 rounded-md p-2 m-2 bg-card">
                 <div>
                   {interview?.logo_url && (interview.logo_url.startsWith("/") || interview.logo_url.startsWith("http")) && (
                     <div className="p-1 flex justify-center">
@@ -892,7 +892,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
                     </p>
 
                     {/* Camera & proctoring consent notice */}
-                    <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-md text-xs text-yellow-800 font-normal">
+                    <div className="mt-3 p-2 bg-warning-light border border-warning/30 rounded-md text-xs text-warning font-normal">
                       <div className="flex items-center gap-1 mb-1 font-semibold">
                         <VideoIcon className="h-3 w-3" />
                         Camera & Integrity Monitoring
@@ -907,21 +907,21 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
                       <div className="mt-2 flex flex-col gap-1">
                         <div className="flex items-center gap-1 text-xs">
                           {permissionStatus === "granted" ? (
-                            <span className="text-green-600 flex items-center gap-1">
+                            <span className="text-success flex items-center gap-1">
                               <VideoIcon className="h-3 w-3" /> Camera &amp; microphone access granted
                             </span>
                           ) : permissionStatus === "denied" ? (
-                            <span className="text-red-600 flex items-center gap-1">
+                            <span className="text-destructive flex items-center gap-1">
                               <VideoOffIcon className="h-3 w-3" /> Camera or microphone access denied — please allow in browser settings
                             </span>
                           ) : (
-                            <span className="text-yellow-700 flex items-center gap-1">
+                            <span className="text-warning flex items-center gap-1">
                               <VideoIcon className="h-3 w-3" /> Camera &amp; microphone access will be requested when you start
                             </span>
                           )}
                         </div>
                         {cameraError && permissionStatus !== "granted" && (
-                          <p className="text-red-600 flex items-center gap-1 text-xs">
+                          <p className="text-destructive flex items-center gap-1 text-xs">
                             <VideoOffIcon className="h-3 w-3" />
                             {cameraError}
                           </p>
@@ -939,16 +939,16 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
                         <input
                           value={email}
                           className={`h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 text-sm font-normal ${
-                            email && !isValidEmail ? "border-red-400" : "border-input"
+                            email && !isValidEmail ? "border-destructive" : "border-input"
                           }`}
                           placeholder="Enter your email address"
                           onChange={(e) => setEmail(e.target.value)}
                         />
                         {email && !isValidEmail && (
-                          <p className="text-red-500 text-xs w-[75%]">Please enter a valid email address</p>
+                          <p className="text-destructive text-xs w-[75%]">Please enter a valid email address</p>
                         )}
                         {emailMismatchError && (
-                          <p className="text-red-500 text-xs w-[75%]">This interview was sent to a different email address. Please use the email you were invited with.</p>
+                          <p className="text-destructive text-xs w-[75%]">This interview was sent to a different email address. Please use the email you were invited with.</p>
                         )}
                       </div>
                       <div className="flex justify-center">
@@ -984,7 +984,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
                     <AlertDialogTrigger asChild>
                       <Button
                         className="bg-background border text-foreground ml-2 min-w-15 h-10 rounded-lg flex flex-row justify-center"
-                        style={{ borderColor: interview.theme_color }}
+                        style={{ borderColor: interview.theme_color ?? "hsl(var(--color-primary))" }}
                         disabled={Loading}
                       >
                         Exit
@@ -1001,7 +1001,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          className="bg-indigo-600 hover:bg-indigo-800"
+                          className="bg-primary hover:bg-primary/90"
                           onClick={async () => {
                             await onEndCallClick();
                           }}
@@ -1018,9 +1018,9 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
             {/* ── Timing bar — visible only during active interview ── */}
             {isStarted && !isEnded && !isOldUser && (
               <div className="mx-4 mt-2 mb-1">
-                <div className="h-2 rounded-full bg-indigo-100 border border-indigo-200 overflow-hidden">
+                <div className="h-2 rounded-full bg-primary/10 border border-primary/20 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-indigo-600 transition-all duration-1000"
+                    className="h-full rounded-full bg-primary transition-all duration-1000"
                     style={{
                       width: `${Math.min(
                         (Number(currentTimeDuration) / (Number(interviewTimeDuration) * 60)) * 100,
@@ -1102,7 +1102,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
-                      className="w-full bg-background text-foreground border border-indigo-600 h-10 mx-auto flex flex-row justify-center"
+                      className="w-full bg-background text-foreground border border-primary h-10 mx-auto flex flex-row justify-center"
                       disabled={Loading}
                     >
                       End Interview{" "}
@@ -1120,7 +1120,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        className="bg-indigo-600 hover:bg-indigo-800"
+                        className="bg-primary hover:bg-primary/90"
                         onClick={async () => {
                           await onEndCallClick();
                         }}
@@ -1135,7 +1135,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
 
             {/* ── End screen ── */}
             {isEnded && !isOldUser && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-card  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-primary/20 rounded-md p-2 m-2 bg-card  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
                 <div>
                   {isCompiling ? (
                     <div className="p-6 flex flex-col items-center gap-4">
@@ -1150,7 +1150,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
                         <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                           <AlertDialogTrigger asChild>
                             <Button
-                              className="w-full bg-indigo-600 text-white h-10 mt-2"
+                              className="w-full bg-primary text-primary-foreground h-10 mt-2"
                               onClick={() => setIsDialogOpen(true)}
                             >
                               Provide Feedback
@@ -1171,7 +1171,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
                   ) : (
                     <>
                       <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
-                        <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
+                        <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-primary " />
                         <p className="text-lg font-semibold text-center">
                           {isTestResponse
                             ? "Test completed. Redirecting to responses..."
@@ -1186,7 +1186,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
                         >
                           <AlertDialogTrigger asChild>
                             <Button
-                              className="w-full bg-indigo-600 text-white h-10 mt-4 mb-4"
+                              className="w-full bg-primary text-primary-foreground h-10 mt-4 mb-4"
                               onClick={() => setIsDialogOpen(true)}
                             >
                               Provide Feedback
@@ -1213,10 +1213,10 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
               </div>
             )}
             {isOldUser && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-card  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-primary/20 rounded-md p-2 m-2 bg-card  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
                 <div>
                   <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
-                    <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
+                    <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-primary " />
                     <p className="text-lg font-semibold text-center">
                       You have already responded in this interview or you are
                       not eligible to respond. Thank you!

@@ -11,7 +11,7 @@ function SignInFallback() {
       <div className="hidden md:block align-middle my-auto mx-auto">
         <div className="flex flex-col items-center justify-center p-8 bg-card rounded-lg shadow-lg border-2 border-border">
           <h1 className="text-3xl font-bold text-center text-foreground mb-2">
-            Welcome to Folo<span className="text-indigo-600">Up</span>
+            Welcome to Folo<span className="text-primary">Up</span>
           </h1>
           <p className="text-muted-foreground mb-8 text-center">
             Sign in to continue to your dashboard
@@ -20,7 +20,7 @@ function SignInFallback() {
       </div>
       <div className="block md:hidden px-3 h-[60%] my-auto">
         <h1 className="text-2xl font-bold text-center text-foreground">
-          Welcome to Folo<span className="text-indigo-600">Up</span>
+          Welcome to Folo<span className="text-primary">Up</span>
         </h1>
         <h1 className="text-md my-3 text-center text-foreground">
           Mobile version is currently under construction. 🚧
@@ -76,10 +76,10 @@ function SignInContent() {
       <div className="hidden md:block align-middle my-auto mx-auto">
         <div className="flex flex-col items-center justify-center p-8 bg-card rounded-lg shadow-lg border-2 border-border">
           <h1 className="text-3xl font-bold text-center text-foreground mb-2">
-            Welcome to Folo<span className="text-indigo-600">Up</span>
+            Welcome to Folo<span className="text-primary">Up</span>
           </h1>
           {!oauthError && urlErrorMessage ? (
-            <p className="text-red-500 mb-8 text-center text-sm">
+            <p className="text-destructive mb-8 text-center text-sm">
               {urlErrorMessage}
             </p>
           ) : (
@@ -113,13 +113,13 @@ function SignInContent() {
             {loading ? "Signing in..." : "Continue with Google"}
           </Button>
           {oauthError && (
-            <p className="text-red-500 mt-3 text-center text-sm">{oauthError}</p>
+            <p className="text-destructive mt-3 text-center text-sm">{oauthError}</p>
           )}
         </div>
       </div>
       <div className="block md:hidden px-3 h-[60%] my-auto">
         <h1 className="text-2xl font-bold text-center text-foreground">
-          Welcome to Folo<span className="text-indigo-600">Up</span>
+          Welcome to Folo<span className="text-primary">Up</span>
         </h1>
         <h1 className="text-md my-3 text-center text-foreground">
           Mobile version is currently under construction. 🚧

@@ -76,7 +76,7 @@ function TestInterviewContent({ params }: Props) {
   if (linkedJobs.length > 0 && !jobSelected) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="bg-card rounded-xl border-2 border-slate-200 shadow-md p-8 w-[420px] flex flex-col gap-5">
+        <div className="bg-card rounded-xl border-2 border-border shadow-md p-8 w-[420px] flex flex-col gap-5">
           <h2 className="text-lg font-semibold text-center">Select a Job to Test</h2>
           <p className="text-sm text-muted-foreground text-center">
             This interview is linked to multiple jobs. Select one so the test response is tagged correctly, or skip to run a general test.
@@ -87,8 +87,8 @@ function TestInterviewContent({ params }: Props) {
                 key={job.job_id}
                 className={`px-4 py-2 rounded-lg border-2 text-sm text-left transition-colors ${
                   selectedJobId === job.job_id
-                    ? "border-indigo-600 bg-indigo-50 text-indigo-700 font-medium"
-                    : "border-slate-200 hover:border-indigo-300"
+                    ? "border-primary bg-primary/10 text-primary font-medium"
+                    : "border-border hover:border-primary/50"
                 }`}
                 onClick={() => setSelectedJobId(job.job_id)}
               >
@@ -105,7 +105,7 @@ function TestInterviewContent({ params }: Props) {
             </button>
             <button
               disabled={selectedJobId === null}
-              className="flex-1 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               onClick={() => setJobSelected(true)}
             >
               Start Test

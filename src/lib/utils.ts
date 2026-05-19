@@ -120,12 +120,12 @@ export function getCEFRColor(
   const baseLevel = level.replace("+", "") as "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
   
   const colors: Record<string, string> = {
-    A1: "bg-red-100 dark:bg-red-950/30 text-red-800 dark:text-red-400 border-red-300 dark:border-red-800",
-    A2: "bg-orange-100 dark:bg-orange-950/30 text-orange-800 dark:text-orange-400 border-orange-300 dark:border-orange-800",
-    B1: "bg-yellow-100 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-400 border-yellow-300 dark:border-yellow-800",
-    B2: "bg-green-100 dark:bg-green-950/30 text-green-800 dark:text-green-400 border-green-300 dark:border-green-800",
-    C1: "bg-blue-100 dark:bg-blue-950/30 text-blue-800 dark:text-blue-400 border-blue-300 dark:border-blue-800",
-    C2: "bg-purple-100 dark:bg-purple-950/30 text-purple-800 dark:text-purple-400 border-purple-300 dark:border-purple-800",
+    A1: "bg-error-light text-destructive border-destructive/30",
+    A2: "bg-warning-light text-warning border-warning/30", // DS: closest token — no orange semantic token
+    B1: "bg-warning-light text-warning border-warning/30",
+    B2: "bg-success-light text-success border-success/30",
+    C1: "bg-info-light text-info border-info/30",
+    C2: "bg-primary/10 text-primary border-primary/30", // DS: closest token — no purple semantic token
   };
 
   return colors[baseLevel] || colors.A1;

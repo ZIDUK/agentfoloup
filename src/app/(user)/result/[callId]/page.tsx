@@ -25,12 +25,12 @@ const CEFR_LABELS: Record<string, string> = {
 const CEFR_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 const CEFR_COLORS: Record<string, string> = {
-  A1: "bg-red-400",
-  A2: "bg-orange-400",
-  B1: "bg-yellow-400",
-  B2: "bg-green-400",
-  C1: "bg-teal-500",
-  C2: "bg-indigo-500",
+  A1: "bg-destructive",
+  A2: "bg-warning", // DS: closest token — no orange semantic token
+  B1: "bg-warning",
+  B2: "bg-success",
+  C1: "bg-info", // DS: closest token — no teal semantic token
+  C2: "bg-primary",
 };
 
 function CefrScale({ level }: { level: string }) {
@@ -48,7 +48,7 @@ function CefrScale({ level }: { level: string }) {
               <div
                 className={`rounded-md transition-all ${
                   isActive
-                    ? `${CEFR_COLORS[l]} w-9 h-9 ring-2 ring-offset-2 ring-indigo-400 shadow-md`
+                    ? `${CEFR_COLORS[l]} w-9 h-9 ring-2 ring-offset-2 ring-primary shadow-md`
                     : isPast
                     ? `${CEFR_COLORS[l]} w-7 h-7 opacity-60`
                     : "bg-muted w-7 h-7"
@@ -56,14 +56,14 @@ function CefrScale({ level }: { level: string }) {
               >
                 <span
                   className={`text-xs font-bold ${
-                    isActive || isPast ? "text-white" : "text-muted-foreground"
+                    isActive || isPast ? "text-primary-foreground" : "text-muted-foreground"
                   }`}
                 >
                   {l}
                 </span>
               </div>
               {isActive && (
-                <span className="text-[10px] font-semibold text-indigo-600 leading-none">
+                <span className="text-[10px] font-semibold text-primary leading-none">
                   You
                 </span>
               )}
@@ -77,8 +77,8 @@ function CefrScale({ level }: { level: string }) {
 
 const SKILL_CONFIG: Record<string, { color: string; bg: string; icon: JSX.Element }> = {
   Pronunciation: {
-    color: "text-blue-600",
-    bg: "bg-blue-50",
+    color: "text-info",
+    bg: "bg-info-light",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
@@ -86,8 +86,8 @@ const SKILL_CONFIG: Record<string, { color: string; bg: string; icon: JSX.Elemen
     ),
   },
   Fluency: {
-    color: "text-cyan-600",
-    bg: "bg-cyan-50",
+    color: "text-success",
+    bg: "bg-success-light",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -95,8 +95,8 @@ const SKILL_CONFIG: Record<string, { color: string; bg: string; icon: JSX.Elemen
     ),
   },
   Vocabulary: {
-    color: "text-purple-600",
-    bg: "bg-purple-50",
+    color: "text-primary", // DS: closest token — no purple semantic token
+    bg: "bg-primary/10",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -104,8 +104,8 @@ const SKILL_CONFIG: Record<string, { color: string; bg: string; icon: JSX.Elemen
     ),
   },
   Grammar: {
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
+    color: "text-success", // DS: closest token — no emerald semantic token
+    bg: "bg-success-light",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -113,8 +113,8 @@ const SKILL_CONFIG: Record<string, { color: string; bg: string; icon: JSX.Elemen
     ),
   },
   Coherence: {
-    color: "text-orange-600",
-    bg: "bg-orange-50",
+    color: "text-warning", // DS: closest token — no orange semantic token
+    bg: "bg-warning-light",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -146,7 +146,7 @@ function TranscriptBubble({ entry }: { entry: TranscriptEntry }) {
     <div className={`flex gap-2.5 ${isAgent ? "justify-start" : "flex-row-reverse justify-start"}`}>
       <div
         className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5 ${
-          isAgent ? "bg-muted text-muted-foreground" : "bg-indigo-600 text-white"
+          isAgent ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"
         }`}
       >
         {isAgent ? "AI" : "You"}
@@ -155,7 +155,7 @@ function TranscriptBubble({ entry }: { entry: TranscriptEntry }) {
         className={`max-w-[76%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
           isAgent
             ? "bg-muted text-foreground rounded-tl-none"
-            : "bg-indigo-600 text-white rounded-tr-none"
+            : "bg-primary text-primary-foreground rounded-tr-none"
         }`}
       >
         {entry.content}
@@ -242,15 +242,15 @@ export default function ResultPage({ params }: Props) {
 
   if (!analytics) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-primary flex items-center justify-center px-4">
         <div className="bg-card rounded-2xl p-10 max-w-md w-full text-center shadow-xl">
-          <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-5">
-            <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
+            <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">Interview Complete</h1>
-          {interviewName && <p className="text-indigo-500 dark:text-indigo-400 font-medium mb-3">{interviewName}</p>}
+          {interviewName && <p className="text-primary font-medium mb-3">{interviewName}</p>}
           <p className="text-muted-foreground text-sm leading-relaxed">
             Thank you for completing the interview. Your responses have been recorded and will be reviewed shortly.
           </p>
@@ -276,18 +276,18 @@ export default function ResultPage({ params }: Props) {
     <div className="min-h-screen bg-background">
 
       {/* Hero banner */}
-      <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 px-4 pt-12 pb-16">
+      <div className="bg-primary px-4 pt-12 pb-16">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="w-14 h-14 rounded-full bg-white/20 ring-2 ring-white/30 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-14 h-14 rounded-full bg-primary-foreground/20 ring-2 ring-primary-foreground/30 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-7 h-7 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-1">Your Interview Results</h1>
+          <h1 className="text-3xl font-bold text-primary-foreground mb-1">Your Interview Results</h1>
           {interviewName && (
-            <p className="text-indigo-200 text-base mt-1">{interviewName}</p>
+            <p className="text-primary-foreground/70 text-base mt-1">{interviewName}</p>
           )}
-          <p className="text-indigo-300 text-sm mt-2">Your analysis is ready</p>
+          <p className="text-primary-foreground/80 text-sm mt-2">Your analysis is ready</p>
         </div>
       </div>
 
@@ -297,11 +297,11 @@ export default function ResultPage({ params }: Props) {
         {/* CEFR Proficiency card */}
         {ep.cefrLevel && (
           <div className="bg-card rounded-2xl p-6 shadow-md border border-border">
-            <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest text-center mb-4">
+            <p className="text-xs font-bold text-primary uppercase tracking-widest text-center mb-4">
               English Proficiency Level
             </p>
             <div className="flex items-center justify-center gap-3">
-              <span className="text-4xl font-black text-indigo-700 dark:text-indigo-400 leading-none">{ep.cefrLevel}</span>
+              <span className="text-4xl font-black text-primary leading-none">{ep.cefrLevel}</span>
               {CEFR_LABELS[ep.cefrLevel] && (
                 <span className="text-lg font-semibold text-muted-foreground">{CEFR_LABELS[ep.cefrLevel]}</span>
               )}
@@ -315,7 +315,7 @@ export default function ResultPage({ params }: Props) {
             {ep.ieltsEstimate && (
               <div className="mt-3 flex items-center justify-center gap-2">
                 <span className="text-muted-foreground text-xs">IELTS equivalent</span>
-                <span className="bg-indigo-100 text-indigo-700 font-bold text-sm px-2.5 py-0.5 rounded-full">
+                <span className="bg-primary/10 text-primary font-bold text-sm px-2.5 py-0.5 rounded-full">
                   {ep.ieltsEstimate}
                 </span>
               </div>
@@ -358,7 +358,7 @@ export default function ResultPage({ params }: Props) {
               {questionSummaries.map((q: any, i: number) => (
                 <div key={i} className="bg-card rounded-xl p-5 shadow-sm border border-border">
                   <div className="flex items-start gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center mt-0.5">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
                       {i + 1}
                     </span>
                     <div className="min-w-0">

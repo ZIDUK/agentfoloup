@@ -229,12 +229,12 @@ function DetailsPopup({
                       setOpenInterviewerDetails(true);
                     }}
                   >
-                    <Info size={18} strokeWidth={2.2} className="text-indigo-600 dark:text-primary" />
+                    <Info size={18} strokeWidth={2.2} className="text-primary" />
                   </button>
                   <div
                     className={`w-[96px] overflow-hidden rounded-full ${
                       selectedInterviewer === item.id
-                        ? "border-4 border-indigo-600 dark:border-primary"
+                        ? "border-4 border-primary"
                         : ""
                     }`}
                     onClick={() => setSelectedInterviewer(item.id)}

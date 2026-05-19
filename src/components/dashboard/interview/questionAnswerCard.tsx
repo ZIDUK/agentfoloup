@@ -31,7 +31,7 @@ function QuestionAnswerCard({
     <>
       <div className="shadow-md mb-2 bg-card rounded-2xl py-2">
         <div className="flex flex-row items-center">
-          <CardTitle className="text-lg min-w-[42px] bg-indigo-200 rounded-full p-1 mx-3">
+          <CardTitle className="text-lg min-w-[42px] bg-primary/20 rounded-full p-1 mx-3">
             <p className="my-auto text-center">{questionNumber}</p>
           </CardTitle>
           <div className="flex flex-col p-1 flex-1">
@@ -53,7 +53,7 @@ function QuestionAnswerCard({
                   )}
                   {questionSummary.wordsPerMinute !== undefined && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span className="font-semibold text-indigo-600">
+                      <span className="font-semibold text-primary">
                         {Math.round(questionSummary.wordsPerMinute)}
                       </span>
                       <span>Words/min</span>
@@ -61,7 +61,7 @@ function QuestionAnswerCard({
                   )}
                   {questionSummary.badPauses !== undefined && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span className="font-semibold text-red-600">
+                      <span className="font-semibold text-destructive">
                         {questionSummary.badPauses}
                       </span>
                       <span>bad pauses</span>

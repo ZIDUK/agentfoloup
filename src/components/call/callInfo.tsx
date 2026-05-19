@@ -190,7 +190,7 @@ function CallInfo({
               <div>
                 <div className="flex justify-between items-center pb-4 pr-2">
                   <div
-                    className=" inline-flex items-center text-indigo-600 dark:text-primary hover:cursor-pointer"
+                    className=" inline-flex items-center text-primary hover:cursor-pointer"
                     onClick={() => {
                       router.push(`/interviews/${interviewId}`);
                     }}
@@ -201,17 +201,17 @@ function CallInfo({
                   {/* Proctoring flags */}
                   <div className="flex flex-row gap-2 flex-wrap justify-end">
                     {tabSwitchCount != null && tabSwitchCount > 0 && (
-                      <span className="text-xs font-semibold text-red-600 bg-red-100 border border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800 rounded px-2 py-1">
+                      <span className="text-xs font-semibold text-destructive bg-error-light border border-destructive/30 rounded px-2 py-1">
                         Tab switches: {tabSwitchCount}
                       </span>
                     )}
                     {windowSwitchCount != null && windowSwitchCount > 0 && (
-                      <span className="text-xs font-semibold text-orange-600 bg-orange-100 border border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800 rounded px-2 py-1">
+                      <span className="text-xs font-semibold text-warning bg-warning-light border border-warning/30 rounded px-2 py-1">
                         Window switches: {windowSwitchCount}
                       </span>
                     )}
                     {fullscreenExitCount != null && fullscreenExitCount > 0 && (
-                      <span className="text-xs font-semibold text-yellow-700 bg-yellow-100 border border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-600 dark:border-yellow-800 rounded px-2 py-1">
+                      <span className="text-xs font-semibold text-warning bg-warning-light border border-warning/30 rounded px-2 py-1">
                         Fullscreen exits: {fullscreenExitCount}
                       </span>
                     )}
@@ -250,25 +250,25 @@ function CallInfo({
                       <SelectContent>
                         <SelectItem value={CandidateStatus.NO_STATUS}>
                           <div className="flex items-center">
-                            <div className="w-3 h-3 bg-gray-400 rounded-full mr-2" />
+                            <div className="w-3 h-3 bg-muted-foreground rounded-full mr-2" />
                             No Status
                           </div>
                         </SelectItem>
                         <SelectItem value={CandidateStatus.NOT_SELECTED}>
                           <div className="flex items-center">
-                            <div className="w-3 h-3 bg-red-500 rounded-full mr-2" />
+                            <div className="w-3 h-3 bg-destructive rounded-full mr-2" />
                             Not Selected
                           </div>
                         </SelectItem>
                         <SelectItem value={CandidateStatus.POTENTIAL}>
                           <div className="flex items-center">
-                            <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2" />
+                            <div className="w-3 h-3 bg-warning rounded-full mr-2" />
                             Potential
                           </div>
                         </SelectItem>
                         <SelectItem value={CandidateStatus.SELECTED}>
                           <div className="flex items-center">
-                            <div className="w-3 h-3 bg-green-500 rounded-full mr-2" />
+                            <div className="w-3 h-3 bg-success rounded-full mr-2" />
                             Selected
                           </div>
                         </SelectItem>
@@ -278,7 +278,7 @@ function CallInfo({
                       <AlertDialogTrigger asChild>
                         <Button
                           disabled={isClicked}
-                          className="bg-red-500 hover:bg-red-600 p-2"
+                          className="bg-destructive hover:bg-destructive/90 p-2"
                         >
                           <TrashIcon size={16} className="" />
                         </Button>
@@ -396,9 +396,9 @@ function CallInfo({
                     <CircularProgress
                       classNames={{
                         svg: "w-28 h-28 drop-shadow-md",
-                        indicator: "stroke-indigo-600 dark:stroke-primary",
-                        track: "stroke-indigo-600/10 dark:stroke-primary/10",
-                        value: "text-3xl font-semibold text-indigo-600 dark:text-primary",
+                        indicator: "stroke-primary",
+                        track: "stroke-primary/10",
+                        value: "text-3xl font-semibold text-primary",
                       }}
                       value={analytics?.overallScore}
                       strokeWidth={4}
@@ -430,9 +430,9 @@ function CallInfo({
                     <CircularProgress
                       classNames={{
                         svg: "w-28 h-28 drop-shadow-md",
-                        indicator: "stroke-indigo-600 dark:stroke-primary",
-                        track: "stroke-indigo-600/10 dark:stroke-primary/10",
-                        value: "text-3xl font-semibold text-indigo-600 dark:text-primary",
+                        indicator: "stroke-primary",
+                        track: "stroke-primary/10",
+                        value: "text-3xl font-semibold text-primary",
                       }}
                       value={analytics?.communication.score}
                       maxValue={10}
@@ -486,7 +486,7 @@ function CallInfo({
                         <span className="text-xs text-muted-foreground">
                           Pronunciation
                         </span>
-                        <span className="font-semibold text-indigo-600 dark:text-primary">
+                        <span className="font-semibold text-primary">
                           {analytics.pronunciationScore.toFixed(1)}/10
                         </span>
                       </div>
@@ -494,7 +494,7 @@ function CallInfo({
                     {analytics.fluencyScore !== undefined && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Fluency</span>
-                        <span className="font-semibold text-indigo-600 dark:text-primary">
+                        <span className="font-semibold text-primary">
                           {analytics.fluencyScore.toFixed(1)}/10
                         </span>
                       </div>
@@ -502,7 +502,7 @@ function CallInfo({
                     {analytics.grammarScore !== undefined && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Grammar</span>
-                        <span className="font-semibold text-indigo-600 dark:text-primary">
+                        <span className="font-semibold text-primary">
                           {analytics.grammarScore.toFixed(1)}/10
                         </span>
                       </div>
@@ -512,7 +512,7 @@ function CallInfo({
                         <span className="text-xs text-muted-foreground">
                           Vocabulary
                         </span>
-                        <span className="font-semibold text-indigo-600 dark:text-primary">
+                        <span className="font-semibold text-primary">
                           {analytics.vocabularyScore.toFixed(1)}/10
                         </span>
                       </div>
@@ -520,7 +520,7 @@ function CallInfo({
                     {analytics.coherenceScore !== undefined && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Coherence</span>
-                        <span className="font-semibold text-indigo-600 dark:text-primary">
+                        <span className="font-semibold text-primary">
                           {analytics.coherenceScore.toFixed(1)}/10
                         </span>
                       </div>
@@ -547,8 +547,8 @@ function CallInfo({
                     Descriptive Feedback
                   </p>
                   {analytics.pronunciationFeedback && (
-                    <div className="border-l-4 border-indigo-500 dark:border-primary pl-3 py-2">
-                      <p className="font-semibold text-indigo-600 dark:text-primary mb-1">
+                    <div className="border-l-4 border-primary pl-3 py-2">
+                      <p className="font-semibold text-primary mb-1">
                         Pronunciation
                       </p>
                       <p className="text-foreground text-sm">
@@ -557,8 +557,8 @@ function CallInfo({
                     </div>
                   )}
                   {analytics.fluencyFeedback && (
-                    <div className="border-l-4 border-green-500 pl-3 py-2">
-                      <p className="font-semibold text-green-600 mb-1">
+                    <div className="border-l-4 border-success pl-3 py-2">
+                      <p className="font-semibold text-success mb-1">
                         Fluency
                       </p>
                       <p className="text-foreground text-sm">
@@ -567,8 +567,8 @@ function CallInfo({
                     </div>
                   )}
                   {analytics.vocabularyFeedback && (
-                    <div className="border-l-4 border-blue-500 pl-3 py-2">
-                      <p className="font-semibold text-blue-600 mb-1">
+                    <div className="border-l-4 border-info pl-3 py-2">
+                      <p className="font-semibold text-info mb-1">
                         Vocabulary
                       </p>
                       <p className="text-foreground text-sm">
@@ -577,8 +577,8 @@ function CallInfo({
                     </div>
                   )}
                   {analytics.grammarFeedback && (
-                    <div className="border-l-4 border-purple-500 pl-3 py-2">
-                      <p className="font-semibold text-purple-600 mb-1">
+                    <div className="border-l-4 border-primary pl-3 py-2"> {/* DS: closest token — no purple semantic token */}
+                      <p className="font-semibold text-primary mb-1">
                         Grammar
                       </p>
                       <p className="text-foreground text-sm">
@@ -587,8 +587,8 @@ function CallInfo({
                     </div>
                   )}
                   {analytics.coherenceFeedback && (
-                    <div className="border-l-4 border-orange-500 pl-3 py-2">
-                      <p className="font-semibold text-orange-600 mb-1">
+                    <div className="border-l-4 border-warning pl-3 py-2"> {/* DS: closest token — no orange semantic token */}
+                      <p className="font-semibold text-warning mb-1">
                         Coherence
                       </p>
                       <p className="text-foreground text-sm">
@@ -604,25 +604,25 @@ function CallInfo({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-xs text-muted-foreground font-mono">tab_switch_count</p>
-                    <p className={`font-semibold ${(tabSwitchCount ?? 0) > 0 ? "text-red-600" : "text-green-600"}`}>
+                    <p className={`font-semibold ${(tabSwitchCount ?? 0) > 0 ? "text-destructive" : "text-success"}`}>
                       {tabSwitchCount ?? 0}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground font-mono">full_screen_events</p>
-                    <p className={`font-semibold ${(fullscreenExitCount ?? 0) > 0 ? "text-orange-600" : "text-green-600"}`}>
+                    <p className={`font-semibold ${(fullscreenExitCount ?? 0) > 0 ? "text-warning" : "text-success"}`}>
                       {fullscreenExitCount ?? 0}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground font-mono">window_switch_count</p>
-                    <p className={`font-semibold ${(windowSwitchCount ?? 0) > 0 ? "text-orange-600" : "text-green-600"}`}>
+                    <p className={`font-semibold ${(windowSwitchCount ?? 0) > 0 ? "text-warning" : "text-success"}`}>
                       {windowSwitchCount ?? 0}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground font-mono">camera_covered</p>
-                    <p className={`font-semibold ${cameraCovered ? "text-red-600" : "text-green-600"}`}>
+                    <p className={`font-semibold ${cameraCovered ? "text-destructive" : "text-success"}`}>
                       {cameraCovered ? "Yes" : "No"}
                     </p>
                   </div>
@@ -671,11 +671,11 @@ function CallInfo({
                   <div
                     className={`${
                       call?.call_analysis?.user_sentiment == "Neutral"
-                        ? "text-yellow-500"
+                        ? "text-warning"
                         : call?.call_analysis?.user_sentiment == "Negative"
-                          ? "text-red-500"
+                          ? "text-destructive"
                           : call?.call_analysis?.user_sentiment == "Positive"
-                            ? "text-green-500"
+                            ? "text-success"
                             : "text-transparent"
                     } text-xl`}
                   >

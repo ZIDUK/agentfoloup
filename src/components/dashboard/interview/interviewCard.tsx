@@ -81,8 +81,8 @@ function InterviewCard({ name, interviewerId, id, url: _url, readableSlug: _read
     >
       <Card className="relative p-0 mt-4 inline-block cursor-pointer h-60 w-56 ml-1 mr-3 rounded-xl shrink-0 overflow-hidden shadow-md">
         <CardContent className={`p-0 ${isFetching ? "opacity-60" : ""}`}>
-          <div className="w-full h-40 overflow-hidden bg-indigo-600 flex items-center text-center">
-            <CardTitle className="w-full mt-3 mx-2 text-white text-lg">
+          <div className="w-full h-40 overflow-hidden bg-primary flex items-center text-center">
+            <CardTitle className="w-full mt-3 mx-2 text-primary-foreground text-lg">
               {name}
               {isFetching && (
                 <div className="z-100 mt-[-5px]">
@@ -110,7 +110,7 @@ function InterviewCard({ name, interviewerId, id, url: _url, readableSlug: _read
           </div>
           <div className="absolute top-2 right-2 flex gap-1">
             <Button
-              className="text-xs text-indigo-600 px-2 h-6 gap-1"
+              className="text-xs text-primary px-2 h-6 gap-1"
               variant={"secondary"}
               onClick={handleTestInterview}
             >

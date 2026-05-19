@@ -190,7 +190,7 @@ function EditInterview({ interview }: EditInterviewProps) {
       <div className="flex flex-col bg-muted rounded-md min-h-[120px] p-2 pl-4">
         <div>
           <div
-            className="mt-2 ml-1 pr-2 inline-flex items-center text-indigo-600 hover:cursor-pointer"
+            className="mt-2 ml-1 pr-2 inline-flex items-center text-primary hover:cursor-pointer"
             onClick={() => {
               router.push(`/interviews/${interview?.id}`);
             }}
@@ -209,7 +209,7 @@ function EditInterview({ interview }: EditInterviewProps) {
           <div className="flex flex-row gap-3">
             <Button
               disabled={isClicked}
-              className="bg-indigo-600 hover:bg-indigo-800 mt-2"
+              className="bg-primary hover:bg-primary/90 mt-2"
               onClick={() => {
                 setIsClicked(true);
                 onSave();
@@ -221,7 +221,7 @@ function EditInterview({ interview }: EditInterviewProps) {
               <AlertDialogTrigger>
                 <Button
                   disabled={isClicked}
-                  className="bg-red-500 hover:bg-red-600 mr-5 mt-2 p-2"
+                  className="bg-destructive hover:bg-destructive/90 mr-5 mt-2 p-2"
                 >
                   <TrashIcon size={16} className="" />
                 </Button>
@@ -312,7 +312,7 @@ function EditInterview({ interview }: EditInterviewProps) {
                     <div
                       className={`w-[96px] overflow-hidden rounded-full ${
                         selectedInterviewer === item.id
-                          ? "border-4 border-indigo-600"
+                          ? "border-4 border-primary"
                           : ""
                       }`}
                       onClick={() => {
@@ -398,13 +398,13 @@ function EditInterview({ interview }: EditInterviewProps) {
           <div ref={endOfListRef} />
           {questions.length < numQuestions ? (
             <div
-              className="border-indigo-600 opacity-75 hover:opacity-100 w-fit text-center rounded-full mx-auto"
+              className="border-primary opacity-75 hover:opacity-100 w-fit text-center rounded-full mx-auto"
               onClick={handleAddQuestion}
             >
               <Plus
                 size={45}
                 strokeWidth={2.2}
-                className="text-indigo-600 text-center cursor-pointer"
+                className="text-primary text-center cursor-pointer"
               />
             </div>
           ) : (

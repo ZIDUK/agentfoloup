@@ -64,9 +64,9 @@ export default function RootLayout({
                 classNames: {
                   toast: "bg-background",
                   title: "text-foreground",
-                  description: "text-red-400",
-                  actionButton: "bg-indigo-400",
-                  cancelButton: "bg-orange-400",
+                  description: "text-destructive",
+                  actionButton: "bg-primary",
+                  cancelButton: "bg-secondary",
                   closeButton: "bg-background",
                 },
               }}

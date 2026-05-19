@@ -42,7 +42,7 @@ function InfoTooltip({ content }: { content: string }) {
       <Tooltip>
         <TooltipTrigger>
           <Info
-            className="h-2 w-2 text-indigo-600 dark:text-primary inline-block ml-0 align-super font-bold"
+            className="h-2 w-2 text-primary inline-block ml-0 align-super font-bold"
             strokeWidth={2.5}
           />
         </TooltipTrigger>
@@ -452,7 +452,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                   <InfoTooltip content="Average time users took to complete an interview" />
                 </div>
                 <div className="flex items-center justify-center">
-                  <p className="text-2xl font-semibold text-indigo-600 dark:text-primary w-fit p-1 px-2 bg-primary/10 dark:bg-primary/20 rounded-md">
+                  <p className="text-2xl font-semibold text-primary w-fit p-1 px-2 bg-primary/10 rounded-md">
                     {convertSecondstoMMSS(totalDuration / responses.length)}
                   </p>
                 </div>
@@ -462,7 +462,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                   Interview Completion Rate
                   <InfoTooltip content="Percentage of interviews completed successfully" />
                 </div>
-                <p className="w-fit text-2xl font-semibold text-indigo-600 dark:text-primary  p-1 px-2 bg-primary/10 dark:bg-primary/20 rounded-md">
+                <p className="w-fit text-2xl font-semibold text-primary  p-1 px-2 bg-primary/10 rounded-md">
                   {Math.round(
                     (completedInterviews / responses.length) * 10000,
                   ) / 100}
@@ -480,11 +480,11 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 sx={{
                   "& .MuiChartsLegend-series text": {
                     fontSize: "0.8rem !important",
-                    fill: "hsl(var(--foreground)) !important",
+                    fill: "var(--color-foreground) !important",
                   },
-                  '& .MuiChartsAxis-tickLabel': { fill: 'hsl(var(--foreground))' },
-                  '& .MuiChartsAxis-line': { stroke: 'hsl(var(--border))' },
-                  '& .MuiChartsAxis-tick': { stroke: 'hsl(var(--border))' },
+                  '& .MuiChartsAxis-tickLabel': { fill: 'var(--color-foreground)' },
+                  '& .MuiChartsAxis-line': { stroke: 'var(--color-border)' },
+                  '& .MuiChartsAxis-tick': { stroke: 'var(--color-border)' },
                 }}
                 series={[
                   {
@@ -533,11 +533,11 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 sx={{
                   "& .MuiChartsLegend-series text": {
                     fontSize: "0.8rem !important",
-                    fill: "hsl(var(--foreground)) !important",
+                    fill: "var(--color-foreground) !important",
                   },
-                  '& .MuiChartsAxis-tickLabel': { fill: 'hsl(var(--foreground))' },
-                  '& .MuiChartsAxis-line': { stroke: 'hsl(var(--border))' },
-                  '& .MuiChartsAxis-tick': { stroke: 'hsl(var(--border))' },
+                  '& .MuiChartsAxis-tickLabel': { fill: 'var(--color-foreground)' },
+                  '& .MuiChartsAxis-line': { stroke: 'var(--color-border)' },
+                  '& .MuiChartsAxis-tick': { stroke: 'var(--color-border)' },
                 }}
                 series={[
                   {
@@ -596,7 +596,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
           {/* Answer Quality Metrics Section */}
           <div className="bg-muted rounded-2xl min-h-[120px] p-4 px-5 my-3">
             <div className="flex flex-row gap-2 items-center mb-4">
-              <Target className="h-5 w-5 text-indigo-600 dark:text-primary" />
+              <Target className="h-5 w-5 text-primary" />
               <p className="font-semibold my-2">Answer Quality Metrics</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -604,7 +604,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 <p className="text-sm font-medium text-foreground">
                   Avg Answer Length
                 </p>
-                <p className="text-2xl font-semibold text-indigo-600 dark:text-primary">
+                <p className="text-2xl font-semibold text-primary">
                   {answerQualityMetrics.averageAnswerLength}
                   <span className="text-sm text-muted-foreground ml-1">words</span>
                 </p>
@@ -613,14 +613,14 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 <p className="text-sm font-medium text-foreground">
                   Relevance Score
                 </p>
-                <p className="text-2xl font-semibold text-indigo-600 dark:text-primary">
+                <p className="text-2xl font-semibold text-primary">
                   {answerQualityMetrics.averageRelevanceScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
               </div>
               <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
                 <p className="text-sm font-medium text-foreground">Depth Score</p>
-                <p className="text-2xl font-semibold text-indigo-600 dark:text-primary">
+                <p className="text-2xl font-semibold text-primary">
                   {answerQualityMetrics.averageDepthScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
@@ -629,7 +629,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 <p className="text-sm font-medium text-foreground">
                   Consistency Score
                 </p>
-                <p className="text-2xl font-semibold text-indigo-600 dark:text-primary">
+                <p className="text-2xl font-semibold text-primary">
                   {answerQualityMetrics.averageConsistencyScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
@@ -640,7 +640,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
           {/* Advanced Analysis Section */}
           <div className="bg-muted rounded-2xl min-h-[120px] p-4 px-5 my-3">
             <div className="flex flex-row gap-2 items-center mb-4">
-              <TrendingUp className="h-5 w-5 text-indigo-600 dark:text-primary" />
+              <TrendingUp className="h-5 w-5 text-primary" />
               <p className="font-semibold my-2">Advanced Analysis</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -648,7 +648,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 <p className="text-sm font-medium text-foreground">
                   Engagement Score
                 </p>
-                <p className="text-2xl font-semibold text-indigo-600 dark:text-primary">
+                <p className="text-2xl font-semibold text-primary">
                   {advancedAnalysis.averageEngagementScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
@@ -657,7 +657,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 <p className="text-sm font-medium text-foreground">
                   Problem-Solving
                 </p>
-                <p className="text-2xl font-semibold text-indigo-600 dark:text-primary">
+                <p className="text-2xl font-semibold text-primary">
                   {advancedAnalysis.averageProblemSolvingScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
@@ -666,7 +666,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 <p className="text-sm font-medium text-foreground">
                   Adaptability
                 </p>
-                <p className="text-2xl font-semibold text-indigo-600 dark:text-primary">
+                <p className="text-2xl font-semibold text-primary">
                   {advancedAnalysis.averageAdaptabilityScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
@@ -677,19 +677,19 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 </p>
                 <div className="flex flex-col gap-1 mt-1">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full" />
+                    <div className="w-3 h-3 bg-success rounded-full" />
                     <span className="text-sm text-foreground">
                       High: {advancedAnalysis.confidenceLevels.High}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+                    <div className="w-3 h-3 bg-warning rounded-full" />
                     <span className="text-sm text-foreground">
                       Medium: {advancedAnalysis.confidenceLevels.Medium}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full" />
+                    <div className="w-3 h-3 bg-destructive rounded-full" />
                     <span className="text-sm text-foreground">
                       Low: {advancedAnalysis.confidenceLevels.Low}
                     </span>
@@ -704,7 +704,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
             Object.values(cefrMetrics.levelDistribution).some((v) => v > 0)) && (
             <div className="bg-muted rounded-2xl min-h-[120px] p-4 px-5 my-3">
               <div className="flex flex-row gap-2 items-center mb-4">
-                <Target className="h-5 w-5 text-indigo-600 dark:text-primary" />
+                <Target className="h-5 w-5 text-primary" />
                 <p className="font-semibold my-2">English Language Proficiency (CEFR)</p>
                 <InfoTooltip content="Common European Framework of Reference for Languages evaluation based on pronunciation, fluency, grammar, vocabulary, and coherence" />
               </div>
@@ -746,7 +746,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                                           : "Proficient"}
                               </span>
                             </div>
-                            <span className="font-semibold text-indigo-600 dark:text-primary">{count}</span>
+                            <span className="font-semibold text-primary">{count}</span>
                           </div>
                         );
                       })}
@@ -767,7 +767,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     {cefrMetrics.averagePronunciation > 0 && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Pronunciation</span>
-                        <span className="font-semibold text-indigo-600 dark:text-primary text-lg">
+                        <span className="font-semibold text-primary text-lg">
                           {cefrMetrics.averagePronunciation.toFixed(1)}/10
                         </span>
                       </div>
@@ -775,7 +775,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     {cefrMetrics.averageFluency > 0 && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Fluency</span>
-                        <span className="font-semibold text-indigo-600 dark:text-primary text-lg">
+                        <span className="font-semibold text-primary text-lg">
                           {cefrMetrics.averageFluency.toFixed(1)}/10
                         </span>
                       </div>
@@ -783,7 +783,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     {cefrMetrics.averageGrammar > 0 && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Grammar</span>
-                        <span className="font-semibold text-indigo-600 dark:text-primary text-lg">
+                        <span className="font-semibold text-primary text-lg">
                           {cefrMetrics.averageGrammar.toFixed(1)}/10
                         </span>
                       </div>
@@ -791,7 +791,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     {cefrMetrics.averageVocabulary > 0 && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Vocabulary</span>
-                        <span className="font-semibold text-indigo-600 dark:text-primary text-lg">
+                        <span className="font-semibold text-primary text-lg">
                           {cefrMetrics.averageVocabulary.toFixed(1)}/10
                         </span>
                       </div>
@@ -799,7 +799,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     {cefrMetrics.averageCoherence > 0 && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Coherence</span>
-                        <span className="font-semibold text-indigo-600 dark:text-primary text-lg">
+                        <span className="font-semibold text-primary text-lg">
                           {cefrMetrics.averageCoherence.toFixed(1)}/10
                         </span>
                       </div>
@@ -813,7 +813,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
           {/* Comparative Metrics Section */}
           <div className="bg-muted rounded-2xl min-h-[120px] p-4 px-5 my-3">
             <div className="flex flex-row gap-2 items-center mb-4">
-              <BarChart3 className="h-5 w-5 text-indigo-600 dark:text-primary" />
+              <BarChart3 className="h-5 w-5 text-primary" />
               <p className="font-semibold my-2">Comparative Metrics</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -850,10 +850,10 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                       },
                     ]}
                     sx={{
-                      '& .MuiChartsAxis-tickLabel': { fill: 'hsl(var(--foreground))' },
-                      '& .MuiChartsAxis-line': { stroke: 'hsl(var(--border))' },
-                      '& .MuiChartsAxis-tick': { stroke: 'hsl(var(--border))' },
-                      '& .MuiChartsLegend-label': { fill: 'hsl(var(--foreground))' },
+                      '& .MuiChartsAxis-tickLabel': { fill: 'var(--color-foreground)' },
+                      '& .MuiChartsAxis-line': { stroke: 'var(--color-border)' },
+                      '& .MuiChartsAxis-tick': { stroke: 'var(--color-border)' },
+                      '& .MuiChartsLegend-label': { fill: 'var(--color-foreground)' },
                     }}
                     width={400}
                     height={200}
@@ -868,7 +868,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
               {/* Top Performers & Average */}
               <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card shadow-md">
                 <div className="flex flex-row gap-2 items-center mb-2">
-                  <Award className="h-5 w-5 text-indigo-600 dark:text-primary" />
+                  <Award className="h-5 w-5 text-primary" />
                   <p className="font-semibold text-[15px]">Top Performers</p>
                   <InfoTooltip content="Top 3 candidates by overall score" />
                 </div>
@@ -877,16 +877,16 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     {comparativeMetrics.topPerformers.map((performer, index) => (
                       <div
                         key={index}
-                        className="flex flex-row justify-between items-center p-2 rounded-lg bg-primary/5 dark:bg-primary/10"
+                        className="flex flex-row justify-between items-center p-2 rounded-lg bg-primary/10"
                       >
                         <div className="flex items-center gap-2">
                           <div
                             className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold ${
                               index === 0
-                                ? "bg-yellow-500"
+                                ? "bg-warning"
                                 : index === 1
-                                  ? "bg-gray-400"
-                                  : "bg-orange-600"
+                                  ? "bg-muted-foreground"
+                                  : "bg-warning/70" // DS: closest token — no orange semantic token
                             }`}
                           >
                             {index + 1}
@@ -895,7 +895,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                             {performer.name}
                           </span>
                         </div>
-                        <span className="font-semibold text-indigo-600 dark:text-primary">
+                        <span className="font-semibold text-primary">
                           {performer.score}/100
                         </span>
                       </div>
@@ -905,7 +905,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                         <span className="font-medium text-muted-foreground">
                           Average Score
                         </span>
-                        <span className="font-semibold text-indigo-600 dark:text-primary text-lg">
+                        <span className="font-semibold text-primary text-lg">
                           {comparativeMetrics.averageScore.toFixed(1)}/100
                         </span>
                       </div>
@@ -924,7 +924,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
               {/* Score Trends */}
               <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card shadow-md">
                 <div className="flex flex-row gap-2 items-center mb-2">
-                  <TrendingUp className="h-5 w-5 text-indigo-600 dark:text-primary" />
+                  <TrendingUp className="h-5 w-5 text-primary" />
                   <p className="font-semibold text-[15px]">Score Trends</p>
                   <InfoTooltip content="Average score trends over time" />
                 </div>
@@ -952,10 +952,10 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                       } as any, // MUI x-charts v7.7 does not expose strokeDasharray on LineSeriesType
                     ]}
                     sx={{
-                      '& .MuiChartsAxis-tickLabel': { fill: 'hsl(var(--foreground))' },
-                      '& .MuiChartsAxis-line': { stroke: 'hsl(var(--border))' },
-                      '& .MuiChartsAxis-tick': { stroke: 'hsl(var(--border))' },
-                      '& .MuiChartsLegend-series text': { fill: 'hsl(var(--foreground))' },
+                      '& .MuiChartsAxis-tickLabel': { fill: 'var(--color-foreground)' },
+                      '& .MuiChartsAxis-line': { stroke: 'var(--color-border)' },
+                      '& .MuiChartsAxis-tick': { stroke: 'var(--color-border)' },
+                      '& .MuiChartsLegend-series text': { fill: 'var(--color-foreground)' },
                     }}
                     width={400}
                     height={200}
@@ -970,7 +970,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
               {/* Comparison with Average */}
               <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card shadow-md">
                 <div className="flex flex-row gap-2 items-center mb-2">
-                  <BarChart3 className="h-5 w-5 text-indigo-600 dark:text-primary" />
+                  <BarChart3 className="h-5 w-5 text-primary" />
                   <p className="font-semibold text-[15px]">
                     Comparison with Average
                   </p>
@@ -990,15 +990,15 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                               {candidate.name}
                             </span>
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-indigo-600 dark:text-primary text-sm">
+                              <span className="font-semibold text-primary text-sm">
                                 {candidate.score}/100
                               </span>
                               <span
                                 className={`text-sm font-medium ${
                                   candidate.vsAverage > 0
-                                    ? "text-green-600"
+                                    ? "text-success"
                                     : candidate.vsAverage < 0
-                                      ? "text-red-600"
+                                      ? "text-destructive"
                                       : "text-muted-foreground"
                                 }`}
                               >

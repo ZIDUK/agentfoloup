@@ -67,7 +67,7 @@ const createInterviewerCard = () => {
     <>
       {/* <Card
         
-        className="border-dashed border-gray-700 border-4 p-0 inline-block cursor-pointer hover:scale-105 ease-in-out duration-300 h-5 w-5 ml-1 mr-3 rounded-xl shrink-0 overflow-hidden shadow-md"
+        className="border-dashed border-border border-4 p-0 inline-block cursor-pointer hover:scale-105 ease-in-out duration-300 h-5 w-5 ml-1 mr-3 rounded-xl shrink-0 overflow-hidden shadow-md"
       >
         <CardContent className="p-0">
           <div className="flex flex-col justify-center items-center w-full p-4 pb-0 mt-8 overflow-hidden">
@@ -81,7 +81,7 @@ const createInterviewerCard = () => {
       <Plus
         size={30}
         strokeWidth={2}
-        className="cursor-pointer bg-indigo-600 rounded-full text-white"
+        className="cursor-pointer bg-primary rounded-full text-primary-foreground"
         onClick={() => setOpen(true)}
       />
       <Modal
@@ -188,7 +188,7 @@ const createInterviewerCard = () => {
           <div className="flex flex-row justify-end mr-4">
             <Button
               disabled={(name && image ? false : true) || isClicked}
-              className="bg-indigo-600  hover:bg-indigo-800"
+              className="bg-primary hover:bg-primary/90"
               onClick={() => {
                 setIsClicked(true);
                 onSave();
