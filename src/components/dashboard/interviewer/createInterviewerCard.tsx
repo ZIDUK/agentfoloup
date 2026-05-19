@@ -111,7 +111,7 @@ const createInterviewerCard = () => {
               ) : (
                 <div>
                   <LucideImage
-                    className="mt-3 text-gray-300"
+                    className="mt-3 text-muted-foreground"
                     size={100}
                     strokeWidth={0.7}
                   />
