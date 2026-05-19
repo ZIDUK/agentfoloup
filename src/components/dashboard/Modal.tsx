@@ -17,7 +17,7 @@ export default function Modal({
   return (
     <div
       className={`fixed z-50 inset-0 overflow-y-auto flex justify-center items-start py-8 transition-colors
-      ${open ? "visible bg-black/30" : "invisible"}
+      ${open ? "visible bg-foreground/30" : "invisible"}
       `}
       onClick={closeOnOutsideClick ? onClose : () => {}}
     >
