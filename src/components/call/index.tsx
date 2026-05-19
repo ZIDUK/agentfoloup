@@ -813,7 +813,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
 
       {/* Camera preview — small floating thumbnail visible during the interview */}
       {isStarted && !isEnded && cameraStream && (
-        <div className="fixed bottom-4 right-4 z-50 rounded-lg overflow-hidden border-2 border-primary shadow-lg bg-black">
+        <div className="fixed bottom-4 right-4 z-50 rounded-lg overflow-hidden border-2 border-primary shadow-lg bg-foreground">
           <video
             ref={cameraVideoRef}
             autoPlay
@@ -825,7 +825,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
             <VideoIcon className="h-3 w-3 text-destructive" />
           </div>
           {isCameraCovered && (
-            <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center text-white text-xs text-center p-1 gap-1">
+            <div className="absolute inset-0 bg-foreground/75 flex flex-col items-center justify-center text-background text-xs text-center p-1 gap-1">
               <VideoOffIcon className="h-4 w-4 text-destructive" />
               <span>Camera appears covered</span>
             </div>
@@ -839,7 +839,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
             Test Mode — This response will be stored as a test response
           </div>
         )}
-        <Card className={`h-full rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all md:block dark:border-white ${isTestResponse ? "rounded-t-none" : ""}`}>
+        <Card className={`h-full rounded-lg border-2 border-b-4 border-r-4 border-foreground text-xl font-bold transition-all md:block ${isTestResponse ? "rounded-t-none" : ""}`}>
           <div className="flex flex-col h-full">
             <CardHeader className="items-center p-1">
               {!isEnded && (

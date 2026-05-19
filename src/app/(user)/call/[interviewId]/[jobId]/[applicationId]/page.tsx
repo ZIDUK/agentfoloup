@@ -22,7 +22,7 @@ type PopupProps = {
 function PopupLoader() {
   return (
     <div className="bg-background rounded-md absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 md:w-[80%] w-[90%]">
-      <div className="h-[88vh] justify-center items-center rounded-lg border-2 border-b-4 border-r-4 border-black font-bold transition-all md:block dark:border-white">
+      <div className="h-[88vh] justify-center items-center rounded-lg border-2 border-b-4 border-r-4 border-foreground font-bold transition-all md:block">
         <div className="relative flex flex-col items-center justify-center h-full">
           <LoaderWithText />
         </div>
@@ -34,7 +34,7 @@ function PopupLoader() {
 function PopUpMessage({ title, description, image }: PopupProps) {
   return (
     <div className="bg-card rounded-md absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 md:w-[80%] w-[90%]">
-      <div className="h-[88vh] content-center rounded-lg border-2 border-b-4 border-r-4 border-black font-bold transition-all md:block dark:border-white">
+      <div className="h-[88vh] content-center rounded-lg border-2 border-b-4 border-r-4 border-foreground font-bold transition-all md:block">
         <div className="flex flex-col items-center justify-center my-auto">
           <Image
             src={image}

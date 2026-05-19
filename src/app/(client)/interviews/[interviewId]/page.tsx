@@ -288,7 +288,7 @@ function InterviewHome({ params, searchParams }: Props) {
             <div className="font-bold text-md">{interview?.name}</div>
 
             <div
-              className="w-5 h-5 rounded-full border-2 border-white shadow"
+              className="w-5 h-5 rounded-full border-2 border-background shadow"
               style={{ backgroundColor: iconColor }}
             />
 

@@ -881,7 +881,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                       >
                         <div className="flex items-center gap-2">
                           <div
-                            className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold ${
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-destructive-foreground font-bold ${
                               index === 0
                                 ? "bg-warning"
                                 : index === 1
