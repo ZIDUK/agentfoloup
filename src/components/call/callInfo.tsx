@@ -190,7 +190,7 @@ function CallInfo({
               <div>
                 <div className="flex justify-between items-center pb-4 pr-2">
                   <div
-                    className=" inline-flex items-center text-primary hover:cursor-pointer"
+                    className=" inline-flex items-center text-brand-700 hover:cursor-pointer"
                     onClick={() => {
                       router.push(`/interviews/${interviewId}`);
                     }}
@@ -398,7 +398,7 @@ function CallInfo({
                         svg: "w-28 h-28 drop-shadow-md",
                         indicator: "stroke-primary",
                         track: "stroke-primary/10",
-                        value: "text-3xl font-semibold text-primary",
+                        value: "text-3xl font-semibold text-foreground",
                       }}
                       value={analytics?.overallScore}
                       strokeWidth={4}
@@ -432,7 +432,7 @@ function CallInfo({
                         svg: "w-28 h-28 drop-shadow-md",
                         indicator: "stroke-primary",
                         track: "stroke-primary/10",
-                        value: "text-3xl font-semibold text-primary",
+                        value: "text-3xl font-semibold text-foreground",
                       }}
                       value={analytics?.communication.score}
                       maxValue={10}
@@ -486,7 +486,7 @@ function CallInfo({
                         <span className="text-xs text-muted-foreground">
                           Pronunciation
                         </span>
-                        <span className="font-semibold text-primary">
+                        <span className="font-semibold text-foreground">
                           {analytics.pronunciationScore.toFixed(1)}/10
                         </span>
                       </div>
@@ -494,7 +494,7 @@ function CallInfo({
                     {analytics.fluencyScore !== undefined && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Fluency</span>
-                        <span className="font-semibold text-primary">
+                        <span className="font-semibold text-foreground">
                           {analytics.fluencyScore.toFixed(1)}/10
                         </span>
                       </div>
@@ -502,7 +502,7 @@ function CallInfo({
                     {analytics.grammarScore !== undefined && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Grammar</span>
-                        <span className="font-semibold text-primary">
+                        <span className="font-semibold text-foreground">
                           {analytics.grammarScore.toFixed(1)}/10
                         </span>
                       </div>
@@ -512,7 +512,7 @@ function CallInfo({
                         <span className="text-xs text-muted-foreground">
                           Vocabulary
                         </span>
-                        <span className="font-semibold text-primary">
+                        <span className="font-semibold text-foreground">
                           {analytics.vocabularyScore.toFixed(1)}/10
                         </span>
                       </div>
@@ -520,7 +520,7 @@ function CallInfo({
                     {analytics.coherenceScore !== undefined && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Coherence</span>
-                        <span className="font-semibold text-primary">
+                        <span className="font-semibold text-foreground">
                           {analytics.coherenceScore.toFixed(1)}/10
                         </span>
                       </div>
@@ -548,7 +548,7 @@ function CallInfo({
                   </p>
                   {analytics.pronunciationFeedback && (
                     <div className="border-l-4 border-primary pl-3 py-2">
-                      <p className="font-semibold text-primary mb-1">
+                      <p className="font-semibold text-brand-700 mb-1">
                         Pronunciation
                       </p>
                       <p className="text-foreground text-sm">
@@ -578,7 +578,7 @@ function CallInfo({
                   )}
                   {analytics.grammarFeedback && (
                     <div className="border-l-4 border-primary pl-3 py-2"> {/* DS: closest token — no purple semantic token */}
-                      <p className="font-semibold text-primary mb-1">
+                      <p className="font-semibold text-brand-700 mb-1">
                         Grammar
                       </p>
                       <p className="text-foreground text-sm">
