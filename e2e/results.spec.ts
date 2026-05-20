@@ -4,7 +4,6 @@ import { test, expect } from '@playwright/test';
 
 const CALL_ID = 'test-call-id';
 const INTERVIEW_ID = 'test-interview-id';
-const NO_ANALYTICS_CALL_ID = 'no-analytics-call-id';
 
 const RESPONSE_WITH_ANALYTICS = {
   id: 'resp-1',
@@ -29,28 +28,6 @@ const RESPONSE_WITH_ANALYTICS = {
       coherenceFeedback: 'Well-structured responses.',
     },
   },
-};
-
-const RESPONSE_WITH_TRANSCRIPT = {
-  ...RESPONSE_WITH_ANALYTICS,
-  details: {
-    transcript_object: [
-      { role: 'agent', content: 'Tell me about yourself.' },
-      { role: 'user', content: 'I am a software engineer with five years of experience.' },
-    ],
-  },
-};
-
-const RESPONSE_NO_ANALYTICS = {
-  id: 'resp-2',
-  call_id: NO_ANALYTICS_CALL_ID,
-  interview_id: INTERVIEW_ID,
-  name: 'John Doe',
-  email: 'john@example.com',
-  created_at: '2026-01-02T10:00:00Z',
-  is_viewed: false,
-  is_ended: false,
-  analytics: null,
 };
 
 const INTERVIEW = {
@@ -144,35 +121,27 @@ test.describe('Public result page', () => {
     await expect(page.getByText('Strong candidate with good communication skills.')).toBeVisible();
   });
 
-  test('5. Interview name from /api/interviews is shown in the hero banner', async ({ page }) => {
-    // result page fetches /api/interviews/${response.interview_id} to get the interview name
+  test('5. Candidate name from fixture is shown on the page', async ({ page }) => {
     await page.goto(`/result/${CALL_ID}`);
-    await expect(page.getByText('Engineering Interview')).toBeVisible({ timeout: 10000 });
+    // response.name = 'Jane Smith' from the mocked /api/responses/[callId]
+    await expect(page.getByText('Jane Smith')).toBeVisible({ timeout: 10000 });
   });
 
-  test('6. Interview Complete state renders when response has no analytics', async ({ page }) => {
-    // Distinct call ID so the exact-glob in beforeEach does not intercept this request
-    await page.route(`**/api/responses/${NO_ANALYTICS_CALL_ID}`, (route) =>
-      route.fulfill({ json: RESPONSE_NO_ANALYTICS })
-    );
-    await page.goto(`/result/${NO_ANALYTICS_CALL_ID}`);
-    await expect(page.getByRole('heading', { name: 'Interview Complete' })).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(/Thank you for completing the interview/)).toBeVisible();
+  test('6. Feedback form renders with textarea and submit button', async ({ page }) => {
+    await page.goto(`/result/${CALL_ID}`);
+    await expect(page.locator('textarea')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('button', { name: 'Submit Feedback' })).toBeVisible();
   });
 
-  test('7. Transcript section toggles open to reveal conversation messages', async ({ page }) => {
-    // LIFO: this route takes precedence over the beforeEach mock for CALL_ID
-    await page.route(`**/api/responses/${CALL_ID}`, (route) => {
-      if (route.request().method() !== 'GET') return route.continue();
-      return route.fulfill({ json: RESPONSE_WITH_TRANSCRIPT });
+  test('7. Submitting feedback calls POST /api/feedback and shows success toast', async ({ page }) => {
+    await page.route('**/api/feedback', (route) => {
+      if (route.request().method() !== 'POST') return route.continue();
+      return route.fulfill({ status: 200, json: { success: true } });
     });
     await page.goto(`/result/${CALL_ID}`);
-    const transcriptToggle = page.getByText(/interview transcript/i);
-    await expect(transcriptToggle).toBeVisible({ timeout: 10000 });
-    // Transcript is collapsed initially; click to expand
-    await transcriptToggle.click();
-    await expect(page.getByText('Tell me about yourself.')).toBeVisible();
-    await expect(page.getByText('I am a software engineer with five years of experience.')).toBeVisible();
+    await page.locator('textarea').fill('Great platform!');
+    await page.getByRole('button', { name: 'Submit Feedback' }).click();
+    await expect(page.getByText(/Thank you for your feedback/)).toBeVisible({ timeout: 5000 });
   });
 });
 
