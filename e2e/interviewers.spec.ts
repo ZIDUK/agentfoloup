@@ -41,8 +41,8 @@ test.describe('Interviewer management', () => {
       route.fulfill({ json: INTERVIEWERS[0] })
     );
 
-    // Intercept collection endpoint for GET
-    await page.route('**/api/interviewers', (route) =>
+    // Intercept collection endpoint for GET (** catches query strings)
+    await page.route('**/api/interviewers**', (route) =>
       route.fulfill({ json: INTERVIEWERS })
     );
   });

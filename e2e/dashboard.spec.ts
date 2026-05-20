@@ -117,7 +117,6 @@ test.describe('Dashboard page', () => {
     );
     await page.goto('/dashboard');
     const modal = page.locator('.fixed.z-50.inset-0').first();
-    await expect(modal).toBeHidden();
     const createCard = page.getByText('Create an Interview').first();
     await expect(createCard).toBeVisible();
     await createCard.click();

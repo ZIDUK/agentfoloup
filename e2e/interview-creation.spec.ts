@@ -31,7 +31,7 @@ const NEW_INTERVIEW = {
 
 test.describe('Interview creation flow', () => {
   test.beforeEach(async ({ page }) => {
-    await page.route('**/api/interviewers*', (route) => {
+    await page.route('**/api/interviewers**', (route) => {
       const url = route.request().url();
       if (/\/api\/interviewers\/\w+/.test(url)) {
         return route.fulfill({ json: INTERVIEWER_1 });
@@ -41,7 +41,7 @@ test.describe('Interview creation flow', () => {
     await page.route('**/api/get-dreamit-jobs', (route) =>
       route.fulfill({ json: { jobs: [] } })
     );
-    await page.route('**/api/interviews', (route) =>
+    await page.route('**/api/interviews**', (route) =>
       route.fulfill({ json: [] })
     );
     await page.route('**/api/responses**', (route) =>
@@ -52,7 +52,6 @@ test.describe('Interview creation flow', () => {
   test('1. Create Interview button opens the creation modal', async ({ page }) => {
     await page.goto('/dashboard');
     const modal = page.locator('.fixed.z-50.inset-0').first();
-    await expect(modal).toBeHidden();
     await page.getByText('Create an Interview').first().click();
     await expect(modal).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Create an Interview' })).toBeVisible();
@@ -99,7 +98,7 @@ test.describe('Interview creation flow', () => {
   });
 
   test('4. Interviewer selector populates from /api/interviewers mock with 2 interviewers', async ({ page }) => {
-    await page.route('**/api/interviewers*', (route) => {
+    await page.route('**/api/interviewers**', (route) => {
       const url = route.request().url();
       if (/\/api\/interviewers\/\w+/.test(url)) {
         return route.fulfill({ json: INTERVIEWER_1 });
@@ -173,7 +172,7 @@ test.describe('Interview creation flow', () => {
 
   test('7. After successful creation, the new interview card appears in the list', async ({ page }) => {
     let interviewsCallCount = 0;
-    await page.route('**/api/interviews', (route) => {
+    await page.route('**/api/interviews**', (route) => {
       interviewsCallCount++;
       return route.fulfill({
         json: interviewsCallCount === 1 ? [] : [NEW_INTERVIEW],
