@@ -1,4 +1,16 @@
-# Stage 1: Build the application
+# Stage 1: Supabase deployer — runs migrations + edge functions on every deploy
+FROM node:20-alpine AS deployer
+
+WORKDIR /app
+
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
+
+COPY supabase/ ./supabase/
+
+CMD ["sh", "-c", "npx supabase link --project-ref $SUPABASE_PROJECT_ID && npx supabase db push --include-all --yes && npx supabase functions deploy"]
+
+# Stage 2: Build the application
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -47,13 +59,7 @@ RUN npx update-browserslist-db@latest || true
 
 RUN yarn build || (echo "Build failed. Check the error above." && exit 1)
 
-# Install Supabase CLI and link project
-RUN apk add --no-cache curl
-RUN curl -fsSL https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz \
-  | tar -xz -C /usr/local/bin
-RUN supabase link --project-ref $SUPABASE_PROJECT_ID
-
-# Stage 2: Production image
+# Stage 3: Production image
 FROM node:20-alpine AS production
 
 WORKDIR /app

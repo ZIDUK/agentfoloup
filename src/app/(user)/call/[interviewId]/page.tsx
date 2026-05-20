@@ -6,6 +6,7 @@ import Call from "@/components/call";
 import Image from "next/image";
 import { Interview } from "@/types/interview";
 import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText";
+import { getSupabaseClient } from "@/lib/supabase-client";
 
 type Props = {
   params: {
@@ -51,7 +52,7 @@ function PopUpMessage({ title, description, image }: PopupProps) {
   );
 }
 
-type InviteState = "checking" | "not_found" | "expired" | "valid";
+type InviteState = "checking" | "not_found" | "expired" | "valid" | "interview_not_found" | "interview_inactive";
 
 type InvitationData = {
   id: string;
@@ -125,6 +126,22 @@ function InterviewInterface({ params }: Props) {
   useEffect(() => {
     if (isCheckingApp || !invitation) return;
     const fetchInterview = async () => {
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase
+        .from("interview")
+        .select("id,is_active,is_archived,is_deleted")
+        .eq("id", invitation.interview_id)
+        .maybeSingle();
+
+      if (error || data === null) {
+        setInviteState("interview_not_found");
+        return;
+      }
+      if (data.is_active === false || data.is_archived === true || data.is_deleted === true) {
+        setInviteState("interview_inactive");
+        return;
+      }
+
       try {
         const response = await getInterviewById(invitation.interview_id);
         if (response) {
@@ -205,14 +222,56 @@ function InterviewInterface({ params }: Props) {
     );
   }
 
+  if (inviteState === "interview_not_found") {
+    return (
+      <div className="h-screen overflow-hidden">
+        <div className="hidden md:block p-4 h-full form-container">
+          <PopUpMessage
+            title="This Link Is Not Valid"
+            description="This interview may have been removed. Please contact the hiring team."
+            image="/invalid-url.png"
+          />
+        </div>
+        <div className="md:hidden flex flex-col items-center justify-center my-auto">
+          <div className="mt-48 px-3">
+            <p className="text-center text-muted-foreground my-5">
+              This interview may have been removed. Please contact the hiring team.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (inviteState === "interview_inactive") {
+    return (
+      <div className="h-screen overflow-hidden">
+        <div className="hidden md:block p-4 h-full form-container">
+          <PopUpMessage
+            title="This Interview Is Closed"
+            description="This interview is no longer accepting responses. Please contact the hiring team."
+            image="/closed.png"
+          />
+        </div>
+        <div className="md:hidden flex flex-col items-center justify-center my-auto">
+          <div className="mt-48 px-3">
+            <p className="text-center text-muted-foreground my-5">
+              This interview is no longer accepting responses. Please contact the hiring team.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen overflow-hidden">
       <div className="hidden md:block p-4 h-full form-container">
         {isCheckingApp || !interview ? (
           interviewNotFound ? (
             <PopUpMessage
-              title="Invalid URL"
-              description="The interview link you're trying to access is invalid. Please check the URL and try again."
+              title="This Link Is Not Valid"
+              description="This interview may have been removed. Please contact the hiring team."
               image="/invalid-url.png"
             />
           ) : (
@@ -220,8 +279,8 @@ function InterviewInterface({ params }: Props) {
           )
         ) : !isActive ? (
           <PopUpMessage
-            title="Interview Is Unavailable"
-            description="We are not currently accepting responses. Please contact the sender for more information."
+            title="This Interview Is Closed"
+            description="This interview is no longer accepting responses. Please contact the hiring team."
             image="/closed.png"
           />
         ) : (

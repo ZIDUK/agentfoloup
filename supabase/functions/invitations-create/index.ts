@@ -96,6 +96,16 @@ Deno.serve(async (req) => {
   const expires_at = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
   const now = new Date().toISOString();
 
+  const { data: existing, error: existingError } = await supabase
+    .from("invitations")
+    .select("*")
+    .eq("application_id", application_id)
+    .eq("job_id", job_id)
+    .maybeSingle();
+
+  if (existingError) return errorResponse("Database error on duplicate check", 500);
+  if (existing) return jsonResponse({ invitation: existing }, 200);
+
   const { data: invitation, error: insertError } = await supabase
     .from("invitations")
     .insert({
@@ -114,7 +124,13 @@ Deno.serve(async (req) => {
 
   if (insertError) {
     if (insertError.code === "23505") {
-      return errorResponse("An invitation already exists for this application_id", 409);
+      const { data: raceExisting, error: raceError } = await supabase
+        .from("invitations")
+        .select("*")
+        .eq("application_id", application_id)
+        .maybeSingle();
+      if (raceError || !raceExisting) return errorResponse("Conflict and re-fetch failed", 500);
+      return jsonResponse({ invitation: raceExisting }, 200);
     }
     return errorResponse(insertError.message, 500);
   }
