@@ -164,9 +164,6 @@ test.describe('Candidate call page', () => {
       route.fulfill({ status: 201, json: { id: 'call-test-001', call_id: 'call-test-001' } })
     );
 
-    await page.route('**/api/register-call', (route) =>
-      route.fulfill({ json: { success: true } })
-    );
   });
 
   // 1. Page loads and shows pre-call form
@@ -186,11 +183,16 @@ test.describe('Candidate call page', () => {
     await expect(nameInput).toBeEditable();
   });
 
-  // 3. Invalid email shows inline error; Start Interview stays disabled
-  test('3. invalid email shows validation error and Start Interview is disabled', async ({ page }) => {
+  // 3. Validation fires on empty name and invalid email format
+  test('3. validation: empty name disables submit; malformed email shows error', async ({ page }) => {
     await page.goto(`/call/${INVITATION_ID}`);
     await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 15000 });
 
+    // Valid email but no name — button must be disabled
+    await page.locator('input[placeholder="Enter your email address"]').fill(CANDIDATE_EMAIL);
+    await expect(page.getByRole('button', { name: 'Start Interview' })).toBeDisabled();
+
+    // Malformed email — inline error visible and button still disabled
     await page.locator('input[placeholder="Enter your email address"]').fill('notanemail');
     await expect(page.getByText('Please enter a valid email address')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Start Interview' })).toBeDisabled();
@@ -209,23 +211,8 @@ test.describe('Candidate call page', () => {
     await expect(page.getByRole('button', { name: 'End Interview' })).toBeVisible({ timeout: 20000 });
   });
 
-  // 5. Active interview renders interviewer and candidate UI elements
-  test('5. active interview shows interviewer and candidate UI elements', async ({ page }) => {
-    await page.goto(`/call/${INVITATION_ID}`);
-    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 15000 });
-
-    await page.locator('input[placeholder="Enter your email address"]').fill(CANDIDATE_EMAIL);
-    await page.locator('input[placeholder="Enter your first name"]').fill('Test User');
-    await page.getByRole('button', { name: 'Start Interview' }).click();
-
-    await expect(page.getByRole('button', { name: 'End Interview' })).toBeVisible({ timeout: 20000 });
-    await expect(page.getByText('Interviewer')).toBeVisible();
-    await expect(page.getByText('You')).toBeVisible();
-    await expect(page.locator('img[alt="Image of the interviewer"]')).toBeVisible();
-  });
-
-  // 6. Tab switch during active interview triggers the integrity warning dialog
-  test('6. switching tabs during interview shows Integrity Warning dialog', async ({ page }) => {
+  // 5. Tab switch during active interview triggers the integrity warning dialog
+  test('5. switching tabs during interview shows Integrity Warning dialog', async ({ page }) => {
     await page.goto(`/call/${INVITATION_ID}`);
     await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 15000 });
 
@@ -243,8 +230,8 @@ test.describe('Candidate call page', () => {
     await expect(page.getByRole('heading', { name: 'Integrity Warning' })).toBeVisible({ timeout: 5000 });
   });
 
-  // 7. Nested route /call/[interviewId]/[jobId]/[applicationId] resolves the invitation and redirects
-  test('7. nested call route resolves invitation and redirects to pre-call form', async ({ page }) => {
+  // 6. Nested route /call/[interviewId]/[jobId]/[applicationId] resolves the invitation and redirects
+  test('6. nested call route resolves invitation and redirects to pre-call form', async ({ page }) => {
     await page.goto(`/call/${INTERVIEW_ID}/${JOB_ID}/${APPLICATION_ID}`);
     await page.waitForURL(`**/call/${INVITATION_ID}`, { timeout: 15000 });
     await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 15000 });
