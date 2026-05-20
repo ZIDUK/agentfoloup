@@ -190,7 +190,7 @@ function EditInterview({ interview }: EditInterviewProps) {
       <div className="flex flex-col bg-muted rounded-md min-h-[120px] p-2 pl-4">
         <div>
           <div
-            className="mt-2 ml-1 pr-2 inline-flex items-center text-primary hover:cursor-pointer"
+            className="mt-2 ml-1 pr-2 inline-flex items-center text-brand-700 hover:cursor-pointer"
             onClick={() => {
               router.push(`/interviews/${interview?.id}`);
             }}
@@ -404,7 +404,7 @@ function EditInterview({ interview }: EditInterviewProps) {
               <Plus
                 size={45}
                 strokeWidth={2.2}
-                className="text-primary text-center cursor-pointer"
+                className="text-brand-700 text-center cursor-pointer"
               />
             </div>
           ) : (
