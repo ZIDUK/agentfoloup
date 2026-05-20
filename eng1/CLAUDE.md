@@ -95,7 +95,7 @@ Never use `--author yousaf`, `--author operator`, `--author user`, or any other 
 
 Required comments you must leave (in order):
 - **PLAN** comment before writing any code
-- **DONE** comment after pushing, before delivering
+- **DONE** comment after committing and pushing, before delivering
 
 Missing either comment = incomplete handoff. Super will return the bead to you.
 
