@@ -493,19 +493,19 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                         id: 0,
                         value: sentimentCount.positive,
                         label: `Positive (${sentimentCount.positive})`,
-                        color: "#22c55e",
+                        color: "var(--color-chart-2)",
                       },
                       {
                         id: 1,
                         value: sentimentCount.neutral,
                         label: `Neutral (${sentimentCount.neutral})`,
-                        color: "#eab308",
+                        color: "var(--color-chart-4)",
                       },
                       {
                         id: 2,
                         value: sentimentCount.negative,
                         label: `Negative (${sentimentCount.negative})`,
-                        color: "#eb4444",
+                        color: "var(--color-chart-3)",
                       },
                     ],
                     highlightScope: { faded: "global", highlighted: "item" },
@@ -546,26 +546,26 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                         id: 0,
                         value: candidateStatusCount[CandidateStatus.SELECTED],
                         label: `Selected (${candidateStatusCount[CandidateStatus.SELECTED]})`,
-                        color: "#22c55e",
+                        color: "var(--color-chart-2)",
                       },
                       {
                         id: 1,
                         value: candidateStatusCount[CandidateStatus.POTENTIAL],
                         label: `Potential (${candidateStatusCount[CandidateStatus.POTENTIAL]})`,
-                        color: "#eab308",
+                        color: "var(--color-chart-4)",
                       },
                       {
                         id: 2,
                         value:
                           candidateStatusCount[CandidateStatus.NOT_SELECTED],
                         label: `Not Selected (${candidateStatusCount[CandidateStatus.NOT_SELECTED]})`,
-                        color: "#eb4444",
+                        color: "var(--color-chart-3)",
                       },
                       {
                         id: 3,
                         value: candidateStatusCount[CandidateStatus.NO_STATUS],
                         label: `No Status (${candidateStatusCount[CandidateStatus.NO_STATUS]})`,
-                        color: "#9ca3af",
+                        color: "var(--color-muted-foreground)",
                       },
                     ],
                     highlightScope: { faded: "global", highlighted: "item" },
@@ -846,7 +846,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     series={[
                       {
                         data: comparativeMetrics.scoreDistribution,
-                        color: "#4F46E5",
+                        color: "var(--color-chart-1)",
                       },
                     ]}
                     sx={{
@@ -939,14 +939,14 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     series={[
                       {
                         data: comparativeMetrics.scoreTrends.map((t) => t.score),
-                        color: "#4F46E5",
+                        color: "var(--color-chart-1)",
                         label: "Average Score",
                       },
                       {
                         data: Array(comparativeMetrics.scoreTrends.length).fill(
                           comparativeMetrics.averageScore,
                         ),
-                        color: "#9ca3af",
+                        color: "var(--color-muted-foreground)",
                         label: "Overall Average",
                         strokeDasharray: "5 5",
                       } as any, // MUI x-charts v7.7 does not expose strokeDasharray on LineSeriesType
