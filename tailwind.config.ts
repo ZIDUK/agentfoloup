@@ -100,10 +100,6 @@ module.exports = {
           border: "var(--color-sidebar-border)",
         },
       },
-      boxShadow: {
-        elegant: "0 10px 30px -10px hsl(var(--primary) / 0.15)",
-        card: "0 1px 3px 0 hsl(220 20% 25% / 0.1), 0 1px 2px 0 hsl(220 20% 25% / 0.06)",
-      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
