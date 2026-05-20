@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockSupabaseExternal } from './helpers/mocks';
 
 test.use({ storageState: 'e2e/fixtures/auth.json' });
 
@@ -59,6 +60,15 @@ const INTERVIEWER = {
 
 test.describe('Dashboard page', () => {
   test.beforeEach(async ({ page }) => {
+    await mockSupabaseExternal(page);
+
+    // Playwright matches routes LIFO (last-registered wins), so registering this fallback
+    // BEFORE the specific routes below guarantees specific ones take precedence. Any
+    // unmocked /api/* call still resolves with an empty body rather than hitting the real server.
+    await page.route('**/api/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+    );
+
     await page.route('**/api/interviewers*', (route) => {
       const url = route.request().url();
       if (/\/api\/interviewers\/\w+/.test(url)) {
@@ -131,6 +141,9 @@ test.describe('Dashboard page', () => {
     const interviewersLink = page.getByText('Interviewers', { exact: true });
     await expect(interviewersLink).toBeVisible();
     await interviewersLink.click();
-    await expect(page).toHaveURL('/dashboard/interviewers');
+    // router.push is async; toHaveURL with no explicit wait races the navigation
+    // and flakes in slower browser/timing environments — waitForURL blocks until settled.
+    await page.waitForURL('**/dashboard/interviewers', { timeout: 10000 });
+    expect(page.url()).toContain('/dashboard/interviewers');
   });
 });

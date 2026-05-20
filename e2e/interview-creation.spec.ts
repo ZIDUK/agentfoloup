@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockSupabaseExternal } from './helpers/mocks';
 
 test.use({ storageState: 'e2e/fixtures/auth.json' });
 
@@ -31,6 +32,15 @@ const NEW_INTERVIEW = {
 
 test.describe('Interview creation flow', () => {
   test.beforeEach(async ({ page }) => {
+    await mockSupabaseExternal(page);
+
+    // Playwright matches routes LIFO (last-registered wins), so registering this fallback
+    // BEFORE the specific routes below guarantees specific ones take precedence. Any
+    // unmocked /api/* call still resolves with an empty body rather than hitting the real server.
+    await page.route('**/api/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+    );
+
     await page.route('**/api/interviewers**', (route) => {
       const url = route.request().url();
       if (/\/api\/interviewers\/\w+/.test(url)) {
@@ -54,7 +64,8 @@ test.describe('Interview creation flow', () => {
     const modal = page.locator('.fixed.z-50.inset-0').first();
     await page.getByText('Create an Interview').first().click();
     await expect(modal).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Create an Interview' })).toBeVisible();
+    // Use level: 1 to disambiguate from the h3 "Create an Interview" card heading on the dashboard
+    await expect(page.getByRole('heading', { name: 'Create an Interview', level: 1 })).toBeVisible();
   });
 
   test('2. Form shows required fields: name, objective, description, and question input', async ({ page }) => {

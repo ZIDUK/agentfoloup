@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockSupabaseExternal } from './helpers/mocks';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -82,6 +83,15 @@ const RESPONSE_LIST = [
 
 test.describe('Public result page', () => {
   test.beforeEach(async ({ page }) => {
+    await mockSupabaseExternal(page);
+
+    // Playwright matches routes LIFO (last-registered wins), so registering this fallback
+    // BEFORE the specific routes below guarantees specific ones take precedence. Any
+    // unmocked /api/* call still resolves with an empty body rather than hitting the real server.
+    await page.route('**/api/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+    );
+
     await page.route(`**/api/responses/**`, (route) => {
       if (route.request().method() !== 'GET') return route.continue();
       return route.fulfill({ json: RESPONSE_WITH_ANALYTICS });
@@ -133,7 +143,9 @@ test.describe('Public result page', () => {
 
   test('7. Vocabulary skill section is visible on the result page', async ({ page }) => {
     await page.goto(`/result/${CALL_ID}`);
-    await expect(page.getByText('Vocabulary')).toBeVisible({ timeout: 15000 });
+    // exact: true prevents a strict-mode collision: 'vocabularyFeedback' rendered elsewhere
+    // in the DOM (key names, data-testids) is a substring match for 'Vocabulary' without it.
+    await expect(page.getByText('Vocabulary', { exact: true })).toBeVisible({ timeout: 15000 });
   });
 });
 
@@ -143,6 +155,15 @@ test.describe('Authenticated response list', () => {
   test.use({ storageState: 'e2e/fixtures/auth.json' });
 
   test.beforeEach(async ({ page }) => {
+    await mockSupabaseExternal(page);
+
+    // Playwright matches routes LIFO (last-registered wins), so registering this fallback
+    // BEFORE the specific routes below guarantees specific ones take precedence. Any
+    // unmocked /api/* call still resolves with an empty body rather than hitting the real server.
+    await page.route('**/api/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+    );
+
     // Context fetches — interviewers first so the sidebar doesn't hang
     await page.route('**/api/interviewers**', (route) => route.fulfill({ json: [] }));
     await page.route('**/api/interviews', (route) => route.fulfill({ json: [] }));

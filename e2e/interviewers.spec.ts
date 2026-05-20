@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockSupabaseExternal } from './helpers/mocks';
 
 test.use({ storageState: 'e2e/fixtures/auth.json' });
 
@@ -36,14 +37,33 @@ const INTERVIEWERS = [
 
 test.describe('Interviewer management', () => {
   test.beforeEach(async ({ page }) => {
-    // Intercept the ID-based endpoint (needed for details modal if component fetches by ID)
-    await page.route('**/api/interviewers/*', (route) =>
-      route.fulfill({ json: INTERVIEWERS[0] })
+    await mockSupabaseExternal(page);
+
+    // Playwright matches routes LIFO (last-registered wins), so registering this fallback
+    // BEFORE the specific routes below guarantees specific ones take precedence. Any
+    // unmocked /api/* call still resolves with an empty body rather than hitting the real server.
+    await page.route('**/api/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+    );
+
+    // Mock interviews list (needed for sidebar and providers)
+    await page.route('**/api/interviews**', (route) =>
+      route.fulfill({ json: [] })
+    );
+
+    // Mock responses (needed by some context loaders)
+    await page.route('**/api/responses**', (route) =>
+      route.fulfill({ json: { data: [] } })
     );
 
     // Intercept collection endpoint for GET (** catches query strings)
     await page.route('**/api/interviewers**', (route) =>
       route.fulfill({ json: INTERVIEWERS })
+    );
+
+    // Intercept the ID-based endpoint last so it wins over the collection mock
+    await page.route('**/api/interviewers/*', (route) =>
+      route.fulfill({ json: INTERVIEWERS[0] })
     );
   });
 
@@ -63,13 +83,13 @@ test.describe('Interviewer management', () => {
     await expect(page.getByText('Explorer Lisa').first()).toBeVisible({ timeout: 10000 });
     // Click first card to open the details modal
     await page.getByText('Explorer Lisa').first().click();
-    // Modal shows the interviewer name as heading
-    await expect(page.getByRole('heading', { name: 'Explorer Lisa' })).toBeVisible();
-    // Modal shows all persona attribute labels
-    await expect(page.getByText('Empathy')).toBeVisible();
-    await expect(page.getByText('Rapport')).toBeVisible();
-    await expect(page.getByText('Speed')).toBeVisible();
-    await expect(page.getByText('Exploration')).toBeVisible();
+    // Modal shows the interviewer name as heading (card also has the name, so use last to target the modal)
+    await expect(page.getByRole('heading', { name: 'Explorer Lisa' }).last()).toBeVisible();
+    // Modal shows all persona attribute labels (portal/sheet can render twice — use .first())
+    await expect(page.getByText('Empathy').first()).toBeVisible();
+    await expect(page.getByText('Rapport').first()).toBeVisible();
+    await expect(page.getByText('Speed').first()).toBeVisible();
+    await expect(page.getByText('Exploration').first()).toBeVisible();
     // Persona values are displayed: empathy=7 → stored/10 → display = 0.7
     await expect(page.getByText('0.7').first()).toBeVisible();
   });
