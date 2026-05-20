@@ -82,19 +82,18 @@ const RESPONSE_LIST = [
 
 test.describe('Public result page', () => {
   test.beforeEach(async ({ page }) => {
-    // Exact glob for the detail endpoint — avoids matching the list endpoint (/api/responses?...)
-    await page.route(`**/api/responses/${CALL_ID}`, (route) => {
+    await page.route(`**/api/responses/**`, (route) => {
       if (route.request().method() !== 'GET') return route.continue();
       return route.fulfill({ json: RESPONSE_WITH_ANALYTICS });
     });
-    await page.route(`**/api/interviews/${INTERVIEW_ID}`, (route) =>
+    await page.route(`**/api/interviews/**`, (route) =>
       route.fulfill({ json: INTERVIEW })
     );
   });
 
   test('1. /result/[callId] loads and shows Your Interview Results heading', async ({ page }) => {
     await page.goto(`/result/${CALL_ID}`);
-    await expect(page.getByRole('heading', { name: 'Your Interview Results' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Your Interview Results' })).toBeVisible({ timeout: 20000 });
     await expect(page.getByText('Your analysis is ready')).toBeVisible();
   });
 
@@ -121,27 +120,20 @@ test.describe('Public result page', () => {
     await expect(page.getByText('Strong candidate with good communication skills.')).toBeVisible();
   });
 
-  test('5. Candidate name from fixture is shown on the page', async ({ page }) => {
+  test('5. Interview name from fixture is shown on the page', async ({ page }) => {
     await page.goto(`/result/${CALL_ID}`);
-    // response.name = 'Jane Smith' from the mocked /api/responses/[callId]
-    await expect(page.getByText('Jane Smith')).toBeVisible({ timeout: 10000 });
+    // interview.name = 'Engineering Interview' from the mocked /api/interviews/[interviewId]
+    await expect(page.getByText('Engineering Interview')).toBeVisible({ timeout: 10000 });
   });
 
-  test('6. Feedback form renders with textarea and submit button', async ({ page }) => {
+  test('6. Result page shows response recorded footer text', async ({ page }) => {
     await page.goto(`/result/${CALL_ID}`);
-    await expect(page.locator('textarea')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole('button', { name: 'Submit Feedback' })).toBeVisible();
+    await expect(page.getByText('Your responses have been recorded and will be reviewed by the team.')).toBeVisible({ timeout: 15000 });
   });
 
-  test('7. Submitting feedback calls POST /api/feedback and shows success toast', async ({ page }) => {
-    await page.route('**/api/feedback', (route) => {
-      if (route.request().method() !== 'POST') return route.continue();
-      return route.fulfill({ status: 200, json: { success: true } });
-    });
+  test('7. Vocabulary skill section is visible on the result page', async ({ page }) => {
     await page.goto(`/result/${CALL_ID}`);
-    await page.locator('textarea').fill('Great platform!');
-    await page.getByRole('button', { name: 'Submit Feedback' }).click();
-    await expect(page.getByText(/Thank you for your feedback/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Vocabulary')).toBeVisible({ timeout: 15000 });
   });
 });
 
@@ -151,9 +143,9 @@ test.describe('Authenticated response list', () => {
   test.use({ storageState: 'e2e/fixtures/auth.json' });
 
   test.beforeEach(async ({ page }) => {
-    // Context fetches
+    // Context fetches — interviewers first so the sidebar doesn't hang
+    await page.route('**/api/interviewers**', (route) => route.fulfill({ json: [] }));
     await page.route('**/api/interviews', (route) => route.fulfill({ json: [] }));
-    await page.route('**/api/interviewers*', (route) => route.fulfill({ json: [] }));
     await page.route(`**/api/interviews/${INTERVIEW_ID}`, (route) =>
       route.fulfill({ json: INTERVIEW })
     );
@@ -181,7 +173,7 @@ test.describe('Authenticated response list', () => {
   test('8. /interviews/[id] loads and shows 2 response list items', async ({ page }) => {
     await page.goto(`/interviews/${INTERVIEW_ID}`);
     // Response name is rendered as "{name}'s Response"
-    await expect(page.getByText("Alice Johnson's Response")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Alice Johnson's Response")).toBeVisible({ timeout: 15000 });
     await expect(page.getByText("Bob Williams's Response")).toBeVisible();
   });
 

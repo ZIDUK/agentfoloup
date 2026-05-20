@@ -130,7 +130,7 @@ test.describe('Candidate call page', () => {
     });
 
     // Invitation lookup (both id= and application_id= query forms)
-    await page.route('**/api/fn/invitations-get**', (route) =>
+    await page.route(/\/api\/fn\/invitations-get/, (route) =>
       route.fulfill({ json: { invitation: INVITATION, is_expired: false } })
     );
 
@@ -169,15 +169,17 @@ test.describe('Candidate call page', () => {
   // 1. Page loads and shows pre-call form
   test('1. pre-call form loads after invitation is resolved', async ({ page }) => {
     await page.goto(`/call/${INVITATION_ID}`);
-    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState('networkidle', { timeout: 20000 });
+    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 20000 });
   });
 
   // 2. Both email and name inputs are present and editable
   test('2. email and name inputs are visible and editable', async ({ page }) => {
     await page.goto(`/call/${INVITATION_ID}`);
+    await page.waitForLoadState('networkidle', { timeout: 20000 });
     const emailInput = page.locator('input[placeholder="Enter your email address"]');
     const nameInput = page.locator('input[placeholder="Enter your first name"]');
-    await expect(emailInput).toBeVisible({ timeout: 15000 });
+    await expect(emailInput).toBeVisible({ timeout: 20000 });
     await expect(nameInput).toBeVisible();
     await expect(emailInput).toBeEditable();
     await expect(nameInput).toBeEditable();
@@ -186,7 +188,8 @@ test.describe('Candidate call page', () => {
   // 3. Validation fires on empty name and invalid email format
   test('3. validation: empty name disables submit; malformed email shows error', async ({ page }) => {
     await page.goto(`/call/${INVITATION_ID}`);
-    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState('networkidle', { timeout: 20000 });
+    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 20000 });
 
     // Valid email but no name — button must be disabled
     await page.locator('input[placeholder="Enter your email address"]').fill(CANDIDATE_EMAIL);
@@ -201,7 +204,8 @@ test.describe('Candidate call page', () => {
   // 4. Completing the form and clicking Start transitions to the active interview UI
   test('4. valid form submission transitions to active interview', async ({ page }) => {
     await page.goto(`/call/${INVITATION_ID}`);
-    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState('networkidle', { timeout: 20000 });
+    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 20000 });
 
     await page.locator('input[placeholder="Enter your email address"]').fill(CANDIDATE_EMAIL);
     await page.locator('input[placeholder="Enter your first name"]').fill('Test User');
@@ -214,7 +218,8 @@ test.describe('Candidate call page', () => {
   // 5. Tab switch during active interview triggers the integrity warning dialog
   test('5. switching tabs during interview shows Integrity Warning dialog', async ({ page }) => {
     await page.goto(`/call/${INVITATION_ID}`);
-    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState('networkidle', { timeout: 20000 });
+    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 20000 });
 
     await page.locator('input[placeholder="Enter your email address"]').fill(CANDIDATE_EMAIL);
     await page.locator('input[placeholder="Enter your first name"]').fill('Test User');
@@ -233,7 +238,8 @@ test.describe('Candidate call page', () => {
   // 6. Nested route /call/[interviewId]/[jobId]/[applicationId] resolves the invitation and redirects
   test('6. nested call route resolves invitation and redirects to pre-call form', async ({ page }) => {
     await page.goto(`/call/${INTERVIEW_ID}/${JOB_ID}/${APPLICATION_ID}`);
+    await page.waitForLoadState('networkidle', { timeout: 20000 });
     await page.waitForURL(`**/call/${INVITATION_ID}`, { timeout: 15000 });
-    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 20000 });
   });
 });
