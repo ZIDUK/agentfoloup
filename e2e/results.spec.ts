@@ -101,7 +101,7 @@ test.describe('Public result page', () => {
   test('2. CEFR proficiency level B2 is displayed with its label', async ({ page }) => {
     await page.goto(`/result/${CALL_ID}`);
     // span.text-4xl.font-black.text-primary renders the level
-    await expect(page.getByText(/B2/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/B2/).first()).toBeVisible({ timeout: 10000 });
     // CEFR_LABELS["B2"] = "Upper Intermediate"
     await expect(page.getByText('Upper Intermediate')).toBeVisible();
   });
@@ -111,7 +111,7 @@ test.describe('Public result page', () => {
     // "LANGUAGE SKILLS" section heading (uppercase tracking-widest label)
     await expect(page.getByText(/language skills/i)).toBeVisible({ timeout: 10000 });
     // At least 2 skill card labels visible
-    await expect(page.getByText('Pronunciation')).toBeVisible();
+    await expect(page.getByText('Pronunciation', { exact: true })).toBeVisible();
     await expect(page.getByText('Fluency')).toBeVisible();
   });
 
@@ -189,7 +189,7 @@ test.describe('Authenticated response list', () => {
     await page.goto(`/interviews/${INTERVIEW_ID}`);
     await expect(page.getByText("Alice Johnson's Response")).toBeVisible({ timeout: 10000 });
     // Overall score badge (w-6 h-6 rounded-full border-primary) shows analytics.overallScore
-    await expect(page.getByText('82')).toBeVisible();
+    await expect(page.getByText('82').first()).toBeVisible();
   });
 
   test('10. Clicking a response navigates URL to include ?call=[callId]', async ({ page }) => {

@@ -53,14 +53,14 @@ test.describe('Interviewer management', () => {
     // Wait for loading skeleton to clear
     await expect(page.locator('.animate-pulse').first()).toBeHidden({ timeout: 10000 });
     // Both mocked interviewer names are visible as card titles
-    await expect(page.getByText('Explorer Lisa')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('Empathetic Bob')).toBeVisible();
+    await expect(page.getByText('Explorer Lisa').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Empathetic Bob').first()).toBeVisible();
   });
 
   // 2. Card shows name and persona attribute values
   test('2. interviewer card shows name and persona attribute values', async ({ page }) => {
     await page.goto('/dashboard/interviewers');
-    await expect(page.getByText('Explorer Lisa')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Explorer Lisa').first()).toBeVisible({ timeout: 10000 });
     // Click first card to open the details modal
     await page.getByText('Explorer Lisa').first().click();
     // Modal shows the interviewer name as heading

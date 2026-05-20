@@ -85,7 +85,7 @@ test.describe('Dashboard page', () => {
     );
     await page.goto('/dashboard');
     await expect(page.locator('.animate-pulse').first()).toBeHidden();
-    await expect(page.getByText('Create an Interview')).toBeVisible();
+    await expect(page.getByText('Create an Interview').first()).toBeVisible();
     await expect(page.locator('a[href^="/interviews/"]')).toHaveCount(0);
   });
 
@@ -118,7 +118,7 @@ test.describe('Dashboard page', () => {
     await page.goto('/dashboard');
     const modal = page.locator('.fixed.z-50.inset-0').first();
     await expect(modal).toBeHidden();
-    const createCard = page.getByText('Create an Interview');
+    const createCard = page.getByText('Create an Interview').first();
     await expect(createCard).toBeVisible();
     await createCard.click();
     await expect(modal).toBeVisible();
