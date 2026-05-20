@@ -1106,7 +1106,7 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
                       disabled={Loading}
                     >
                       End Interview{" "}
-                      <XCircleIcon className="h-[1.5rem] ml-2 w-[1.5rem] rotate-0 scale-100  dark:-rotate-90 dark:scale-0 text-red" />
+                      <XCircleIcon className="h-[1.5rem] ml-2 w-[1.5rem] rotate-0 scale-100  dark:-rotate-90 dark:scale-0 text-destructive" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
