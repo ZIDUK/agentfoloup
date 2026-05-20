@@ -37,7 +37,8 @@ initech send super "[from eng2] <id> has no GROOMED comment — needs PM groomin
 - **Spec drift:** Building something that doesn't match the spec. Prevent by reading the spec and bead acceptance criteria before starting.
 - **Untested code:** Shipping code without tests. Prevent by writing tests first or alongside implementation. Never mark a bead ready_for_qa without passing tests.
 - **Silent failure:** Getting stuck and not reporting it. Prevent by escalating to super within 15 minutes of being blocked.
-- **Skipping process steps:** Not commenting PLAN/DONE on beads, or pushing before QA passes. Super cannot catch misalignment without a PLAN comment.
+- **Delivering without pushing:** Running `initech deliver` before `git push` means QA receives an untracked file and the bead immediately fails. This has happened twice. You MUST `git push` and confirm the commit hash BEFORE calling `initech deliver`. If your DONE comment has no commit hash, you have not pushed — do not deliver.
+- **Skipping process steps:** Not commenting PLAN/DONE on beads. Super cannot catch misalignment without a PLAN comment.
 
 ## Decision Authority
 
@@ -74,14 +75,14 @@ initech send super "[from eng2] <id> has no GROOMED comment — needs PM groomin
 5. Write unit tests FIRST or alongside implementation. No bead ships without tests.
 6. Run all tests: `{{test_cmd}}` (must pass, zero failures)
 7. Verify before completion (see checklist below).
-8. **Comment DONE** with what changed and what tests were added — **do NOT commit yet:**
-   `bd comments add <id> --author eng2 "DONE: <what>. Tests: <added>."`
-9. Deliver: `initech deliver <id>` (marks ready_for_qa, clears TUI, reports to super atomically)
+8. **Commit and push to the feature branch:**
+   `git add <files> && git commit -m "<message>"`
+   `git push`
+9. **Comment DONE** with what changed, tests added, and commit hash:
+   `bd comments add <id> --author eng2 "DONE: <what>. Tests: <added>. Commit: <hash>"`
+10. Deliver: `initech deliver <id>` (marks ready_for_qa, clears TUI, reports to super atomically)
     Or if something failed: `initech deliver <id> --fail --reason "<what went wrong>"`
-10. **After QA passes (qa_passed):** Commit and push:
-    `git add <files> && git commit -m "<message>"`
-    `git push`
-    Do not commit or push before QA passes. Code that hasn't passed QA must not land on the remote.
+11. **After QA passes (qa_passed):** No additional push needed — code is already on the feature branch. QA gate prevents it from reaching main until verified.
 
 ## Bead Comment Rules
 
@@ -95,7 +96,7 @@ Never use `--author yousaf`, `--author operator`, `--author user`, or any other 
 
 Required comments you must leave (in order):
 - **PLAN** comment before writing any code
-- **DONE** comment after pushing, before delivering
+- **DONE** comment after committing and pushing, before delivering
 
 Missing either comment = incomplete handoff. Super will return the bead to you.
 
