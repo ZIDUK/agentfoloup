@@ -11,7 +11,7 @@ function SignInFallback() {
       <div className="hidden md:block align-middle my-auto mx-auto">
         <div className="flex flex-col items-center justify-center p-8 bg-card rounded-lg shadow-lg border-2 border-border">
           <h1 className="text-3xl font-bold text-center text-foreground mb-2">
-            Welcome to Folo<span className="text-primary">Up</span>
+            Welcome to Folo<span className="text-brand-700">Up</span>
           </h1>
           <p className="text-muted-foreground mb-8 text-center">
             Sign in to continue to your dashboard
@@ -20,7 +20,7 @@ function SignInFallback() {
       </div>
       <div className="block md:hidden px-3 h-[60%] my-auto">
         <h1 className="text-2xl font-bold text-center text-foreground">
-          Welcome to Folo<span className="text-primary">Up</span>
+          Welcome to Folo<span className="text-brand-700">Up</span>
         </h1>
         <h1 className="text-md my-3 text-center text-foreground">
           Mobile version is currently under construction. 🚧
@@ -76,7 +76,7 @@ function SignInContent() {
       <div className="hidden md:block align-middle my-auto mx-auto">
         <div className="flex flex-col items-center justify-center p-8 bg-card rounded-lg shadow-lg border-2 border-border">
           <h1 className="text-3xl font-bold text-center text-foreground mb-2">
-            Welcome to Folo<span className="text-primary">Up</span>
+            Welcome to Folo<span className="text-brand-700">Up</span>
           </h1>
           {!oauthError && urlErrorMessage ? (
             <p className="text-destructive mb-8 text-center text-sm">
@@ -119,7 +119,7 @@ function SignInContent() {
       </div>
       <div className="block md:hidden px-3 h-[60%] my-auto">
         <h1 className="text-2xl font-bold text-center text-foreground">
-          Welcome to Folo<span className="text-primary">Up</span>
+          Welcome to Folo<span className="text-brand-700">Up</span>
         </h1>
         <h1 className="text-md my-3 text-center text-foreground">
           Mobile version is currently under construction. 🚧

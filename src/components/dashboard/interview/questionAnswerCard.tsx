@@ -53,7 +53,7 @@ function QuestionAnswerCard({
                   )}
                   {questionSummary.wordsPerMinute !== undefined && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span className="font-semibold text-primary">
+                      <span className="font-semibold text-brand-700">
                         {Math.round(questionSummary.wordsPerMinute)}
                       </span>
                       <span>Words/min</span>

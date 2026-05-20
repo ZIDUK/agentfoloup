@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { Interview } from "@/types/interview";
 import { Response } from "@/types/response";
-import { formatTimestampToDateHHMM } from "@/lib/utils";
+import { formatTimestampToDateHHMM, getDefaultThemeColor } from "@/lib/utils";
 import CallInfo from "@/components/call/callInfo";
 import SummaryInfo from "@/components/dashboard/interview/summaryInfo";
 import EditInterview from "@/components/dashboard/interview/editInterview";
@@ -64,8 +64,8 @@ function InterviewHome({ params, searchParams }: Props) {
   const [isViewed, setIsViewed] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
-  const [themeColor, setThemeColor] = useState<string>("#4F46E5");
-  const [iconColor, seticonColor] = useState<string>("#4F46E5");
+  const [themeColor, setThemeColor] = useState<string>(getDefaultThemeColor);
+  const [iconColor, seticonColor] = useState<string>(getDefaultThemeColor);
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [responseType, setResponseType] = useState<string>("CANDIDATE");
 
@@ -108,8 +108,8 @@ function InterviewHome({ params, searchParams }: Props) {
         setInterview(response);
         setIsActive(response.is_active);
         setIsViewed(response.is_viewed);
-        setThemeColor(response.theme_color ?? "#4F46E5");
-        seticonColor(response.theme_color ?? "#4F46E5");
+        setThemeColor(response.theme_color ?? getDefaultThemeColor());
+        seticonColor(response.theme_color ?? getDefaultThemeColor());
       } catch {
         // silent
       }
@@ -300,7 +300,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="bg-transparent shadow-none relative text-xs text-primary px-1 h-7 hover:scale-110 hover:bg-transparent"
+                    className="bg-transparent shadow-none relative text-xs text-brand-700 px-1 h-7 hover:scale-110 hover:bg-transparent"
                     variant="secondary"
                     onClick={(e) => { e.stopPropagation(); setIsSharePopupOpen(true); }}
                   >
@@ -316,7 +316,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="bg-transparent shadow-none text-xs text-primary px-0 h-7 hover:scale-110 relative"
+                    className="bg-transparent shadow-none text-xs text-brand-700 px-0 h-7 hover:scale-110 relative"
                     onClick={(e) => { e.stopPropagation(); seeInterviewPreviewPage(); }}
                   >
                     <Eye />
@@ -331,7 +331,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="bg-transparent shadow-none text-xs text-primary px-0 h-7 hover:scale-110 relative"
+                    className="bg-transparent shadow-none text-xs text-brand-700 px-0 h-7 hover:scale-110 relative"
                     onClick={(e) => { e.stopPropagation(); setShowColorPicker(!showColorPicker); }}
                   >
                     <Palette size={19} />
@@ -346,7 +346,7 @@ function InterviewHome({ params, searchParams }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="bg-transparent shadow-none text-xs text-primary px-0 h-7 hover:scale-110 relative"
+                    className="bg-transparent shadow-none text-xs text-brand-700 px-0 h-7 hover:scale-110 relative"
                     onClick={() => router.push(`/interviews/${params.interviewId}?edit=true`)}
                   >
                     <Pencil size={16} />
@@ -500,7 +500,7 @@ function InterviewHome({ params, searchParams }: Props) {
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <div className="w-6 h-6 rounded-full bg-background border-2 border-primary flex items-center justify-center">
-                                        <span className="text-primary text-xs font-semibold">
+                                        <span className="text-foreground text-xs font-semibold">
                                           {response?.analytics?.overallScore}
                                         </span>
                                       </div>

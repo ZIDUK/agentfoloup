@@ -137,7 +137,7 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
             <Plus
               size={45}
               strokeWidth={2.2}
-              className="text-primary  cursor-pointer"
+              className="text-brand-700  cursor-pointer"
             />
           </div>
         ) : (

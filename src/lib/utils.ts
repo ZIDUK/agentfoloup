@@ -43,6 +43,18 @@ export function convertSecondstoMMSS(seconds: number) {
   return `${minutes}m ${remainingSeconds.toString().padStart(2, "0")}s`;
 }
 
+// Fallback matches --color-chart-1 token value
+const DS_CHART_1_FALLBACK = "#6366f1";
+
+/** Returns the resolved --color-chart-1 CSS token, or the hardcoded fallback when SSR. */
+export function getDefaultThemeColor(): string {
+  if (typeof window === "undefined") return DS_CHART_1_FALLBACK;
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue("--color-chart-1")
+    .trim();
+  return value || DS_CHART_1_FALLBACK;
+}
+
 export function isLightColor(color: string) {
   const hex = color?.replace("#", "");
   const r = parseInt(hex?.substring(0, 2), 16);

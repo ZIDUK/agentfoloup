@@ -493,19 +493,19 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                         id: 0,
                         value: sentimentCount.positive,
                         label: `Positive (${sentimentCount.positive})`,
-                        color: "#22c55e",
+                        color: "var(--color-chart-2)",
                       },
                       {
                         id: 1,
                         value: sentimentCount.neutral,
                         label: `Neutral (${sentimentCount.neutral})`,
-                        color: "#eab308",
+                        color: "var(--color-chart-4)",
                       },
                       {
                         id: 2,
                         value: sentimentCount.negative,
                         label: `Negative (${sentimentCount.negative})`,
-                        color: "#eb4444",
+                        color: "var(--color-chart-3)",
                       },
                     ],
                     highlightScope: { faded: "global", highlighted: "item" },
@@ -546,26 +546,26 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                         id: 0,
                         value: candidateStatusCount[CandidateStatus.SELECTED],
                         label: `Selected (${candidateStatusCount[CandidateStatus.SELECTED]})`,
-                        color: "#22c55e",
+                        color: "var(--color-chart-2)",
                       },
                       {
                         id: 1,
                         value: candidateStatusCount[CandidateStatus.POTENTIAL],
                         label: `Potential (${candidateStatusCount[CandidateStatus.POTENTIAL]})`,
-                        color: "#eab308",
+                        color: "var(--color-chart-4)",
                       },
                       {
                         id: 2,
                         value:
                           candidateStatusCount[CandidateStatus.NOT_SELECTED],
                         label: `Not Selected (${candidateStatusCount[CandidateStatus.NOT_SELECTED]})`,
-                        color: "#eb4444",
+                        color: "var(--color-chart-3)",
                       },
                       {
                         id: 3,
                         value: candidateStatusCount[CandidateStatus.NO_STATUS],
                         label: `No Status (${candidateStatusCount[CandidateStatus.NO_STATUS]})`,
-                        color: "#9ca3af",
+                        color: "var(--color-muted-foreground)",
                       },
                     ],
                     highlightScope: { faded: "global", highlighted: "item" },
@@ -604,7 +604,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 <p className="text-sm font-medium text-foreground">
                   Avg Answer Length
                 </p>
-                <p className="text-2xl font-semibold text-primary">
+                <p className="text-2xl font-semibold text-brand-700">
                   {answerQualityMetrics.averageAnswerLength}
                   <span className="text-sm text-muted-foreground ml-1">words</span>
                 </p>
@@ -613,14 +613,14 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 <p className="text-sm font-medium text-foreground">
                   Relevance Score
                 </p>
-                <p className="text-2xl font-semibold text-primary">
+                <p className="text-2xl font-semibold text-brand-700">
                   {answerQualityMetrics.averageRelevanceScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
               </div>
               <div className="flex flex-col gap-2 p-3 rounded-2xl bg-card shadow-md">
                 <p className="text-sm font-medium text-foreground">Depth Score</p>
-                <p className="text-2xl font-semibold text-primary">
+                <p className="text-2xl font-semibold text-brand-700">
                   {answerQualityMetrics.averageDepthScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
@@ -629,7 +629,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 <p className="text-sm font-medium text-foreground">
                   Consistency Score
                 </p>
-                <p className="text-2xl font-semibold text-primary">
+                <p className="text-2xl font-semibold text-brand-700">
                   {answerQualityMetrics.averageConsistencyScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
@@ -648,7 +648,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 <p className="text-sm font-medium text-foreground">
                   Engagement Score
                 </p>
-                <p className="text-2xl font-semibold text-primary">
+                <p className="text-2xl font-semibold text-brand-700">
                   {advancedAnalysis.averageEngagementScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
@@ -657,7 +657,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 <p className="text-sm font-medium text-foreground">
                   Problem-Solving
                 </p>
-                <p className="text-2xl font-semibold text-primary">
+                <p className="text-2xl font-semibold text-brand-700">
                   {advancedAnalysis.averageProblemSolvingScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
@@ -666,7 +666,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                 <p className="text-sm font-medium text-foreground">
                   Adaptability
                 </p>
-                <p className="text-2xl font-semibold text-primary">
+                <p className="text-2xl font-semibold text-brand-700">
                   {advancedAnalysis.averageAdaptabilityScore.toFixed(1)}
                   <span className="text-sm text-muted-foreground ml-1">/10</span>
                 </p>
@@ -746,7 +746,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                                           : "Proficient"}
                               </span>
                             </div>
-                            <span className="font-semibold text-primary">{count}</span>
+                            <span className="font-semibold text-brand-700">{count}</span>
                           </div>
                         );
                       })}
@@ -767,7 +767,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     {cefrMetrics.averagePronunciation > 0 && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Pronunciation</span>
-                        <span className="font-semibold text-primary text-lg">
+                        <span className="font-semibold text-brand-700 text-lg">
                           {cefrMetrics.averagePronunciation.toFixed(1)}/10
                         </span>
                       </div>
@@ -775,7 +775,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     {cefrMetrics.averageFluency > 0 && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Fluency</span>
-                        <span className="font-semibold text-primary text-lg">
+                        <span className="font-semibold text-brand-700 text-lg">
                           {cefrMetrics.averageFluency.toFixed(1)}/10
                         </span>
                       </div>
@@ -783,7 +783,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     {cefrMetrics.averageGrammar > 0 && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Grammar</span>
-                        <span className="font-semibold text-primary text-lg">
+                        <span className="font-semibold text-brand-700 text-lg">
                           {cefrMetrics.averageGrammar.toFixed(1)}/10
                         </span>
                       </div>
@@ -791,7 +791,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     {cefrMetrics.averageVocabulary > 0 && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Vocabulary</span>
-                        <span className="font-semibold text-primary text-lg">
+                        <span className="font-semibold text-brand-700 text-lg">
                           {cefrMetrics.averageVocabulary.toFixed(1)}/10
                         </span>
                       </div>
@@ -799,7 +799,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     {cefrMetrics.averageCoherence > 0 && (
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Coherence</span>
-                        <span className="font-semibold text-primary text-lg">
+                        <span className="font-semibold text-brand-700 text-lg">
                           {cefrMetrics.averageCoherence.toFixed(1)}/10
                         </span>
                       </div>
@@ -846,7 +846,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     series={[
                       {
                         data: comparativeMetrics.scoreDistribution,
-                        color: "#4F46E5",
+                        color: "var(--color-chart-1)",
                       },
                     ]}
                     sx={{
@@ -895,7 +895,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                             {performer.name}
                           </span>
                         </div>
-                        <span className="font-semibold text-primary">
+                        <span className="font-semibold text-brand-700">
                           {performer.score}/100
                         </span>
                       </div>
@@ -905,7 +905,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                         <span className="font-medium text-muted-foreground">
                           Average Score
                         </span>
-                        <span className="font-semibold text-primary text-lg">
+                        <span className="font-semibold text-brand-700 text-lg">
                           {comparativeMetrics.averageScore.toFixed(1)}/100
                         </span>
                       </div>
@@ -939,14 +939,14 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     series={[
                       {
                         data: comparativeMetrics.scoreTrends.map((t) => t.score),
-                        color: "#4F46E5",
+                        color: "var(--color-chart-1)",
                         label: "Average Score",
                       },
                       {
                         data: Array(comparativeMetrics.scoreTrends.length).fill(
                           comparativeMetrics.averageScore,
                         ),
-                        color: "#9ca3af",
+                        color: "var(--color-muted-foreground)",
                         label: "Overall Average",
                         strokeDasharray: "5 5",
                       } as any, // MUI x-charts v7.7 does not expose strokeDasharray on LineSeriesType
@@ -990,7 +990,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                               {candidate.name}
                             </span>
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-primary text-sm">
+                              <span className="font-semibold text-brand-700 text-sm">
                                 {candidate.score}/100
                               </span>
                               <span

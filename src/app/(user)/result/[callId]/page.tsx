@@ -63,7 +63,7 @@ function CefrScale({ level }: { level: string }) {
                 </span>
               </div>
               {isActive && (
-                <span className="text-[10px] font-semibold text-primary leading-none">
+                <span className="text-[10px] font-semibold text-foreground leading-none">
                   You
                 </span>
               )}
@@ -250,7 +250,7 @@ export default function ResultPage({ params }: Props) {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">Interview Complete</h1>
-          {interviewName && <p className="text-primary font-medium mb-3">{interviewName}</p>}
+          {interviewName && <p className="text-brand-700 font-medium mb-3">{interviewName}</p>}
           <p className="text-muted-foreground text-sm leading-relaxed">
             Thank you for completing the interview. Your responses have been recorded and will be reviewed shortly.
           </p>
@@ -297,11 +297,11 @@ export default function ResultPage({ params }: Props) {
         {/* CEFR Proficiency card */}
         {ep.cefrLevel && (
           <div className="bg-card rounded-2xl p-6 shadow-md border border-border">
-            <p className="text-xs font-bold text-primary uppercase tracking-widest text-center mb-4">
+            <p className="text-xs font-bold text-brand-700 uppercase tracking-widest text-center mb-4">
               English Proficiency Level
             </p>
             <div className="flex items-center justify-center gap-3">
-              <span className="text-4xl font-black text-primary leading-none">{ep.cefrLevel}</span>
+              <span className="text-4xl font-black text-brand-700 leading-none">{ep.cefrLevel}</span>
               {CEFR_LABELS[ep.cefrLevel] && (
                 <span className="text-lg font-semibold text-muted-foreground">{CEFR_LABELS[ep.cefrLevel]}</span>
               )}
