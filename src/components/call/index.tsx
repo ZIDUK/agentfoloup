@@ -14,7 +14,7 @@ import { useResponses } from "@/contexts/responses.context";
 import Image from "next/image";
 import MiniLoader from "../loaders/mini-loader/miniLoader";
 import { toast } from "sonner";
-import { isLightColor, testEmail } from "@/lib/utils";
+import { getDefaultThemeColor, isLightColor, testEmail } from "@/lib/utils";
 import { Interview } from "@/types/interview";
 import { FeedbackData } from "@/types/response";
 import { FeedbackForm } from "@/components/call/feedbackForm";
@@ -966,8 +966,8 @@ function Call({ interview, applicationId, invitationId, jobId, isTestResponse = 
                   <Button
                     className="min-w-20 h-10 rounded-lg flex flex-row justify-center"
                     style={{
-                      backgroundColor: interview.theme_color ?? "#4F46E5",
-                      color: isLightColor(interview.theme_color ?? "#4F46E5")
+                      backgroundColor: interview.theme_color ?? getDefaultThemeColor(),
+                      color: isLightColor(interview.theme_color ?? getDefaultThemeColor())
                         ? "black"
                         : "white",
                     }}

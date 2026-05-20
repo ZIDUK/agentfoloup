@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { Interview } from "@/types/interview";
 import { Response } from "@/types/response";
-import { formatTimestampToDateHHMM } from "@/lib/utils";
+import { formatTimestampToDateHHMM, getDefaultThemeColor } from "@/lib/utils";
 import CallInfo from "@/components/call/callInfo";
 import SummaryInfo from "@/components/dashboard/interview/summaryInfo";
 import EditInterview from "@/components/dashboard/interview/editInterview";
@@ -64,8 +64,8 @@ function InterviewHome({ params, searchParams }: Props) {
   const [isViewed, setIsViewed] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
-  const [themeColor, setThemeColor] = useState<string>("#4F46E5");
-  const [iconColor, seticonColor] = useState<string>("#4F46E5");
+  const [themeColor, setThemeColor] = useState<string>(getDefaultThemeColor);
+  const [iconColor, seticonColor] = useState<string>(getDefaultThemeColor);
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [responseType, setResponseType] = useState<string>("CANDIDATE");
 
@@ -108,8 +108,8 @@ function InterviewHome({ params, searchParams }: Props) {
         setInterview(response);
         setIsActive(response.is_active);
         setIsViewed(response.is_viewed);
-        setThemeColor(response.theme_color ?? "#4F46E5");
-        seticonColor(response.theme_color ?? "#4F46E5");
+        setThemeColor(response.theme_color ?? getDefaultThemeColor());
+        seticonColor(response.theme_color ?? getDefaultThemeColor());
       } catch {
         // silent
       }
