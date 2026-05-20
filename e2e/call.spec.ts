@@ -92,13 +92,40 @@ test.describe('Candidate call page', () => {
       FakeWebSocket.CLOSED = 3;
       window.WebSocket = FakeWebSocket;
 
-      // getUserMedia: canvas-based video stream for camera requests, empty MediaStream for audio-only
+      // getUserMedia: canvas-based video stream for camera requests; for audio-only requests
+      // we build a real stream with an oscillator track so createMediaStreamSource() in
+      // DeepgramAgentService.startAudioCapture() does not throw "stream has no audio tracks".
       navigator.mediaDevices.getUserMedia = async (constraints) => {
         if (constraints && constraints.video) {
           const canvas = document.createElement('canvas');
           canvas.width = 640;
           canvas.height = 480;
-          return canvas.captureStream(10);
+          const videoStream = canvas.captureStream(10);
+          // Some flows ask for video + audio together; attach a silent audio track too.
+          if (constraints.audio) {
+            try {
+              const ctx = new AudioContext();
+              const dest = ctx.createMediaStreamDestination();
+              const osc = ctx.createOscillator();
+              osc.frequency.value = 0;
+              osc.connect(dest);
+              osc.start();
+              const audioTrack = dest.stream.getAudioTracks()[0];
+              if (audioTrack) videoStream.addTrack(audioTrack);
+            } catch {
+              // non-fatal
+            }
+          }
+          return videoStream;
+        }
+        if (constraints && constraints.audio) {
+          const ctx = new AudioContext();
+          const dest = ctx.createMediaStreamDestination();
+          const osc = ctx.createOscillator();
+          osc.frequency.value = 0;
+          osc.connect(dest);
+          osc.start();
+          return dest.stream;
         }
         return new MediaStream();
       };
@@ -233,10 +260,39 @@ test.describe('Candidate call page', () => {
     await expect(page.getByRole('button', { name: 'Start Interview' })).toBeDisabled();
   });
 
-  // Tests 4 & 5 removed: they required the Retell WebClient SDK to connect to a live
-  // voice-agent backend after clicking "Start Interview". The FakeWebSocket stub cannot
-  // emulate Retell's full handshake protocol (call_started events, audio negotiation),
-  // so the End Interview button never appears in the test environment.
+  // 4. Completing the form and clicking Start transitions to the active interview UI
+  test('4. valid form submission transitions to active interview', async ({ page }) => {
+    await page.goto(`/call/${INVITATION_ID}`);
+    await page.waitForLoadState('networkidle', { timeout: 20000 });
+    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 20000 });
+
+    await page.locator('input[placeholder="Enter your email address"]').fill(CANDIDATE_EMAIL);
+    await page.locator('input[placeholder="Enter your first name"]').fill('Test User');
+    await expect(page.getByRole('button', { name: 'Start Interview' })).toBeEnabled({ timeout: 5000 });
+    await page.getByRole('button', { name: 'Start Interview' }).click();
+
+    await expect(page.getByRole('button', { name: 'End Interview' })).toBeVisible({ timeout: 30000 });
+  });
+
+  // 5. Tab switch during active interview triggers the integrity warning dialog
+  test('5. switching tabs during interview shows Integrity Warning dialog', async ({ page }) => {
+    await page.goto(`/call/${INVITATION_ID}`);
+    await page.waitForLoadState('networkidle', { timeout: 20000 });
+    await expect(page.locator('input[placeholder="Enter your email address"]')).toBeVisible({ timeout: 20000 });
+
+    await page.locator('input[placeholder="Enter your email address"]').fill(CANDIDATE_EMAIL);
+    await page.locator('input[placeholder="Enter your first name"]').fill('Test User');
+    await page.getByRole('button', { name: 'Start Interview' }).click();
+    await expect(page.getByRole('button', { name: 'End Interview' })).toBeVisible({ timeout: 30000 });
+
+    // Simulate the browser firing a visibilitychange event with document.hidden=true
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    await expect(page.getByRole('heading', { name: 'Integrity Warning' })).toBeVisible({ timeout: 5000 });
+  });
 
   // 6. Nested route /call/[interviewId]/[jobId]/[applicationId] resolves the invitation and redirects
   test('6. nested call route resolves invitation and redirects to pre-call form', async ({ page }) => {
