@@ -72,7 +72,7 @@ test.describe('Dashboard page', () => {
   });
 
   test('1. /dashboard loads and shows the interview list section', async ({ page }) => {
-    await page.route('**/api/interviews', (route) =>
+    await page.route('**/api/interviews**', (route) =>
       route.fulfill({ json: [] })
     );
     await page.goto('/dashboard');
@@ -80,7 +80,7 @@ test.describe('Dashboard page', () => {
   });
 
   test('2. empty state message displays when no interviews exist', async ({ page }) => {
-    await page.route('**/api/interviews', (route) =>
+    await page.route('**/api/interviews**', (route) =>
       route.fulfill({ json: [] })
     );
     await page.goto('/dashboard');
@@ -90,7 +90,7 @@ test.describe('Dashboard page', () => {
   });
 
   test('3. interview cards render when interviews exist', async ({ page }) => {
-    await page.route('**/api/interviews', (route) =>
+    await page.route('**/api/interviews**', (route) =>
       route.fulfill({ json: INTERVIEWS })
     );
     await page.goto('/dashboard');
@@ -102,7 +102,7 @@ test.describe('Dashboard page', () => {
   });
 
   test('4. clicking an interview card navigates to /interviews/[id]', async ({ page }) => {
-    await page.route('**/api/interviews', (route) =>
+    await page.route('**/api/interviews**', (route) =>
       route.fulfill({ json: INTERVIEWS })
     );
     await page.goto('/dashboard');
@@ -112,7 +112,7 @@ test.describe('Dashboard page', () => {
   });
 
   test('5. Create Interview button is visible and opens the creation modal', async ({ page }) => {
-    await page.route('**/api/interviews', (route) =>
+    await page.route('**/api/interviews**', (route) =>
       route.fulfill({ json: [] })
     );
     await page.goto('/dashboard');
@@ -125,7 +125,7 @@ test.describe('Dashboard page', () => {
   });
 
   test('6. nav link to /dashboard/interviewers navigates correctly', async ({ page }) => {
-    await page.route('**/api/interviews', (route) =>
+    await page.route('**/api/interviews**', (route) =>
       route.fulfill({ json: [] })
     );
     await page.goto('/dashboard');

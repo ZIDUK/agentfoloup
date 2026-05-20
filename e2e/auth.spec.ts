@@ -9,7 +9,7 @@ async function mockApiRoutes(page: Page) {
 test.describe('sign-in page', () => {
   test('renders with sign-in UI visible', async ({ page }) => {
     await page.goto('/sign-in');
-    await expect(page.getByRole('heading', { name: /welcome to folo/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /welcome to folo/i }).first()).toBeVisible();
     await expect(page.getByRole('button', { name: /continue with google/i })).toBeVisible();
   });
 });
