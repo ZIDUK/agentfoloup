@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import React, { useState, useEffect, useRef } from "react";
 import { useInterviews } from "@/contexts/interviews.context";
-import { Share2, Filter, Pencil, UserIcon, Eye, Palette, ChevronLeft, ChevronRight } from "lucide-react";
+import { Filter, Pencil, UserIcon, Eye, Palette, ChevronLeft, ChevronRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { Interview } from "@/types/interview";
@@ -16,7 +16,6 @@ import EditInterview from "@/components/dashboard/interview/editInterview";
 import Modal from "@/components/dashboard/Modal";
 import { toast } from "sonner";
 import { HexColorPicker } from "react-colorful";
-import SharePopup from "@/components/dashboard/interview/sharePopup";
 import {
   Tooltip,
   TooltipTrigger,
@@ -57,7 +56,6 @@ function InterviewHome({ params, searchParams }: Props) {
   const [totalResponses, setTotalResponses] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const { getInterviewById } = useInterviews();
-  const [isSharePopupOpen, setIsSharePopupOpen] = useState(false);
   const router = useRouter();
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isGeneratingInsights, setIsGeneratingInsights] = useState<boolean>(false);
@@ -296,22 +294,6 @@ function InterviewHome({ params, searchParams }: Props) {
               <UserIcon className="my-auto" size={16} />: {totalResponses}
             </div>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    className="bg-transparent shadow-none relative text-xs text-brand-700 px-1 h-7 hover:scale-110 hover:bg-transparent"
-                    variant="secondary"
-                    onClick={(e) => { e.stopPropagation(); setIsSharePopupOpen(true); }}
-                  >
-                    <Share2 size={16} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-popover" side="bottom" sideOffset={4}>
-                  <span className="text-foreground flex flex-row gap-4">Share</span>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -567,17 +549,6 @@ function InterviewHome({ params, searchParams }: Props) {
           <HexColorPicker color={themeColor} onChange={handleColorChange} style={{ width: "100%" }} />
         </div>
       </Modal>
-      {isSharePopupOpen && (
-        <SharePopup
-          open={isSharePopupOpen}
-          shareContent={
-            interview?.readable_slug
-              ? `${base_url}/call/${interview?.readable_slug}`
-              : (interview?.url as string)
-          }
-          onClose={() => setIsSharePopupOpen(false)}
-        />
-      )}
     </div>
   );
 }
