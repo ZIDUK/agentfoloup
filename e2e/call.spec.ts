@@ -223,6 +223,25 @@ test.describe('Candidate call page', () => {
       route.fulfill({ json: { callResponse: {}, analytics: null } })
     );
 
+    // The call page queries Supabase directly (supabase.from("interview").select(...)) to
+    // check is_active/is_archived/is_deleted before rendering the pre-call form.
+    // Register fallback FIRST so the specific interview mock (registered after) wins via LIFO.
+    await page.route(/.*\.supabase\.co\/rest\/.*/, (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+    );
+    await page.route(/.*\.supabase\.co\/rest\/v1\/interview.*/, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([{
+          id: INTERVIEW_ID,
+          is_active: true,
+          is_archived: false,
+          is_deleted: false,
+        }]),
+      })
+    );
+
   });
 
   // 1. Page loads and shows pre-call form

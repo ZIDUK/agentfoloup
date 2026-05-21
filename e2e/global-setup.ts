@@ -109,7 +109,7 @@ async function globalSetup() {
 
   // Navigate to /sign-in — the middleware now sees a valid session in the cookie
   // and redirects to /dashboard (validSession check passes for @agenticdream.com).
-  await page.goto('http://localhost:3000/sign-in');
+  await page.goto('http://localhost:3002/sign-in');
   await page.waitForURL((url) => !url.pathname.startsWith('/sign-in'), { timeout: 15000 });
 
   await context.storageState({ path: 'e2e/fixtures/auth.json' });

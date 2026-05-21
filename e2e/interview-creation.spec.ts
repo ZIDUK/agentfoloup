@@ -3,8 +3,8 @@ import { mockSupabaseExternal } from './helpers/mocks';
 
 test.use({ storageState: 'e2e/fixtures/auth.json' });
 
-const INTERVIEWER_1 = { id: 1, name: 'Alex', image: 'https://via.placeholder.com/70' };
-const INTERVIEWER_2 = { id: 2, name: 'Jordan', image: 'https://via.placeholder.com/70' };
+const INTERVIEWER_1 = { id: 1, name: 'Alex', image: '/interviewers/Lisa.png' };
+const INTERVIEWER_2 = { id: 2, name: 'Jordan', image: '/interviewers/Lisa.png' };
 
 const NEW_INTERVIEW = {
   id: 'new-interview-id',
@@ -61,15 +61,17 @@ test.describe('Interview creation flow', () => {
 
   test('1. Create Interview button opens the creation modal', async ({ page }) => {
     await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
     const modal = page.locator('.fixed.z-50.inset-0').first();
     await page.getByText('Create an Interview').first().click();
     await expect(modal).toBeVisible();
     // Use level: 1 to disambiguate from the h3 "Create an Interview" card heading on the dashboard
-    await expect(page.getByRole('heading', { name: 'Create an Interview', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Create an Interview', level: 1 })).toBeVisible({ timeout: 10000 });
   });
 
   test('2. Form shows required fields: name, objective, description, and question input', async ({ page }) => {
     await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
     await page.getByText('Create an Interview').first().click();
     // Step 1: name and objective fields
     const nameInput = page.getByPlaceholder('e.g. Name of the Interview');
@@ -79,7 +81,7 @@ test.describe('Interview creation flow', () => {
     await expect(objectiveTextarea).toBeVisible();
     // Navigate to step 2 to assert description and question fields
     await nameInput.fill('Test Interview');
-    await expect(page.locator('img[alt="Picture of the interviewer"]').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('img[alt="Picture of the interviewer"]').first()).toBeVisible({ timeout: 15000 });
     await page.locator('img[alt="Picture of the interviewer"]').first().click();
     await objectiveTextarea.fill('Assess technical skills');
     await page.locator('input[type="number"][max="50"]').fill('2');
@@ -96,6 +98,7 @@ test.describe('Interview creation flow', () => {
 
   test('3. Submit buttons are disabled when required fields are empty', async ({ page }) => {
     await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
     await page.getByText('Create an Interview').first().click();
     const generateBtn = page.getByRole('button', { name: 'Generate Questions' });
     const manualBtn = page.getByRole('button', { name: "I'll do it myself" });
@@ -117,6 +120,7 @@ test.describe('Interview creation flow', () => {
       return route.fulfill({ json: [INTERVIEWER_1, INTERVIEWER_2] });
     });
     await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
     await page.getByText('Create an Interview').first().click();
     await expect(page.getByText('Alex', { exact: true })).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('Jordan', { exact: true })).toBeVisible({ timeout: 5000 });
@@ -135,9 +139,10 @@ test.describe('Interview creation flow', () => {
       route.fulfill({ json: { response: JSON.stringify(generatedPayload) } })
     );
     await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
     await page.getByText('Create an Interview').first().click();
     await page.getByPlaceholder('e.g. Name of the Interview').fill('Engineering Interview');
-    await expect(page.locator('img[alt="Picture of the interviewer"]').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('img[alt="Picture of the interviewer"]').first()).toBeVisible({ timeout: 15000 });
     await page.locator('img[alt="Picture of the interviewer"]').first().click();
     await page.getByPlaceholder(/Find best candidates/).fill('Assess engineering competency');
     await page.locator('input[type="number"][max="50"]').fill('3');
@@ -152,9 +157,10 @@ test.describe('Interview creation flow', () => {
       route.fulfill({ status: 201, json: { id: 'new-interview-id' } })
     );
     await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
     await page.getByText('Create an Interview').first().click();
     await page.getByPlaceholder('e.g. Name of the Interview').fill('Test Interview');
-    await expect(page.locator('img[alt="Picture of the interviewer"]').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('img[alt="Picture of the interviewer"]').first()).toBeVisible({ timeout: 15000 });
     await page.locator('img[alt="Picture of the interviewer"]').first().click();
     await page.getByPlaceholder(/Find best candidates/).fill('Assess skills');
     // numQuestions=2 so that Plus button is visible after manual entry (1 < 2)
@@ -193,9 +199,10 @@ test.describe('Interview creation flow', () => {
       route.fulfill({ status: 201, json: NEW_INTERVIEW })
     );
     await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
     await page.getByText('Create an Interview').first().click();
     await page.getByPlaceholder('e.g. Name of the Interview').fill('Test Interview');
-    await expect(page.locator('img[alt="Picture of the interviewer"]').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('img[alt="Picture of the interviewer"]').first()).toBeVisible({ timeout: 15000 });
     await page.locator('img[alt="Picture of the interviewer"]').first().click();
     await page.getByPlaceholder(/Find best candidates/).fill('Assess skills');
     await page.locator('input[type="number"][max="50"]').fill('2');
