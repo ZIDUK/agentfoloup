@@ -23,7 +23,7 @@ const getInterviewById = async (id: string) => {
     const { data } = await supabase
       .from("interview")
       .select(`*`)
-      .or(`id.eq.${id},readable_slug.eq.${id}`);
+      .eq("id", id);
 
     return data ? data[0] : null;
   } catch {

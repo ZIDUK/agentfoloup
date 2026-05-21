@@ -45,16 +45,12 @@ export async function POST(req: Request, res: Response) {
     const payload = body.interviewData;
     const jobs: { job_id: number; job_title: string }[] = Array.isArray(payload.jobs) ? payload.jobs : [];
 
-    const interviewNameSlug = payload.name?.toLowerCase().replace(/\s/g, "-");
-    const readableSlug = interviewNameSlug ? `${interviewNameSlug}-${url_id}` : null;
-
     const { jobs: _jobs, job_id: _job_id, job_title: _job_title, ...interviewPayload } = payload;
 
     await InterviewService.createInterview({
       ...interviewPayload,
       url: url,
       id: url_id,
-      readable_slug: readableSlug,
     });
 
     logger.info("Interview created successfully");

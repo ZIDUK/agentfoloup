@@ -39,7 +39,6 @@ function Interviews() {
                 key={item.id}
                 name={item.name}
                 url={item.url ?? ""}
-                readableSlug={item.readable_slug}
               />
             ))
           )}

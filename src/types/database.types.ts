@@ -67,7 +67,6 @@ export type Database = {
           question_count: number | null
           questions: Json | null
           quotes: Json[] | null
-          readable_slug: string | null
           respondents: string[] | null
           response_count: number | null
           theme_color: string | null
@@ -93,7 +92,6 @@ export type Database = {
           question_count?: number | null
           questions?: Json | null
           quotes?: Json[] | null
-          readable_slug?: string | null
           respondents?: string[] | null
           response_count?: number | null
           theme_color?: string | null
@@ -119,7 +117,6 @@ export type Database = {
           question_count?: number | null
           questions?: Json | null
           quotes?: Json[] | null
-          readable_slug?: string | null
           respondents?: string[] | null
           response_count?: number | null
           theme_color?: string | null

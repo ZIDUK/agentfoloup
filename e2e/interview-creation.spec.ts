@@ -12,7 +12,6 @@ const NEW_INTERVIEW = {
   interviewer_id: 1,
   created_at: '2026-01-01T00:00:00Z',
   url: null,
-  readable_slug: 'test-interview-new-interview-id',
   user_id: 'user-1',
   objective: 'Assess skills',
   question_count: 2,

@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const { data, error } = await supabase
     .from("interview")
     .select("*")
-    .or(`id.eq.${id},readable_slug.eq.${id}`);
+    .eq("id", id);
 
   if (error) {
     logger.error("interviews/[id] GET: query failed", { error });

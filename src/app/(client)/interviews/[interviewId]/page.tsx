@@ -83,8 +83,8 @@ function InterviewHome({ params, searchParams }: Props) {
       return;
     }
 
-    let interviewId = interview.readable_slug;
-    if (!interviewId && interview.url) {
+    let interviewId: string | undefined;
+    if (interview.url) {
       const urlParts = interview.url.split("/");
       interviewId = urlParts[urlParts.length - 1];
     }

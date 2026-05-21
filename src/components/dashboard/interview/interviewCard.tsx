@@ -11,11 +11,9 @@ interface Props {
   interviewerId: bigint;
   id: string;
   url: string;
-  readableSlug: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function InterviewCard({ name, interviewerId, id, url: _url, readableSlug: _readableSlug }: Props) {
+function InterviewCard({ name, interviewerId, id, url: _url }: Props) {
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [img, setImg] = useState("");
